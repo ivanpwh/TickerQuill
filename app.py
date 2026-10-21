@@ -18,7 +18,7 @@ import theme
 from theme import FONT, FONT_B, T
 
 APP_NAME = "TickerQuill"
-APP_VERSION = "1.0"
+APP_VERSION = "1.1.0"
 BASE = Path(__file__).resolve().parent
 CACHE = BASE / "cache"
 WORK = BASE / "work"
