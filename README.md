@@ -1,6 +1,6 @@
 # TickerQuill
 
-[![CI](https://github.com/ivanpwh/tickerquill/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanpwh/tickerquill/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/ivanpwh/TickerQuill/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanpwh/TickerQuill/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 *A quill for stock videos: it listens so you can read.*
 
@@ -74,8 +74,8 @@ Details: [Architecture](docs/architecture.md) · [Methodology](docs/methodology.
 ## Installation (Windows)
 
 ```powershell
-git clone https://github.com/ivanpwh/tickerquill.git
-cd tickerquill
+git clone https://github.com/ivanpwh/TickerQuill.git
+cd TickerQuill
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -139,7 +139,7 @@ Local CPU transcription of a one-hour video can take a long time. The Colab engi
 ### Part 1: start the server in Colab
 
 1. **Open Colab.** Go to <https://colab.research.google.com> and sign in with your Google account.
-2. **Load the notebook.** Quickest: once the repository is on GitHub, click [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ivanpwh/tickerquill/blob/main/colab/Whisper_Server.ipynb) and skip to step 3. Otherwise, in the "Open notebook" window choose the **Upload** tab (or use **File > Upload notebook** if a notebook is already open), then select `colab/Whisper_Server.ipynb` from the app folder. It opens with four cells: instructions, install, server file and start.
+2. **Load the notebook.** Quickest: click [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ivanpwh/TickerQuill/blob/main/colab/Whisper_Server.ipynb) and skip to step 3. Otherwise, in the "Open notebook" window choose the **Upload** tab (or use **File > Upload notebook** if a notebook is already open), then select `colab/Whisper_Server.ipynb` from the app folder. It opens with four cells: instructions, install, server file and start.
 3. **Turn on the GPU.** Menu **Runtime > Change runtime type**, pick **T4 GPU**, **Save**. The top-right corner should now show the GPU runtime. (The install cell also prints a warning if no GPU is attached.)
 4. **Run everything.** Menu **Runtime > Run all** (or `Ctrl+F9`). If Colab warns that the notebook was not authored by Google, review it and choose **Run anyway**.
 5. **Wait a minute or two (longer on a slow connection).** The cells install the packages, write the server file, start the server and open a tunnel. You can scroll to the last cell to watch.

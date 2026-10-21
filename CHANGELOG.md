@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.1.0 - 2026-10-21
+
 ### Added
 - Transcripts opened with **[ OPEN FILE ]** now appear in **History** (as `FILE` entries) and can be analysed again from the saved copy.
 - The LLM model has no default any more: a fresh install must set one (**[ PICK MODEL ]** lists what the endpoint offers), and the app warns before a job starts if the API key or model is missing.

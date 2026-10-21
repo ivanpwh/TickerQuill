@@ -4,7 +4,7 @@ Run the speech-to-text step on a Colab GPU instead of your own computer. The app
 
 ## Use it
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ivanpwh/tickerquill/blob/main/colab/Whisper_Server.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ivanpwh/TickerQuill/blob/main/colab/Whisper_Server.ipynb)
 
 Short version (the full illustrated walk-through, including what you should see at each step and what to do when it fails, is in the main README: [Running Whisper on Google Colab](../README.md#running-whisper-on-google-colab)):
 
