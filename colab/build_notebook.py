@@ -19,7 +19,8 @@ INSTALL = """import subprocess
 
 if subprocess.run(["nvidia-smi", "-L"], capture_output=True).returncode != 0:
     print("WARNING: no GPU detected. Choose Runtime > Change runtime type > T4 GPU, then run again.")
-!pip -q install faster-whisper fastapi uvicorn python-multipart"""
+!pip -q install "av>=18.1,<19" faster-whisper fastapi uvicorn python-multipart
+!python -c 'import av; print("PyAV", av.__version__)'"""
 
 START = '''import glob, os, re, secrets, site, subprocess, sys, time, urllib.request
 

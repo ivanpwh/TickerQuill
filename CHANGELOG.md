@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- Colab notebook: `open() got an unexpected keyword argument 'metadata_errors'` came from PyAV 19, which removed that argument while faster-whisper still uses it. The install cell now pins `av>=18.1,<19` and prints the installed PyAV version. Re-download `Whisper_Server.ipynb` and run it in a fresh session.
+
 ## 1.1.0 - 2026-10-21
 
 ### Added
