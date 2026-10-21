@@ -139,7 +139,7 @@ STR = {
         "hint_done": "[OK] Transkrip sudah ada ({model}, {date}), akan dipakai ulang.",
         "hint_part": "[..] Transkrip sebagian {pct}% ditemukan, bisa dilanjutkan.",
         "dlg_done_t": "Video sudah pernah ditranskrip",
-        "dlg_done": "{title}\nModel: {model} | {date}\n\nPakai ulang transkrip ini (langsung ke analisis) atau transkrip ulang dari awal?",
+        "dlg_done": "{title}\nModel: {model} | {date}\n\nPakai ulang transkrip ini (analisis tersimpan ditampilkan) atau transkrip ulang dari awal?",
         "dlg_part_t": "Transkrip sebagian ditemukan",
         "dlg_part": "{title}\nSelesai {pct}% (sampai {t}), model: {model}\n\nLanjutkan dari {t} atau ulangi dari awal?",
         "o_reuse": "[ PAKAI ULANG ]", "o_fresh": "[ TRANSKRIP ULANG ]", "o_resume": "[ LANJUTKAN ]",
@@ -153,8 +153,15 @@ STR = {
         "colab_empty": "Isi URL dan token terlebih dulu.",
         "err_colab_cfg": "Server Colab belum diatur. Buka PENGATURAN > TRANSKRIPSI, isi URL dan token dari notebook, atau pilih Whisper di Local.",
         "s_comp": "2/3 MENGOMPRESI AUDIO", "s_up": "2/3 MENGUNGGAH KE COLAB", "s_remote": "2/3 COLAB MEMUAT MODEL WHISPER",
-        "err_colab": "Server Colab bermasalah: {e}\nPastikan notebook masih berjalan dan URL/token di PENGATURAN > TRANSKRIPSI masih yang terbaru. "
-                     "Transkrip sebagian (jika ada) tersimpan dan bisa dilanjutkan.",
+        "err_colab": "Server Colab bermasalah: {e}\nPastikan notebook masih berjalan dan URL/token di PENGATURAN > TRANSKRIPSI masih yang terbaru.",
+        "s_retry_2": "2/3 MENCOBA LAGI KE COLAB", "s_retry_3": "3/3 MENCOBA LAGI ANALISIS",
+        "err_step": "Langkah {step}/3 gagal: {e}", "err_tries": "Sudah dicoba {n} kali, tetap gagal.",
+        "hint_tr_part": "Transkrip sebagian tersimpan. Tekan [ ANALISIS ], lalu pilih [ LANJUTKAN ] untuk meneruskan dari titik terakhir.",
+        "hint_tr_none": "Tekan [ ANALISIS ] untuk mencoba lagi.",
+        "hint_an": "Transkrip sudah tersimpan. Tekan [ ANALISIS ], lalu pilih [ PAKAI ULANG ] untuk menganalisis lagi tanpa transkripsi ulang.",
+        "hint_dl_part": "Transkrip sebagian masih tersimpan: buka dari RIWAYAT untuk melanjutkan setelah koneksi pulih.",
+        "hist_reanalyze": "[ ANALISIS ULANG ]",
+        "no_saved": "Transkrip tersedia, tetapi belum ada analisis tersimpan. Tekan [ ANALISIS ULANG ] di RIWAYAT untuk membuatnya.",
         "set_btn": "[ PENGATURAN ]", "set_title": "Pengaturan",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
                     "pilihan lain ke settings.json. Kosongkan kolom teks untuk kembali ke nilai bawaan.",
@@ -205,7 +212,7 @@ STR = {
         "hint_done": "[OK] A transcript already exists ({model}, {date}); it will be reused.",
         "hint_part": "[..] A partial transcript ({pct}%) was found; it can be resumed.",
         "dlg_done_t": "Video already transcribed",
-        "dlg_done": "{title}\nModel: {model} | {date}\n\nReuse this transcript (straight to analysis) or transcribe again from scratch?",
+        "dlg_done": "{title}\nModel: {model} | {date}\n\nReuse this transcript (saved analysis is shown) or transcribe again from scratch?",
         "dlg_part_t": "Partial transcript found",
         "dlg_part": "{title}\n{pct}% done (up to {t}), model: {model}\n\nResume from {t} or start over?",
         "o_reuse": "[ REUSE ]", "o_fresh": "[ TRANSCRIBE AGAIN ]", "o_resume": "[ RESUME ]",
@@ -219,8 +226,15 @@ STR = {
         "colab_empty": "Enter the URL and token first.",
         "err_colab_cfg": "The Colab server is not set up. Open SETTINGS > TRANSCRIPTION, enter the URL and token from the notebook, or set Whisper to Local.",
         "s_comp": "2/3 COMPRESSING AUDIO", "s_up": "2/3 UPLOADING TO COLAB", "s_remote": "2/3 COLAB LOADING WHISPER MODEL",
-        "err_colab": "Colab server problem: {e}\nMake sure the notebook is still running and the URL/token in SETTINGS > TRANSCRIPTION are the latest. "
-                     "A partial transcript (if any) is saved and can be resumed.",
+        "err_colab": "Colab server problem: {e}\nMake sure the notebook is still running and the URL/token in SETTINGS > TRANSCRIPTION are the latest.",
+        "s_retry_2": "2/3 RETRYING COLAB", "s_retry_3": "3/3 RETRYING ANALYSIS",
+        "err_step": "Step {step}/3 failed: {e}", "err_tries": "Tried {n} times, still failing.",
+        "hint_tr_part": "A partial transcript is saved. Press [ ANALYZE ], then choose [ RESUME ] to continue from the last point.",
+        "hint_tr_none": "Press [ ANALYZE ] to try again.",
+        "hint_an": "The transcript is saved. Press [ ANALYZE ], then choose [ REUSE ] to analyse again without transcribing.",
+        "hint_dl_part": "The partial transcript is still saved: open it from HISTORY to resume once the connection is back.",
+        "hist_reanalyze": "[ REANALYZE ]",
+        "no_saved": "The transcript is available, but no analysis is saved yet. Press [ REANALYZE ] in HISTORY to create it.",
         "set_btn": "[ SETTINGS ]", "set_title": "Settings",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
                     "other choices go to settings.json. Clear a text field to fall back to its default.",
@@ -358,6 +372,31 @@ def save_file_entry(title, text, source):
     return path
 
 
+TRIES = 3  # percobaan otomatis untuk gangguan sementara di langkah 2 dan 3
+RETRY_WAITS = (5, 15)  # detik menunggu sebelum percobaan ke-2 dan ke-3
+# Langkah aktif menurut status (1 unduh, 2 transkripsi, 3 analisis); status yang tidak tercantum tidak mengubahnya
+STEP_OF = {"s_info": 1, "s_dl": 1, "s_cache": 2, "s_load": 2, "s_tr": 2, "s_resume": 2, "s_comp": 2,
+           "s_up": 2, "s_remote": 2, "s_retry_2": 2, "s_an": 3, "s_retry_3": 3}
+
+
+class StepError(RuntimeError):
+    """Gagal di langkah 2 atau 3. transient: gangguan sementara yang layak dicoba ulang otomatis."""
+
+    def __init__(self, step, detail, transient=False, tries=1):
+        super().__init__(detail)
+        self.step, self.detail, self.transient, self.tries = step, detail, transient, tries
+
+
+def llm_transient(e):
+    """Gangguan penyedia LLM yang biasanya hilang sendiri; kunci atau model yang salah tidak termasuk."""
+    import openai
+
+    if isinstance(e, (openai.APIConnectionError, openai.RateLimitError, openai.InternalServerError)):
+        return True
+    # error tanpa kode HTTP, misalnya "upstream connection lost" dari router di tengah permintaan
+    return isinstance(e, openai.APIError) and not isinstance(e, openai.APIStatusError)
+
+
 class Cancelled(Exception):
     pass
 
@@ -366,7 +405,7 @@ class Pipeline:
     """Jalan di thread terpisah; kirim event (kind, payload) lewat queue."""
 
     def __init__(self, url, whisper_model, audio_lang, ui_lang, out_q, transcript_path=None, model=None,
-                 mode="auto", engine="Local", preloaded=None):
+                 mode="auto", engine="Local", preloaded=None, entry=None):
         self.url, self.whisper_model, self.q = url, whisper_model, out_q
         self.preloaded = preloaded  # (judul, transkrip) dari entri riwayat berkas; lewati unduh dan Whisper
         self.engine = engine  # Local | Colab
@@ -380,13 +419,41 @@ class Pipeline:
         self.run_ev = threading.Event()  # set = berjalan, clear = dijeda
         self.run_ev.set()
         self.pct = 0
+        self.step = 0  # langkah aktif (1-3) untuk pesan error; 0 = tidak ditandai, misalnya saat membuka berkas
+        self.partial_path = None  # checkpoint transkripsi, untuk pesan error langkah 1 dan 2
+        self.done_path = entry  # entri riwayat (transkrip selesai atau berkas); analisis yang berhasil disimpan di sini
+        self.saved_analysis = None  # mode 'view': analisis tersimpan yang ditampilkan tanpa memanggil LLM
 
     def emit(self, kind, payload=None):
         self.q.put((kind, payload))
 
     def status(self, key, pct, extra=""):
         self.pct = pct
+        self.step = STEP_OF.get(key, self.step)
         self.emit("status", (key, pct, extra))
+
+    def retry_wait(self, key, attempt):
+        """Jeda sebelum percobaan berikutnya; batal bila pengguna membatalkan selama jeda."""
+        self.status(key, self.pct, f" ({attempt + 1}/{TRIES})")
+        if self.cancel.wait(RETRY_WAITS[attempt - 1]):
+            raise Cancelled()
+
+    def failure(self, step, detail, tries=1):
+        """Pesan error: langkah yang gagal, jumlah percobaan, dan langkah berikutnya yang aman dilakukan."""
+        t = STR[self.ui]
+        if not step:
+            return detail
+        lines = [t["err_step"].format(step=step, e=detail)]
+        if tries > 1:
+            lines.append(t["err_tries"].format(n=tries))
+        saved = self.partial_path is not None and self.partial_path.exists()
+        if step == 1 and saved:
+            lines.append(t["hint_dl_part"])
+        elif step == 2:
+            lines.append(t["hint_tr_part"] if saved else t["hint_tr_none"])
+        elif step == 3:
+            lines.append(t["hint_an"])
+        return "\n".join(lines)
 
     def check(self):
         if self.cancel.is_set():
@@ -443,18 +510,29 @@ class Pipeline:
             if self.preloaded:
                 self.status("s_cache", 100)
                 title, transcript = self.preloaded
+                if self.mode != "reanalyze":  # analisis yang sudah tersimpan di entri riwayat berkas
+                    self.saved_analysis = self.stored_analysis(self.done_path)
             elif self.transcript_path:
                 title, transcript = self.read_transcript_file()
             else:
                 _, title, transcript = self.get_transcript()
             self.emit("transcript", (title, transcript))
-            self.analyze(title, transcript)
+            if self.saved_analysis is not None:  # analisis yang sudah tersimpan: tampilkan tanpa LLM
+                self.emit("report_raw", (self.saved_analysis, "stop"))
+                self.status("done", 100)
+            elif self.mode == "view":  # buka dari riwayat: jangan memulai analisis, cukup beri tahu
+                self.emit("notice", STR[self.ui]["no_saved"])
+                self.status("done", 100)
+            else:
+                self.analyze(title, transcript)
             self.emit("done")
         except Cancelled:
             self.status("cancelled", 0)
             self.emit("done")
+        except StepError as e:
+            self.emit("error", self.failure(e.step, e.detail, e.tries))
         except Exception as e:
-            self.emit("error", f"{type(e).__name__}: {e}")
+            self.emit("error", self.failure(self.step, f"{type(e).__name__}: {e}"))
 
     def read_transcript_file(self):
         self.status("s_file", 50)
@@ -463,36 +541,43 @@ class Pipeline:
         if not transcript.strip():
             raise RuntimeError(STR[self.ui]["empty_file"])
         try:
-            save_file_entry(path.stem, transcript, path)  # supaya muncul di Riwayat
+            self.done_path = save_file_entry(path.stem, transcript, path)  # supaya muncul di Riwayat; analisis disimpan di sana
         except OSError:
             pass  # gagal mencatat riwayat tidak boleh menggagalkan analisis
         return path.stem, transcript
 
     def get_transcript(self):
-        import yt_dlp
-
         code = self.audio_lang or "auto"
         vid = video_id(self.url)
 
+        if vid:  # sejak awal: dipakai pesan error dan penyimpanan analisis, termasuk saat transkrip dari cache
+            self.done_path, self.partial_path = cache_paths(vid, code)
+
         def reuse():
             """Transkrip selesai dari cache (tanpa jaringan), kecuali mode 'fresh'/'resume'."""
-            if vid and self.mode in ("auto", "reuse"):
+            if vid and self.mode in ("auto", "reuse", "view", "reanalyze"):
                 state = cache_state(vid, code)
                 if state and state[0] == "done" and state[1]["transcript"].strip():
                     self.status("s_cache", 100)
+                    # 'reanalyze' sengaja tidak memakai analisis tersimpan: langkah 3 dibuat ulang
+                    self.saved_analysis = state[1].get("analysis") if self.mode != "reanalyze" else None
                     return vid, state[1]["title"], state[1]["transcript"]
 
         hit = reuse()
         if hit:
             return hit
-        self.status("s_info", 0)
-        opts = {"quiet": True, "noplaylist": True, "no_warnings": True}
-        with yt_dlp.YoutubeDL(opts) as ydl:
-            info = ydl.extract_info(self.url, download=False)
-        vid, title = info["id"], info.get("title", info["id"])
-        hit = reuse()
-        if hit:
-            return hit
+        title = self.checkpoint_title(vid, code)  # lanjutan: judul dari checkpoint, tanpa jaringan
+        if title is None:
+            import yt_dlp  # hanya bila perlu jaringan; membuka riwayat dan melanjutkan dengan audio lokal tidak
+
+            self.status("s_info", 0)
+            opts = {"quiet": True, "noplaylist": True, "no_warnings": True}
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+            vid, title = info["id"], info.get("title", info["id"])
+            hit = reuse()
+            if hit:
+                return hit
         done_path, partial_path = cache_paths(vid, code)
         if self.mode == "fresh":
             partial_path.unlink(missing_ok=True)
@@ -503,25 +588,72 @@ class Pipeline:
             self.download_audio()
             audio = self.find_audio(vid)
 
-        lines, start, whisper_name = [], 0.0, self.whisper_model
-        if partial_path.exists() and self.mode != "fresh":  # lanjutkan dari checkpoint
-            try:
-                saved = read_meta(partial_path)
-                lines, start = saved["lines"], float(saved["done_until"])
-                whisper_name = saved.get("whisper_model") or whisper_name  # model yang sama agar konsisten
-            except (OSError, ValueError, KeyError):
-                lines, start = [], 0.0
-        if self.engine == "Colab":
-            upload = WORK / "upload" / f"{vid}.ogg"  # dipakai ulang bila dibatalkan/dilanjutkan; dihapus saat selesai
-            segments, duration, device = self.colab_segments(audio, upload, whisper_name, start)
-        else:
-            upload = None
-            segments, duration, device = self.local_segments(audio, whisper_name, start)
-        result = self.collect(segments, duration, device, lines, start, whisper_name, title, vid,
-                              done_path, partial_path)
+        self.partial_path, self.done_path = partial_path, done_path
+        # dipakai ulang bila dibatalkan/dilanjutkan; dihapus saat selesai
+        upload = WORK / "upload" / f"{vid}.ogg" if self.engine == "Colab" else None
+        result = self.transcribe(audio, upload, title, vid, done_path, partial_path)
         if upload:
             upload.unlink(missing_ok=True)
         return result
+
+    def checkpoint_title(self, vid, code):
+        """Judul dari checkpoint bila audio dan checkpoint sudah ada, supaya lanjutan tidak butuh jaringan."""
+        if not vid or self.mode not in ("auto", "resume"):
+            return None
+        partial = cache_paths(vid, code)[1]
+        if not partial.exists() or self.find_audio(vid) is None:
+            return None
+        try:
+            return read_meta(partial)["title"]
+        except (OSError, ValueError, KeyError):
+            return None
+
+    def stored_analysis(self, path):
+        """Analisis yang tersimpan di entri riwayat, atau None."""
+        if not path or not path.exists():
+            return None
+        try:
+            return read_meta(path).get("analysis")
+        except (OSError, ValueError):
+            return None
+
+    def save_analysis(self, raw, finish):
+        """Simpan analisis yang selesai di entri transkrip, supaya riwayat bisa menampilkannya tanpa LLM."""
+        if not self.done_path or not self.done_path.exists() or not raw.strip() or str(finish).startswith("error"):
+            return
+        try:
+            data = read_meta(self.done_path)
+            data.update(analysis=raw, analysis_model=self.model)
+            write_json_atomic(self.done_path, data)
+        except (OSError, ValueError):
+            pass  # gagal menyimpan salinan tidak boleh menggagalkan hasil yang sudah tampil
+
+    def load_checkpoint(self, partial_path):
+        """(baris, titik lanjut, model) dari checkpoint; kosong bila tidak ada, rusak, atau mode 'fresh'."""
+        if partial_path.exists() and self.mode != "fresh":  # lanjutkan dari checkpoint
+            try:
+                saved = read_meta(partial_path)
+                return saved["lines"], float(saved["done_until"]), saved.get("whisper_model") or self.whisper_model
+            except (OSError, ValueError, KeyError):
+                pass
+        return [], 0.0, self.whisper_model
+
+    def transcribe(self, audio, upload, title, vid, done_path, partial_path):
+        """Langkah 2. Gangguan sementara (koneksi Colab putus) dicoba ulang dari checkpoint terakhir."""
+        for attempt in range(1, TRIES + 1):
+            lines, start, whisper_name = self.load_checkpoint(partial_path)  # model yang sama agar konsisten
+            try:
+                if upload:
+                    segments, duration, device = self.colab_segments(audio, upload, whisper_name, start)
+                else:
+                    segments, duration, device = self.local_segments(audio, whisper_name, start)
+                return self.collect(segments, duration, device, lines, start, whisper_name, title, vid,
+                                    done_path, partial_path)
+            except StepError as e:
+                if not e.transient or attempt == TRIES:
+                    e.tries = attempt
+                    raise
+                self.retry_wait("s_retry_2", attempt)
 
     def local_segments(self, audio, whisper_name, start):
         self.status("s_load", 0)
@@ -545,7 +677,7 @@ class Pipeline:
         """Kompres audio, unggah ke server Colab, dan kembalikan aliran segmen seperti faster-whisper."""
         url, token = colab_conf()
         if not url or not token:
-            raise RuntimeError(STR[self.ui]["err_colab_cfg"])
+            raise StepError(2, STR[self.ui]["err_colab_cfg"])
         try:
             if not upload.exists():
                 self.status("s_comp", 0)
@@ -561,8 +693,8 @@ class Pipeline:
                         self.status("s_resume", 0, f" ({fmt_ts(start)})")
                     return self.guard_remote(events), value["duration"], "COLAB " + value["device"].upper()
         except remote.RemoteError as e:
-            raise RuntimeError(STR[self.ui]["err_colab"].format(e=e)) from e
-        raise RuntimeError(STR[self.ui]["err_colab"].format(e="no response"))
+            raise StepError(2, STR[self.ui]["err_colab"].format(e=e), transient=e.transient) from e
+        raise StepError(2, STR[self.ui]["err_colab"].format(e="no response"))
 
     def guard_remote(self, events):
         """Teruskan segmen; ubah RemoteError di tengah aliran menjadi pesan yang bisa dipahami pengguna."""
@@ -571,7 +703,7 @@ class Pipeline:
                 if kind == "seg":
                     yield seg
         except remote.RemoteError as e:
-            raise RuntimeError(STR[self.ui]["err_colab"].format(e=e)) from e
+            raise StepError(2, STR[self.ui]["err_colab"].format(e=e), transient=e.transient) from e
         finally:
             events.close()
 
@@ -605,17 +737,33 @@ class Pipeline:
         return vid, title, transcript
 
     def analyze(self, title, transcript):
+        self.status("s_an", 0)
         key = setting("NINEROUTER_API_KEY")
         if not key:
-            raise RuntimeError(STR[self.ui]["err_key"])
+            raise StepError(3, STR[self.ui]["err_key"])
         if not self.model:
-            raise RuntimeError(STR[self.ui]["err_model"])
+            raise StepError(3, STR[self.ui]["err_model"])
         from openai import OpenAI
 
-        self.status("s_an", 0)
         client = OpenAI(base_url=setting("NINEROUTER_BASE_URL", NINEROUTER_URL), api_key=key)
         messages = [{"role": "system", "content": SYSTEM_PROMPT + STR[self.ui]["lang_rule"]},
                     {"role": "user", "content": f"Judul video / Video title: {title}\n\nTRANSKRIP / TRANSCRIPT:\n{transcript}"}]
+        for attempt in range(1, TRIES + 1):
+            try:
+                raw, finish = self.request_report(client, messages)
+                break
+            except Cancelled:
+                raise
+            except Exception as e:
+                if not llm_transient(e) or attempt == TRIES:
+                    raise StepError(3, f"{type(e).__name__}: {e}", tries=attempt) from e
+                self.retry_wait("s_retry_3", attempt)
+        self.save_analysis(raw, finish)
+        self.emit("report_raw", (raw, finish))
+        self.status("done", 100)
+
+    def request_report(self, client, messages):
+        """Satu permintaan analisis (streaming). Bila koneksi putus setelah sebagian jawaban diterima, jawaban itu tetap dipakai."""
         try:
             stream = client.chat.completions.create(model=self.model, stream=True, max_tokens=16000,
                                                     messages=messages)
@@ -641,8 +789,7 @@ class Pipeline:
             if not raw:
                 raise
             finish = f"error: {e}"  # koneksi putus di tengah jawaban: tetap olah yang sudah diterima
-        self.emit("report_raw", (raw, finish))
-        self.status("done", 100)
+        return raw, finish
 
 
 class App(tk.Tk):
@@ -959,12 +1106,9 @@ class App(tk.Tk):
             [("resume", self.tr("o_resume")), ("fresh", self.tr("o_restart")), (None, self.tr("o_cancel"))])
 
     def show_history(self):
-        if self.go_btn["state"] == "disabled":
-            messagebox.showinfo(self.tr("hist_title"), self.tr("busy"))
-            return
-        HistoryDialog(self)
+        HistoryDialog(self)  # boleh dibuka saat proses berjalan; memulai proses dicek di HistoryDialog.go
 
-    def start(self, transcript_path=None, mode=None, preloaded=None):
+    def start(self, transcript_path=None, mode=None, preloaded=None, entry=None):
         if self.go_btn["state"] == "disabled":
             return
         url = self.url.get().strip()
@@ -997,7 +1141,7 @@ class App(tk.Tk):
         self.stop_btn.config(state="normal")
         self.pipeline = Pipeline(url, self.model_var.get(), self.audio_var.get(), self.ui, self.q,
                                  transcript_path=transcript_path, model=self.model, mode=mode or "auto",
-                                 engine=self.engine_var.get(), preloaded=preloaded)
+                                 engine=self.engine_var.get(), preloaded=preloaded, entry=entry)
         threading.Thread(target=self.pipeline.run, daemon=True).start()
 
     def stop(self):
@@ -1031,6 +1175,10 @@ class App(tk.Tk):
                     self.dash.message(f"! {p}")
                     self.show("ANALISIS")
                     self.finish()
+                elif kind == "notice":
+                    self.write("ANALISIS", f"\n{p}\n", "dim")
+                    self.dash.message(p)
+                    self.show("DASHBOARD")
                 elif kind == "done":
                     self.finish()
         except queue.Empty:
@@ -1111,7 +1259,8 @@ class HistoryDialog(tk.Toplevel):
         bottom = tk.Frame(self, bg=T.BG)
         bottom.pack(fill="x", padx=12, pady=(0, 12))
         app.button(bottom, app.tr("hist_go"), lambda: self.go("auto")).pack(side="left")
-        app.button(bottom, app.tr("hist_fresh"), lambda: self.go("fresh")).pack(side="left", padx=6)
+        app.button(bottom, app.tr("hist_reanalyze"), lambda: self.go("reanalyze")).pack(side="left", padx=6)
+        app.button(bottom, app.tr("hist_fresh"), lambda: self.go("fresh")).pack(side="left")
         app.button(bottom, app.tr("hist_del"), self.delete).pack(side="left")
         app.button(bottom, app.tr("close"), self.destroy).pack(side="right")
         self.reload()
@@ -1135,12 +1284,18 @@ class HistoryDialog(tk.Toplevel):
         it = self.selected()
         if not it:
             return
-        if it["is_file"]:  # transkrip dari berkas: langsung analisis ulang dari salinan di cache
-            self.destroy()
-            self.app.start(preloaded=(it["meta"]["title"], it["meta"]["transcript"]))
+        if self.app.go_btn["state"] == "disabled":  # proses lain masih berjalan: riwayat tetap terbuka
+            messagebox.showinfo(self.app.tr("hist_title"), self.app.tr("busy"), parent=self)
             return
-        if mode == "auto":
-            mode = "resume" if it["partial"] else "reuse"
+        if it["is_file"]:  # transkrip dari berkas: tampilkan hasil tersimpan, atau analisis ulang bila diminta
+            self.destroy()
+            self.app.start(preloaded=(it["meta"]["title"], it["meta"]["transcript"]),
+                           mode="view" if mode == "auto" else "reanalyze", entry=it["path"])
+            return
+        if mode == "auto":  # belum selesai: lanjutkan; selesai: tampilkan dashboard, analisis, dan transkrip
+            mode = "resume" if it["partial"] else "view"
+        elif mode == "reanalyze" and it["partial"]:  # analisis butuh transkrip lengkap: selesaikan dulu
+            mode = "resume"
         self.app.url_var.set(it["url"])
         self.app.audio_var.set(AUDIO_LABEL_OF.get(it["code"], "Auto"))
         self.destroy()
