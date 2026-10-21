@@ -1,0 +1,7 @@
+# Runtime dependencies (tkinter ships with Python and is not listed here).
+faster-whisper>=1.2.1
+yt-dlp>=2026.8.19
+openai>=3.35.1
+
+# Optional: CA bundle for the HTTPS connection to a Colab server (recommended on macOS).
+certifi

@@ -1,0 +1,275 @@
+# TickerQuill
+
+[![CI](https://github.com/ivanpwh/tickerquill/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanpwh/tickerquill/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+*A quill for stock videos: it listens so you can read.*
+
+Turn a YouTube stock-market video into a structured, investor-friendly summary: what the speaker said about each stock, their stance, the price levels they mentioned, and how complete and reliable that information is.
+
+**YouTube → Whisper (speech-to-text) → LLM (structured extraction) → local calculations → dashboard.**
+
+![Dashboard, retro green theme](docs/images/dashboard-retro-green.png)
+
+> TickerQuill summarises **what a speaker said**. It does not fetch market data, verify prices, or give investment advice. See [Disclaimer](#disclaimer).
+
+## Features
+
+**Transcription**
+- Paste a YouTube URL; the audio is downloaded (yt-dlp) and transcribed with [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (models `large-v3`, `medium`, `small`, `base`).
+- Runs on your computer (GPU if CUDA is available, otherwise CPU) **or on a Google Colab GPU** ([guide](colab/README.md)).
+- Audio languages: Auto-detect, Indonesian, English, Malay, Mandarin, Japanese, Korean, Arabic.
+- Timestamps on every line (`[hh:mm:ss]`), plus automatic clean-up of Whisper's repeated "hallucination" phrases.
+- **Pause, resume and cancel.** Cancelled or failed transcriptions keep a checkpoint and continue from where they stopped.
+- Transcripts are cached: the same video and language is never transcribed twice unless you ask.
+
+**Analysis**
+- An OpenAI-compatible LLM extracts the market view, a list of stocks with stance (BUY / HOLD / SELL / WATCH / AVOID), reasons, expectations, price levels (entry, target, stop loss, support, resistance), and risks mentioned.
+- Already have a transcript? **Open a `.txt`, `.md`, `.srt` or `.vtt` file** and skip the download and Whisper steps.
+- The report can be written in Indonesian or English.
+
+**Dashboard (all numbers calculated by the app, not by the AI)**
+- Market-tone gauge (−1 to +1) weighted by how often each stock is discussed.
+- One card per stock: stance badge, mention share, plan completeness (0–100), reward:risk ratio with potential gain and loss, speaker confidence, video timestamps, and warnings for doubtful names or numbers.
+- Plain-language tips, a step-by-step explanation of every formula, and a glossary.
+
+**History**
+- Browse every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
+
+**Settings and themes**
+- A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
+- Themes: Retro Green, Retro Amber, Modern Dark, Light, Follow system.
+- Interface in Indonesian or English.
+
+**Export**
+- Copy or save the dashboard, analysis (Markdown) or transcript (text).
+
+![Stock cards](docs/images/stock-cards-retro-green.png)
+
+## How it works
+
+```
+YouTube URL
+   │  1/3  yt-dlp: fetch video info, download audio            (your computer)
+   ▼
+audio ──► 2/3  Whisper: speech → timestamped text              (your computer, or Google Colab GPU)
+   │            cached per video + language, checkpointed
+   ▼
+transcript ─► 3/3  LLM: transcript → JSON (stocks, stances, levels, risks)
+   ▼
+report.py: mentions, tone score, completeness, reward:risk, reliability, tips
+   ▼
+Dashboard · Analysis (Markdown) · Transcript
+```
+
+Details: [Architecture](docs/architecture.md) · [Methodology](docs/methodology.md).
+
+## Requirements
+
+- **Windows** (developed and tested on Windows 11). macOS/Linux: see [Other platforms](#other-platforms).
+- **Python 3.10 or newer** with Tk (included in the standard Windows installer). Only Python 3.11 has been tested.
+- An **OpenAI-compatible LLM endpoint** and API key for the analysis step. The app was developed against a local 9router proxy (`http://localhost:20128/v1`); any endpoint that supports chat completions with streaming should work, but only 9router has been used so far. Transcription works without it.
+- Disk space for the Whisper model (`large-v3` is about 3 GB) and downloaded audio.
+- Optional: an NVIDIA GPU with CUDA for fast local transcription, or a Google account for the Colab engine (free-tier GPU availability varies).
+
+## Installation (Windows)
+
+```powershell
+git clone https://github.com/ivanpwh/tickerquill.git
+cd tickerquill
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+
+copy .env.example .env      # then add your API key (or do it later in Settings)
+```
+
+Start the app:
+
+```powershell
+.venv\Scripts\python.exe app.py      # with a console, useful for error messages
+run.bat                              # no console window
+```
+
+The first transcription downloads the selected Whisper model, which can take a few minutes.
+
+## Quick start
+
+1. Open **[ SETTINGS ] > ANALYSIS (LLM)**, enter your endpoint URL, API key and model (**[ PICK MODEL ]** lists the models your endpoint offers), then **[ SAVE ]**.
+2. Paste a YouTube URL into the **URL>** field and press **[ ANALYZE ]**.
+3. Watch the progress bar: *fetch info → download audio → transcribe → analyse*.
+4. The **DASHBOARD** tab opens when the analysis finishes. **ANALYSIS** shows the Markdown report, **TRANSCRIPT** the full text.
+5. Use **[ COPY ]** or **[ SAVE ]** to export the tab you are viewing.
+
+Full walkthrough: [User guide](docs/user-guide.md).
+
+## Main window
+
+| Control | What it does |
+|---|---|
+| **URL>** | YouTube video URL (`watch?v=`, `youtu.be/`, `shorts/`, `live/`, `embed/`) |
+| **[ ANALYZE ]** | Run the whole pipeline. Press **Enter** in the URL field for the same effect |
+| **[ OPEN FILE ]** | Analyse an existing transcript file (`.txt`, `.md`, `.srt`, `.vtt`) |
+| **[ HISTORY ]** | Browse, reuse, resume, restart or delete past transcripts |
+| **[ PAUSE ] / [ RESUME ]** | Pause during download, model load or transcription |
+| **[ CANCEL ]** | Stop the current job (transcription progress is kept) |
+| **[ SETTINGS ]** | Open the settings dialog (also: click the grey summary line) |
+| **DASHBOARD / ANALYSIS / TRANSCRIPT** | The three result views |
+| **[ COPY ] / [ SAVE ]** | Copy or save the current view |
+
+## Settings
+
+Open **[ SETTINGS ]**. Everything is applied as soon as you press **[ SAVE ]**.
+
+| Tab | Options |
+|---|---|
+| **General** | App language (ID/EN), theme |
+| **Transcription** | Whisper engine (Local/Colab), Whisper model, default audio language, Colab URL and token, **[ TEST CONNECTION ]** |
+| **Analysis (LLM)** | Endpoint URL, API key (masked), model, **[ PICK MODEL ]** |
+
+Values are stored in `.env` (secrets and defaults) and `settings.json` (theme, Whisper model and choices made in the app). Reference: [Configuration](docs/configuration.md).
+
+![Settings, Transcription tab](docs/images/settings-transcription.png)
+
+## Running Whisper on Google Colab
+
+Local CPU transcription of a one-hour video can take a long time. The Colab engine sends compressed audio (about 14 MB per hour) to a Whisper server running on a Colab GPU and streams the text back, so progress, pause/cancel and resume keep working. The YouTube download still happens on your computer.
+
+**You need:** a Google account, a browser, and this app already installed and working (see [Installation](#installation-windows)). No Colab account upgrade is required, but free-tier GPU availability varies.
+
+### Part 1: start the server in Colab
+
+1. **Open Colab.** Go to <https://colab.research.google.com> and sign in with your Google account.
+2. **Load the notebook.** Quickest: once the repository is on GitHub, click [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ivanpwh/tickerquill/blob/main/colab/Whisper_Server.ipynb) and skip to step 3. Otherwise, in the "Open notebook" window choose the **Upload** tab (or use **File > Upload notebook** if a notebook is already open), then select `colab/Whisper_Server.ipynb` from the app folder. It opens with four cells: instructions, install, server file and start.
+3. **Turn on the GPU.** Menu **Runtime > Change runtime type**, pick **T4 GPU**, **Save**. The top-right corner should now show the GPU runtime. (The install cell also prints a warning if no GPU is attached.)
+4. **Run everything.** Menu **Runtime > Run all** (or `Ctrl+F9`). If Colab warns that the notebook was not authored by Google, review it and choose **Run anyway**.
+5. **Wait a minute or two (longer on a slow connection).** The cells install the packages, write the server file, start the server and open a tunnel. You can scroll to the last cell to watch.
+6. **Copy the connection line.** The last cell prints something like:
+
+   ```
+   Paste this line into TickerQuill > Settings > Transcription > Colab server URL:
+
+   https://random-words-here.trycloudflare.com Ab3dEf...token...
+
+   Server running. Leave this cell running; press Stop when you are done.
+   ```
+
+   Select the **whole line** (the address, a space, then the token) and copy it. The cell then keeps running; that is expected. **Leave it running** and keep the Colab tab open while you use the app.
+
+### Part 2: connect the app
+
+7. Start TickerQuill and press **[ SETTINGS ]** (top right) > **TRANSCRIPTION** tab.
+8. Set **Run Whisper on** to **Colab**.
+9. Click the **Colab server URL** field and **paste** the line you copied. The token field fills in automatically when you save or test.
+10. Press **[ TEST CONNECTION ]**. A successful test shows:
+
+    ```
+    Connected. Device: cuda, status: ok.
+    ```
+
+    `Device: cuda` means the GPU is in use. `Device: cpu` means the runtime has no GPU (go back to step 3).
+11. Press **[ SAVE ]**. The grey summary line on the main window should now read `Whisper large-v3 on Colab | …`.
+12. Optional: choose the **Whisper model** and **Default audio language** on the same tab, then **[ SAVE ]** again. `large-v3` is a good choice on a T4 GPU.
+
+### Part 3: transcribe
+
+13. Back on the main window, paste a YouTube URL and press **[ ANALYZE ]**.
+14. Watch the status line: *downloading audio → compressing audio → uploading to Colab → Colab loading Whisper model → transcribing (COLAB CUDA) → analysing*.
+    - The first run in a session downloads the Whisper model inside Colab (`large-v3` is about 3 GB), so "Colab loading Whisper model" can take a few minutes. Later runs in the same session skip this.
+    - Compression and upload take roughly a minute or two per hour of audio, depending on your computer and connection.
+15. The dashboard opens when the analysis finishes, exactly as with the local engine.
+
+### Each time you come back
+
+The URL and token are **new every Colab session**. When you start a new session (or the old one timed out):
+
+1. Run the notebook again (steps 1–6) and copy the new line.
+2. In **[ SETTINGS ] > TRANSCRIPTION** paste it into the URL field, **[ TEST CONNECTION ]**, **[ SAVE ]**.
+
+### Stop when you are done
+
+In Colab press the stop button on the last cell, or use **Runtime > Disconnect and delete runtime**. This frees the GPU and closes the tunnel. Switch **Run Whisper on** back to **Local** if you want to transcribe offline.
+
+### If something goes wrong
+
+| Symptom | What to do |
+|---|---|
+| *Test connection*: connection refused, timeout or `trycloudflare` not found | The last notebook cell is no longer running, or the URL is old. Run it again and paste the new line |
+| `401 … wrong token` | The token belongs to a different session. Paste the new `URL TOKEN` line |
+| `Device: cpu` | No GPU attached. **Runtime > Change runtime type > T4 GPU**, then run the notebook again. If Colab says no GPU is available, try again later |
+| Install or server cell fails | Read the red error text; the last cell prints the server error too. Re-run all cells once; if it repeats, report the error text |
+| Job stops midway ("Colab server problem") | The session ended or the tunnel dropped. Run the notebook again, paste the new line, press **[ ANALYZE ]** and choose **[ RESUME ]** – nothing already transcribed is lost |
+| Very slow first run | The model is downloading inside Colab; wait for it |
+
+More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.md#colab-engine).
+
+> **Privacy:** the audio is uploaded to your Colab session through a Cloudflare tunnel, protected by a random per-session token. Anyone who has both the URL and the token can use your session, so do not share them. Use the Local engine for audio you would not upload. Check Google's terms for how you may use Colab.
+
+## Files the app creates
+
+| Path | Contents |
+|---|---|
+| `work/` | Downloaded audio (kept so a resumed job does not download again; delete it to free space) |
+| `cache/` | One JSON per video + language: finished transcripts and resumable checkpoints (this is what History lists) |
+| `transcripts/` | A plain `.txt` copy of every finished transcript |
+| `.env` | Endpoint, API key and defaults |
+| `settings.json` | Theme, Whisper model, engine, Colab connection, last LLM model |
+
+`.env` and `settings.json` contain secrets; keep them out of version control (the included `.gitignore` does).
+
+## Limitations
+
+- **Everything comes from what was said.** Prices, targets and stances are the speaker's words, not market data. The app does not check real prices or whether past calls were right.
+- **Speech recognition makes mistakes**, especially with tickers and numbers. Doubtful items are flagged, but always re-check in the video.
+- **LLM output can be incomplete.** If a reply is cut off, the dashboard shows what could be recovered and warns you; at most 12 stocks per video are extracted.
+- Single job at a time; no batch or playlist support.
+- Not packaged as an installer; Windows is the only tested platform.
+
+## Other platforms
+
+macOS and Linux have **not been tested**. The code is plain Python/Tk, so it may run (`python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python app.py`), but expect rough edges: `run.bat` is Windows-only, the UI uses the Consolas font, Tk buttons ignore custom colours on macOS, and mouse-wheel scrolling in the dashboard assumes Windows deltas. Without CUDA, local Whisper uses the CPU, which is slow for `large-v3`; consider `small`/`medium` or the Colab engine. Proper macOS support is planned.
+
+## Project layout
+
+```
+app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history
+report.py           parsing of the LLM reply, all calculations, tips, dashboard blocks
+dashboard.py        scrollable dashboard view (canvas)
+theme.py            colour themes and live re-colouring
+textclean.py        removes repeated-phrase hallucinations from transcripts
+remote.py           client for the Colab Whisper server
+colab/              Colab server, notebook and its build script
+docs/               user guide, configuration, methodology, architecture, troubleshooting
+tests/              pytest suite (calculations, parsing, settings, themes)
+.github/workflows/  CI (tests on Windows and Linux)
+requirements.txt    Python dependencies (requirements-dev.txt adds pytest)
+.env.example        template for .env
+run.bat             Windows launcher (no console)
+```
+
+## Development
+
+```powershell
+pip install -r requirements-dev.txt
+python -m pytest                      # GUI tests skip themselves when no display or Tk is available
+python colab/build_notebook.py        # regenerate colab/Whisper_Server.ipynb after editing whisper_server.py
+```
+
+CI (`.github/workflows/ci.yml`) runs the tests on Windows and Linux and checks that the notebook matches `whisper_server.py`. The tests cover the calculations and parsing in `report.py`, text clean-up, settings and history helpers, and the theme engine; the download, Whisper and LLM steps are not covered by automated tests. Before opening a pull request please run the tests and, for UI changes, try the app with at least one dark and one light theme. See [Architecture](docs/architecture.md#extension-points) for how to add settings, themes and languages.
+
+## Documentation
+
+- [User guide](docs/user-guide.md): step-by-step usage and how to read the dashboard
+- [Configuration](docs/configuration.md): every setting, environment variable and file
+- [Methodology](docs/methodology.md): every formula, with worked examples
+- [Architecture](docs/architecture.md): modules, data formats, threading, Colab protocol
+- [Troubleshooting](docs/troubleshooting.md)
+- [Colab guide](colab/README.md)
+- [Changelog](CHANGELOG.md)
+
+## Disclaimer
+
+TickerQuill is a tool for summarising video content. Its output is **not investment advice** and may contain errors from speech recognition or from the AI model. Compare it with your own data (current prices, financial statements, news) and consider consulting a licensed adviser before making decisions.
+
+## License
+
+[MIT](LICENSE) © 2026 [ivanpwh](https://github.com/ivanpwh). Dependencies (faster-whisper, yt-dlp, openai and others) and the Whisper model weights are installed or downloaded separately and keep their own licenses.

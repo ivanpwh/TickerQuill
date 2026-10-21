@@ -1,0 +1,38 @@
+# --- Secrets and per-machine settings (never commit) ---
+.env
+.env.*
+!.env.example
+settings.json
+
+# --- Generated data: downloaded audio, transcripts, history cache ---
+work/
+cache/
+transcripts/
+*.mp3
+*.m4a
+*.wav
+*.ogg
+*.webm
+*.part
+*.ytdl
+
+# --- Python / tooling ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# --- Temporary and log files ---
+*.tmp
+*.log
+cloudflared
+
+# --- Editors and OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
