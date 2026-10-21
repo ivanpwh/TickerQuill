@@ -1,5 +1,7 @@
 """Error di langkah 2 (transkripsi) dan 3 (analisis): coba ulang otomatis untuk gangguan sementara, pesan menyebut langkah."""
 import queue
+import sys
+import types
 
 import pytest
 
@@ -300,16 +302,21 @@ def test_truncated_analysis_is_not_saved(no_wait, monkeypatch):
     assert "analysis" not in app.read_meta(done)
 
 
-def test_resume_needs_no_network_when_checkpoint_and_audio_exist(no_wait, monkeypatch, tmp_path):
-    import yt_dlp
+def fake_yt_dlp(monkeypatch, youtube_dl_cls):
+    """yt-dlp is not installed in CI; get_transcript imports it at call time, so a stand-in module is enough."""
+    module = types.ModuleType("yt_dlp")
+    module.YoutubeDL = youtube_dl_cls
+    monkeypatch.setitem(sys.modules, "yt_dlp", module)
 
+
+def test_resume_needs_no_network_when_checkpoint_and_audio_exist(no_wait, monkeypatch, tmp_path):
     work = tmp_path / "work"
     work.mkdir()
     monkeypatch.setattr(app, "WORK", work)
     (work / f"{VID}.ogg").write_bytes(b"audio")
     _, partial = app.cache_paths(VID, "id")
     write_checkpoint(partial)
-    monkeypatch.setattr(yt_dlp, "YoutubeDL", lambda opts: (_ for _ in ()).throw(AssertionError("no network call")))
+    fake_yt_dlp(monkeypatch, lambda opts: (_ for _ in ()).throw(AssertionError("no network call")))
     starts = []
 
     def fake_colab(self, audio, upload, whisper_name, start):
@@ -324,14 +331,12 @@ def test_resume_needs_no_network_when_checkpoint_and_audio_exist(no_wait, monkey
 
 
 def test_download_failure_with_checkpoint_says_it_is_still_saved(no_wait, monkeypatch, tmp_path):
-    import yt_dlp
-
     work = tmp_path / "work"
     work.mkdir()
     monkeypatch.setattr(app, "WORK", work)  # tanpa audio: unduhan dibutuhkan dan gagal
     _, partial = app.cache_paths(VID, "id")
     write_checkpoint(partial)
-    monkeypatch.setattr(yt_dlp, "YoutubeDL", Broken)
+    fake_yt_dlp(monkeypatch, Broken)
     out = queue.Queue()
     app.Pipeline(URL, "tiny", "Indonesia", "EN", out).run()
     kind, msg = drain(out)[-1]

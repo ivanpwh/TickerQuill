@@ -547,8 +547,6 @@ class Pipeline:
         return path.stem, transcript
 
     def get_transcript(self):
-        import yt_dlp
-
         code = self.audio_lang or "auto"
         vid = video_id(self.url)
 
@@ -570,6 +568,8 @@ class Pipeline:
             return hit
         title = self.checkpoint_title(vid, code)  # lanjutan: judul dari checkpoint, tanpa jaringan
         if title is None:
+            import yt_dlp  # hanya bila perlu jaringan; membuka riwayat dan melanjutkan dengan audio lokal tidak
+
             self.status("s_info", 0)
             opts = {"quiet": True, "noplaylist": True, "no_warnings": True}
             with yt_dlp.YoutubeDL(opts) as ydl:

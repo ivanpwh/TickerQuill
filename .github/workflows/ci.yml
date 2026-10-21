@@ -18,8 +18,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      # The tests only need pytest; Whisper, yt-dlp and openai are imported lazily by the app.
-      - run: pip install pytest
+      # The tests need pytest and openai (for its exception classes); Whisper and yt-dlp are imported lazily by the app.
+      - run: pip install pytest "openai>=3.35.1"
       - run: python -m pytest -q -rs
       - name: Colab notebook is in sync with whisper_server.py
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
