@@ -11,8 +11,13 @@ Segment = namedtuple("Segment", "start end text")
 CHUNK = 1 << 20
 
 
+TRANSIENT_STATUS = {502, 503, 504, 520, 521, 522, 523, 524, 530}  # tunnel/gerbang Cloudflare yang sedang putus
+
+
 class RemoteError(Exception):
-    pass
+    def __init__(self, message, transient=False):
+        super().__init__(message)
+        self.transient = transient  # True: koneksi sementara, layak dicoba ulang; token/URL/error server tidak
 
 
 def compress_audio(src, dst, check=lambda: None, bitrate=32000):
@@ -60,7 +65,8 @@ def _fail(resp):
         body = json.loads(body).get("detail", body)
     except ValueError:
         pass
-    raise RemoteError(f"Server Colab menjawab {resp.status}: {str(body)[:200]}")
+    raise RemoteError(f"Server Colab menjawab {resp.status}: {str(body)[:200]}",
+                      transient=resp.status in TRANSIENT_STATUS)
 
 
 def health(base, token):
@@ -129,8 +135,8 @@ def events(base, token, audio, model, language, start=0.0, check=lambda: None, o
             elif kind == "seg":
                 yield "seg", Segment(ev["start"], ev["end"], ev["text"])
         if not done:
-            raise RemoteError("Koneksi ke Colab terputus sebelum transkripsi selesai.")
+            raise RemoteError("Koneksi ke Colab terputus sebelum transkripsi selesai.", transient=True)
     except (OSError, http.client.HTTPException, ValueError) as e:
-        raise RemoteError(f"{type(e).__name__}: {e}") from e
+        raise RemoteError(f"{type(e).__name__}: {e}", transient=True) from e
     finally:
         conn.close()

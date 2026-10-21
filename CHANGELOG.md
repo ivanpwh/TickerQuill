@@ -2,7 +2,13 @@
 
 ## Unreleased
 
+### Added
+- Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
+- Finished analyses are saved with their transcript, including files opened with **[ OPEN FILE ]**. Clicking a finished transcript in **History** shows its dashboard, analysis and transcript without calling the LLM; **[ REANALYZE ]** creates the analysis again.
+
 ### Fixed
+- Resuming a partial transcript needs no network when its audio and checkpoint are already on disk.
+- **History** stays open while another job runs; choosing an item then shows a message instead of closing the window silently.
 - Colab notebook: `open() got an unexpected keyword argument 'metadata_errors'` came from PyAV 19, which removed that argument while faster-whisper still uses it. The install cell now pins `av>=18.1,<19` and prints the installed PyAV version. Re-download `Whisper_Server.ipynb` and run it in a fresh session.
 
 ## 1.1.0 - 2026-10-21

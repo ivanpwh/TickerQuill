@@ -58,12 +58,13 @@ def test_history_dialog_reanalyses_file_entries_from_the_cached_copy(root, monke
     dialog = app.HistoryDialog(root)
     try:
         assert len(dialog.items) == 1 and "my notes" in dialog.list.get(0)
+        entry_path = dialog.items[0]["path"]
         dialog.list.selection_set(0)
         dialog.go("auto")
     finally:
         if dialog.winfo_exists():
             dialog.destroy()
-    assert started == {"preloaded": ("my notes", "[00:00:01] BBCA")}
+    assert started == {"preloaded": ("my notes", "[00:00:01] BBCA"), "mode": "view", "entry": entry_path}
     for item in app.list_history():
         item["path"].unlink()
 
