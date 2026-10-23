@@ -560,3 +560,47 @@ def test_overview_stock_detail_links_to_tradingview(collection, monkeypatch):
                   if isinstance(x, tk.Button) and x.cget("text") == "[ TRADINGVIEW ]")
     button.invoke()
     assert opened == ["https://www.tradingview.com/chart/?symbol=IDX%3ATLKM"]
+
+
+def test_candle_chart_runs_in_its_own_process_with_the_window_context(root, monkeypatch, tmp_path):
+    import importlib.util
+    import subprocess
+
+    launched = []
+
+    class Proc:
+        def __init__(self, args, **kw):
+            launched.append((args, kw))
+            self.alive = True
+
+        def poll(self):
+            return None if self.alive else 0
+
+        def terminate(self):
+            self.alive = False
+
+    monkeypatch.setattr(subprocess, "Popen", Proc)
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name: object())
+    monkeypatch.setattr(app.tempfile, "gettempdir", lambda: str(tmp_path))
+    ctx = {"levels": {"entry": 2080.0}, "videos": [{"date": "2026-10-20", "stance": "BUY", "title": "v", "prices": {}}]}
+    first = root.open_chart("tlkm", ctx)
+    args, kw = launched[0]
+    assert args[1].endswith("chartview.py") and kw["cwd"] == app.BASE
+    saved = json.loads((tmp_path / "tickerquill-chart-TLKM.JK.json").read_text(encoding="utf-8"))
+    assert saved["symbol"] == "TLKM.JK" and saved["levels"] == {"entry": 2080.0} and saved["videos"] == ctx["videos"]
+    import report
+
+    assert saved["palette"]["BG"] == theme.T.BG and saved["stance_labels"]["BUY"] == report.t(root.ui, "stance_BUY")
+    second = root.open_chart("TLKM", ctx)
+    assert first.alive is False and second.alive is True and len(launched) == 2  # same symbol: replaced
+    root.chart_procs.clear()
+
+
+def test_candle_chart_explains_a_missing_pywebview(root, monkeypatch):
+    import importlib.util
+
+    shown = []
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name: None)
+    monkeypatch.setattr(app.messagebox, "showinfo", lambda title, text, **kw: shown.append(text))
+    assert root.open_chart("TLKM", {}) is None
+    assert shown == [root.tr("chart_missing")]

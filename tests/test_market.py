@@ -124,3 +124,15 @@ def test_since_handles_weekends_missing_levels_and_future_dates():
 ])
 def test_tradingview_url_uses_the_idx_prefix(symbol, expected):
     assert market.tradingview_url(symbol) == f"https://www.tradingview.com/chart/?symbol={expected}"
+
+
+def test_points_carry_open_and_volume_and_become_chart_bars():
+    data = chart([2200.0, 2240.0], [2210.0, 2250.0], [2190.0, 2230.0])
+    data["chart"]["result"][0]["indicators"]["quote"][0].update(open=[2195.0, None], volume=[1000, None])
+    pts = market.parse_chart(data)["points"]
+    assert pts[0][4:] == (2195.0, 1000) and pts[1][4:] == (2240.0, 0)  # missing open -> close, volume -> 0
+    intraday = market.ohlc_bars(pts, daily=False)
+    assert intraday[0] == {"time": T0 + 7 * 3600, "open": 2195.0, "high": 2210.0, "low": 2190.0, "close": 2200.0,
+                           "volume": 1000}
+    daily_bars = market.ohlc_bars(pts, daily=True)
+    assert [b["time"] for b in daily_bars] == ["2026-10-23"] and daily_bars[0]["close"] == 2240.0  # same day: last bar

@@ -68,14 +68,19 @@ def parse_chart(data):
         q = quote[0]
         stamps = res.get("timestamp") or []
         points = []
+        def col(name, i):
+            values = q.get(name) or []
+            return values[i] if i < len(values) else None
+
         for i, ts in enumerate(stamps):
-            close = (q.get("close") or [None] * len(stamps))[i]
+            close = col("close", i)
             if close is None:  # bar kosong (istirahat siang, belum ada transaksi)
                 continue
-            high = (q.get("high") or [None] * len(stamps))[i]
-            low = (q.get("low") or [None] * len(stamps))[i]
+            high, low, open_, volume = col("high", i), col("low", i), col("open", i), col("volume", i)
+            # (waktu WIB, close, high, low, open, volume): urutan lama dipertahankan, open/volume di belakang
             points.append((datetime.fromtimestamp(ts, WIB), float(close), float(high if high is not None else close),
-                           float(low if low is not None else close)))
+                           float(low if low is not None else close), float(open_ if open_ is not None else close),
+                           int(volume or 0)))
         price = meta.get("regularMarketPrice")
         price = float(price) if price is not None else (points[-1][1] if points else None)
         prev = meta.get("previousClose") or meta.get("chartPreviousClose")
@@ -90,6 +95,16 @@ def parse_chart(data):
                 "points": points}
     except (KeyError, IndexError, TypeError, ValueError) as e:
         raise MarketError("bad_data", f"{type(e).__name__}: {e}") from e
+
+
+def ohlc_bars(points, daily):
+    """Batang untuk Lightweight Charts. Harian: 'YYYY-MM-DD'. Intraday: detik epoch digeser +7 jam, karena grafik
+    menampilkan waktu sebagai UTC dan kita ingin jam WIB. Waktu ganda (data hari ini) memakai batang terakhir."""
+    bars = {}
+    for dt, close, high, low, open_, volume in points:
+        time = dt.date().isoformat() if daily else int(dt.timestamp()) + 7 * 3600
+        bars[time] = {"time": time, "open": open_, "high": high, "low": low, "close": close, "volume": volume}
+    return list(bars.values())
 
 
 def market_open(now=None):

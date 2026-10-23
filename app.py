@@ -1,9 +1,13 @@
 """TickerQuill: YouTube -> Whisper -> ringkasan saran & prediksi saham (tema terminal retro)."""
 import hashlib
+import importlib.util
 import json
 import os
 import queue
 import re
+import subprocess
+import sys
+import tempfile
 import threading
 import tkinter as tk
 from datetime import datetime
@@ -15,7 +19,7 @@ import market
 import remote
 import report
 from collection import CollectionPage
-from dashboard import DashboardView, open_url
+from dashboard import DashboardView, open_url, stance_color
 from menus import MenuBar
 from stockview import StockWindow
 from textclean import clean_repeats
@@ -177,6 +181,8 @@ STR = {
         "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
         "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
+        "chart_title": "Grafik candle",
+        "chart_missing": "Grafik candle butuh paket pywebview. Pasang dengan: pip install -r requirements.txt (atau pip install pywebview), lalu buka aplikasi lagi.",
         "page_analysis": "ANALISIS", "page_history": "RIWAYAT", "page_collection": "RINGKASAN PASAR", "m_overview": "Ringkasan Pasar",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
                     "pilihan lain ke settings.json. Kosongkan kolom teks untuk kembali ke nilai bawaan.",
@@ -257,6 +263,8 @@ STR = {
         "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
         "mi_guide": "User guide", "mi_about": "About TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
+        "chart_title": "Candle chart",
+        "chart_missing": "The candle chart needs the pywebview package. Install it with: pip install -r requirements.txt (or pip install pywebview), then restart the app.",
         "page_analysis": "ANALYSIS", "page_history": "HISTORY", "page_collection": "MARKET OVERVIEW", "m_overview": "Market Overview",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
                     "other choices go to settings.json. Clear a text field to fall back to its default.",
@@ -864,6 +872,7 @@ class App(tk.Tk):
         self.job_mark = None  # proses berakhir saat halaman lain terbuka: tanda di baris judul sampai ANALISIS dibuka
         self.menubar = None
         self.stock_windows = []  # jendela harga yang terbuka (satu per simbol)
+        self.chart_procs = {}  # simbol -> proses grafik candle (pywebview)
         self.build()
         self.menubar = MenuBar(self, UI_LANGS)
         self.apply_lang()
@@ -1268,6 +1277,35 @@ class App(tk.Tk):
         w = StockWindow(self, ticker, context)
         self.stock_windows.append(w)
         return w
+
+    def open_chart(self, ticker, context):
+        """Grafik candle (Lightweight Charts) di proses pywebview terpisah: Tk dan pywebview sama-sama butuh main
+        thread. Simbol yang sama: jendela lama ditutup dan dibuka lagi dengan konteks terbaru."""
+        if importlib.util.find_spec("webview") is None:
+            messagebox.showinfo(self.tr("chart_title"), self.tr("chart_missing"), parent=self)
+            return None
+        symbol = market.symbol_for(ticker)
+        old = self.chart_procs.get(symbol)
+        if old is not None and old.poll() is None:
+            old.terminate()
+        ctx = {"symbol": symbol, "ui": self.ui, "palette": theme.palette(),
+               "stance_colors": {s: stance_color(s) for s in report.STANCE_VALUE},
+               "stance_labels": {s: report.t(self.ui, "stance_" + s) for s in report.STANCE_VALUE},
+               "levels": (context or {}).get("levels") or {}, "videos": (context or {}).get("videos") or []}
+        path = Path(tempfile.gettempdir()) / f"tickerquill-chart-{symbol}.json"
+        path.write_text(json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
+        exe = Path(sys.executable)
+        windowless = exe.with_name("pythonw.exe")  # tanpa jendela konsol di Windows
+        proc = subprocess.Popen([str(windowless if windowless.exists() else exe), str(BASE / "chartview.py"), str(path)],
+                                cwd=BASE, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        self.chart_procs[symbol] = proc
+        return proc
+
+    def destroy(self):
+        for proc in self.chart_procs.values():  # grafik candle ikut ditutup bersama aplikasi
+            if proc.poll() is None:
+                proc.terminate()
+        super().destroy()
 
     def stock_from_report(self, ticker):
         """Dari kartu saham di Dashboard: level dari analisis ini dan tanggal videonya (bila diketahui)."""

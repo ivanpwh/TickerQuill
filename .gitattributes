@@ -2,3 +2,4 @@
 *.bat text eol=crlf
 *.ipynb text eol=lf
 *.png binary
+assets/lightweight-charts/** -text

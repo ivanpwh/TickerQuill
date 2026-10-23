@@ -14,7 +14,7 @@ from theme import FONT, FONT_B, FONT_BIG, T, mix
 REFRESH_MS = 60_000
 LEVEL_ROLES = {"entry": "AMBER", "target": "GOOD", "stop_loss": "RED"}
 _T = {
-    "title": ("Harga {s}", "{s} price"), "symbol": ("SIMBOL>", "SYMBOL>"), "go": ("[ CARI ]", "[ GO ]"),
+    "title": ("Harga {s}", "{s} price"), "candle": ("[ GRAFIK CANDLE ]", "[ CANDLE CHART ]"), "symbol": ("SIMBOL>", "SYMBOL>"), "go": ("[ CARI ]", "[ GO ]"),
     "reload": ("[ MUAT ULANG ]", "[ RELOAD ]"),
     "loading": ("Memuat harga {s}...", "Loading {s}..."),
     "stats": ("tinggi {h} · rendah {l} · volume {v}", "high {h} · low {l} · volume {v}"),
@@ -76,6 +76,8 @@ class StockWindow(tk.Toplevel):
         self.go_btn = app.button(top, "", self.change_symbol)
         self.go_btn.pack(side="left")
         app.button(top, "[ TRADINGVIEW ]", self.open_tradingview).pack(side="left", padx=(6, 0))
+        self.candle_btn = app.button(top, "", lambda: app.open_chart(self.symbol, self.context))
+        self.candle_btn.pack(side="left", padx=(6, 0))
         self.reload_btn = app.button(top, "", lambda: self.load(full=True))
         self.reload_btn.pack(side="right")
         self.range_btns = {}
@@ -132,6 +134,7 @@ class StockWindow(tk.Toplevel):
         self.title(t(self.ui, "title", s=self.symbol))
         self.symbol_lbl.config(text=t(self.ui, "symbol"))
         self.go_btn.config(text=t(self.ui, "go"))
+        self.candle_btn.config(text=t(self.ui, "candle"))
         self.reload_btn.config(text=t(self.ui, "reload"))
         self.app.mark_tabs(self.range_btns, self.range)
         self.disclaimer_lbl.config(text=t(self.ui, "disclaimer"))

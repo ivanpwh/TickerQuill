@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TickerQuill chart</title>
+<style>
+  :root { --bg: #0b0f0b; --fg: #33ff66; --dim: #4d6b55; --amber: #ffb000; --red: #ff5555; --cyan: #55ddff; --good: #33ff66; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px Consolas, monospace; display: flex; flex-direction: column; }
+  header { padding: 10px 12px 6px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
+  #sym { color: var(--amber); font-weight: bold; }
+  #name { color: var(--dim); }
+  #price { font-size: 20px; font-weight: bold; }
+  .ranges { margin-left: auto; display: flex; gap: 4px; }
+  .ranges button { background: var(--bg); color: var(--fg); border: 1px solid var(--fg); font: bold 12px Consolas, monospace; padding: 2px 8px; cursor: pointer; }
+  .ranges button.on { color: var(--amber); border-color: var(--amber); text-decoration: underline; }
+  .ranges button:hover { background: var(--fg); color: var(--bg); }
+  #msg { color: var(--red); padding: 0 12px; min-height: 16px; }
+  #chart { flex: 1; min-height: 220px; margin: 0 8px; }
+  footer { padding: 6px 12px 8px; color: var(--dim); font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <span id="sym"></span><span id="name"></span><span id="price"></span><span id="chg"></span>
+  <span class="ranges" id="ranges"></span>
+</header>
+<div id="msg"></div>
+<div id="chart"></div>
+<footer id="foot"></footer>
+<script>/*LIGHTWEIGHT_CHARTS*/</script>
+<script>
+"use strict";
+const LWC = LightweightCharts;
+let api, info, chart, candles, volume, markers, current, timer;
+
+window.addEventListener("pywebviewready", async () => {
+  api = window.pywebview.api;
+  info = await api.init();
+  setup();
+  load(info.range, true);
+});
+
+function hexAlpha(hex, alpha) {  // '#rrggbb' + transparansi untuk batang volume
+  return hex + Math.round(alpha * 255).toString(16).padStart(2, "0");
+}
+
+function setup() {
+  const p = info.palette, root = document.documentElement.style;
+  for (const role of ["BG", "FG", "DIM", "AMBER", "RED", "CYAN", "GOOD"]) root.setProperty("--" + role.toLowerCase(), p[role]);
+  document.getElementById("sym").textContent = info.symbol;
+  document.getElementById("foot").textContent = info.strings.foot;
+  const ranges = document.getElementById("ranges");
+  for (const r of info.ranges) {
+    const b = document.createElement("button");
+    b.textContent = r;
+    b.dataset.range = r;
+    b.onclick = () => load(r, true);
+    ranges.appendChild(b);
+  }
+  chart = LWC.createChart(document.getElementById("chart"), {
+    autoSize: true,
+    layout: { background: { type: "solid", color: p.BG }, textColor: p.FG, fontFamily: "Consolas, monospace" },
+    grid: { vertLines: { color: hexAlpha(p.DIM, 0.25) }, horzLines: { color: hexAlpha(p.DIM, 0.25) } },
+    rightPriceScale: { borderColor: p.DIM },
+    timeScale: { borderColor: p.DIM, timeVisible: true, secondsVisible: false },
+  });  // logo atribusi TradingView dibiarkan aktif (syarat lisensi Apache 2.0 Lightweight Charts)
+  candles = chart.addSeries(LWC.CandlestickSeries, {
+    upColor: p.GOOD, downColor: p.RED, borderUpColor: p.GOOD, borderDownColor: p.RED,
+    wickUpColor: p.GOOD, wickDownColor: p.RED,
+    priceFormat: { type: "price", precision: info.precision, minMove: info.precision ? 0.01 : 1 },
+  });
+  candles.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.25 } });
+  volume = chart.addSeries(LWC.HistogramSeries, { priceFormat: { type: "volume" }, priceScaleId: "", lastValueVisible: false, priceLineVisible: false });
+  volume.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
+  for (const lv of info.levels) {
+    candles.createPriceLine({ price: lv.price, color: p[lv.role], lineWidth: 1, lineStyle: LWC.LineStyle.Dashed,
+                              axisLabelVisible: true, title: lv.label });
+  }
+  markers = LWC.createSeriesMarkers(candles, []);
+}
+
+async function load(range, fit) {
+  current = range;
+  clearTimeout(timer);
+  for (const b of document.querySelectorAll(".ranges button")) b.classList.toggle("on", b.dataset.range === range);
+  const msg = document.getElementById("msg");
+  msg.style.color = info.palette.DIM;
+  msg.textContent = info.strings.loading;
+  const d = await api.bars(range);
+  if (range !== current) return;  // tombol lain ditekan selama memuat
+  if (d.error) {
+    msg.style.color = info.palette.RED;
+    msg.textContent = d.error;
+    return;
+  }
+  msg.textContent = "";
+  const p = info.palette;
+  candles.setData(d.bars.map(b => ({ time: b.time, open: b.open, high: b.high, low: b.low, close: b.close })));
+  volume.setData(d.bars.map(b => ({ time: b.time, value: b.volume, color: hexAlpha(b.close >= b.open ? p.GOOD : p.RED, 0.4) })));
+  markers.setMarkers(d.markers);
+  if (fit) chart.timeScale().fitContent();
+  const q = d.quote;
+  document.getElementById("name").textContent = q.name;
+  document.getElementById("price").textContent = q.price;
+  const chg = document.getElementById("chg");
+  chg.textContent = q.change;
+  chg.style.color = q.up ? p.GOOD : p.RED;
+  document.getElementById("foot").textContent = d.status + " · " + info.strings.foot;
+  if (d.open) timer = setTimeout(() => load(current, false), 60000);  // bursa buka: perbarui tiap 60 detik
+}
+</script>
+</body>
+</html>
