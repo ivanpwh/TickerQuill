@@ -31,7 +31,7 @@ Without an API key the app still downloads and transcribes; it stops before the 
 ## 2. Analysing a video
 
 1. Paste the video URL into **URL>**. Supported forms: `youtube.com/watch?v=…`, `youtu.be/…`, `…/shorts/…`, `…/live/…`, `…/embed/…`. Playlists are not expanded; only the single video is used.
-2. Press **[ ANALYZE ]** (or **Enter**).
+2. Press **[ RUN ]** (or **Enter**).
 3. The status line and progress bar show the stage:
 
 | Status | Meaning |
@@ -51,7 +51,7 @@ Only one job runs at a time; the buttons that would start another are disabled u
 
 ## 3. When a video was seen before
 
-If the URL (with the selected audio language) already has a cache entry, a small line under the URL bar says so, and **[ ANALYZE ]** asks what to do:
+If the URL (with the selected audio language) already has a cache entry, a small line under the URL bar says so, and **[ RUN ]** asks what to do:
 
 | Situation | Choices |
 |---|---|
@@ -63,7 +63,7 @@ Reusing is much faster and is the default choice for repeat analyses, for exampl
 ## 4. Pause, cancel and resume
 
 - **[ PAUSE ]** is available while downloading, loading the model and transcribing. **[ RESUME ]** continues. Pausing a download stops it and continues from the partial file.
-- **[ CANCEL ]** stops the job. If any transcript text exists it is saved as a checkpoint (written every 10 segments and on cancel or error). Press **[ ANALYZE ]** again and choose **[ RESUME ]**.
+- **[ CANCEL ]** stops the job. If any transcript text exists it is saved as a checkpoint (written every 10 segments and on cancel or error). Press **[ RUN ]** again and choose **[ RESUME ]**.
 - With the Colab engine a very long pause can drop the connection; the checkpoint still lets you resume.
 
 ## 5. Using your own transcript
@@ -78,17 +78,22 @@ The transcript is also saved to **[ HISTORY ]** as a **FILE** entry (the same co
 
 | Button | Action |
 |---|---|
-| **[ USE / RESUME ]** (or double-click) | Fills in the URL and language, then reuses a finished transcript or resumes an unfinished one. For a `FILE` entry it re-runs the analysis on the saved copy |
+Selecting an item shows its full title and video link under the list. **[ OPEN LINK ]** opens the video in your browser and **[ COPY LINK ]** copies the link. For a `FILE` entry the line shows the original file path; COPY LINK copies the path and OPEN LINK is disabled.
+
+| Button | Action |
+|---|---|
+| **[ USE / RESUME ]** (or double-click) | Resumes an unfinished transcript. For a finished one it shows the saved dashboard, report and transcript without calling the LLM; if no analysis was saved yet it says so |
+| **[ REANALYZE ]** | Runs the LLM analysis again on the saved transcript (an unfinished transcript is resumed first) |
 | **[ RESTART ]** | Transcribes the selected video again from scratch (for a `FILE` entry: same as USE, since there is nothing to transcribe) |
 | **[ DELETE ]** | Removes the entry from the cache. The `.txt` in `transcripts/` and the audio in `work/` are kept |
 
-History is unavailable while a job is running.
-
-> **Note:** the history stores transcripts, not analysis results. **[ USE / RESUME ]** reuses the transcript but runs the LLM analysis again. Saving analyses is on the roadmap.
+History can be opened while a job is running, but choosing an item then only shows a message until the job ends.
 
 ## 7. Reading the results
 
 ![Dashboard](images/dashboard-retro-green.png)
+
+The dashboard and report start with the video title and its link (click it to open the video). For a transcript file the line shows the file name instead.
 
 ### Dashboard tab
 
@@ -102,7 +107,7 @@ History is unavailable while a job is running.
 | **Method & calculations** | How each number was produced, with this video's own values plugged in |
 | **Glossary** | Ticker, entry, target, stop loss, support/resistance, reward:risk, IHSG, FOMO |
 
-A red box at the top means the model's reply was cut off; the dashboard shows what could be recovered and the last stock may be incomplete. Press **[ ANALYZE ]** again (the transcript is reused) or pick another model.
+A red box at the top means the model's reply was cut off; the dashboard shows what could be recovered and the last stock may be incomplete. Press **[ RUN ]** again (the transcript is reused) or pick another model.
 
 ![Stock cards](images/stock-cards-retro-green.png)
 
@@ -120,14 +125,14 @@ A red box at the top means the model's reply was cut off; the dashboard shows wh
 
 Generated from the data, for example: doubtful stocks, a BUY without a stop loss, reward:risk below 1.5 or looking reasonable, a very optimistic video (FOMO warning), a negative video (do not panic-sell over one video). Position-sizing, staleness and "consult a licensed adviser" reminders are always shown. Exact rules: [Methodology](methodology.md#tips).
 
-### Analysis and Transcript tabs
+### Report and Transcript tabs
 
-- **ANALYSIS**: the same content as a Markdown-style report (summary, stocks, market outlook, risks).
+- **REPORT**: the same content as a Markdown-style report (summary, stocks, market outlook, risks).
 - **TRANSCRIPT**: the video title and the full timestamped text, ready to copy or save.
 
 ## 8. Copy and save
 
-**[ COPY ]** and **[ SAVE ]** act on the tab you are viewing. The dashboard and analysis save as `.md`, the transcript as `.txt`. Default names are `tickerquill-dashboard.md`, `tickerquill-analysis.md` and `tickerquill-transcript.txt`.
+The copy and save buttons act on the tab you are viewing and name it: **[ COPY DASHBOARD ]**, **[ COPY REPORT ]**, **[ COPY TRANSCRIPT ]** (Indonesian: **[ SALIN … ]** / **[ SIMPAN … ]**). The video title and link are included. The dashboard and report save as `.md`, the transcript as `.txt`. Default names are `tickerquill-dashboard.md`, `tickerquill-analysis.md` and `tickerquill-transcript.txt`.
 
 Finished transcripts are also written automatically to `transcripts/<title>-<video id>.txt`.
 

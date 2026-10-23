@@ -41,19 +41,19 @@ The app already collapses repeats of 4 or more. Heavy repetition usually means p
 ## Analysis (LLM)
 
 **"NINEROUTER_API_KEY is not set (app/.env)…"**
-Add the key in **[ SETTINGS ] > ANALYSIS (LLM)**. The transcript is still available in the TRANSCRIPT tab, and the next **[ ANALYZE ]** reuses it.
+Add the key in **[ SETTINGS ] > ANALYSIS (LLM)**. The transcript is still available in the TRANSCRIPT tab, and the next **[ RUN ]** reuses it.
 
-**"No LLM model is set…" or the warning "LLM not set up" when you press ANALYZE**
+**"No LLM model is set…" or the warning "LLM not set up" when you press RUN**
 A fresh install has no default model because every endpoint offers different ones. Open **[ SETTINGS ] > ANALYSIS (LLM)**, press **[ PICK MODEL ]** (or type a model id), and **[ SAVE ]**. The same warning appears if the API key is empty.
 
 **Connection refused / cannot load the model list**
 The endpoint is not running or the URL is wrong. For a local 9router, start it first and check the URL (default `http://localhost:20128/v1`). In the model picker you can type a model name by hand even when the list cannot load.
 
 **"The model's reply was not valid JSON, so no dashboard can be built."**
-The raw reply is shown in the ANALYSIS tab. Try again or choose another model; weaker models sometimes ignore the JSON-only instruction. Re-running reuses the cached transcript.
+The raw reply is shown in the REPORT tab. Try again or choose another model; weaker models sometimes ignore the JSON-only instruction. Re-running reuses the cached transcript.
 
 **Red warning: the model's reply was cut off**
-The dashboard shows what could be recovered and the last stock may be incomplete. Press **[ ANALYZE ]** again, or pick a model with a larger output limit. Very long videos make long replies more likely.
+The dashboard shows what could be recovered and the last stock may be incomplete. Press **[ RUN ]** again, or pick a model with a larger output limit. Very long videos make long replies more likely.
 
 **No stocks were found**
 The speaker may not have discussed specific stocks, or the transcript is poor. Try a larger Whisper model or a different LLM model.
@@ -71,7 +71,7 @@ Open **[ SETTINGS ] > TRANSCRIPTION** and paste the `URL TOKEN` line from the no
 - *Connection refused / timeout*: the tunnel is gone; run the last notebook cell again.
 
 **The Colab job stopped midway**
-Whatever was transcribed is checkpointed. Reconnect, then press **[ ANALYZE ]** and choose **[ RESUME ]**. The compressed audio is reused, so it is not compressed again.
+Whatever was transcribed is checkpointed. Reconnect, then press **[ RUN ]** and choose **[ RESUME ]**. The compressed audio is reused, so it is not compressed again.
 
 **No GPU in Colab**
 Choose *Runtime > Change runtime type > T4 GPU* and run the notebook again. Free-tier GPU availability varies. The settings test reports `Device: cpu` when no GPU is attached.

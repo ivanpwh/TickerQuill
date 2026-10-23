@@ -1,6 +1,6 @@
 # Source link and clearer labels: design
 
-Date: 2026-10-23 · Status: approved in brainstorming, awaiting spec review · Sub-project A of the 1.2.0 plan
+Date: 2026-10-23 · Status: approved, implemented · Sub-project A of the 1.2.0 plan
 
 The 1.2.0 plan has three sub-projects, built in order: **A. Source link and labels** (this spec), **B. Analysis archive and COLLECTION dashboard**, **C. Stock price view**. B and C get their own specs.
 
@@ -18,7 +18,7 @@ Out of scope: storing the exact URL variant the user typed (for example `youtu.b
    - YouTube: `{"url": self.url}`. This is the URL box content; when opening from History it already holds the stored URL.
    - Transcript file (OPEN FILE, or a file entry opened from History): `{"file": <file name>}`. The name is the `source` path's file name from the cache entry, falling back to the title when `source` is missing.
 2. `App` keeps it as `self.source` (reset in `start()`). In `process_report`, after `report.compute()`, it sets `self.data["source"] = {"title": <title>, **self.source}`.
-3. `report.blocks(d, ui)` puts `("source", {"title", "url" | "file", "label"})` first, above the truncation warning. `label` is the localised `Source` / `File` word.
+3. `report.blocks(d, ui)` puts `("source", {"title", "url", "line"})` first, above the truncation warning. `url` is empty for a file; `line` is the localised `Sumber: <url>` / `Berkas: <file>` text. `report.source_header()` builds it for both `blocks()` and `report_markdown()`.
 4. `report.report_markdown(d, ui)` starts with:
    ```
    # <video title>

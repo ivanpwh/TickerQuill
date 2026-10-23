@@ -3,8 +3,14 @@
 ## Unreleased
 
 ### Added
+- The dashboard and the report start with the video title and a clickable link (or the file name for transcript files), and the link is included in copied and saved text.
+- **History** shows the selected item's full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 - Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
 - Finished analyses are saved with their transcript, including files opened with **[ OPEN FILE ]**. Clicking a finished transcript in **History** shows its dashboard, analysis and transcript without calling the LLM; **[ REANALYZE ]** creates the analysis again.
+
+### Changed
+- The start button is now **[ RUN ]** (Indonesian **[ PROSES ]**) and the report tab **REPORT** (**HASIL ANALISIS**), so the button and the tab no longer share a label.
+- The copy and save buttons name the tab they act on, for example **[ COPY TRANSCRIPT ]**.
 
 ### Fixed
 - Resuming a partial transcript needs no network when its audio and checkpoint are already on disk.

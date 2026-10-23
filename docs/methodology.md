@@ -34,7 +34,7 @@ Rules in the prompt: record what the speaker said, never invent tickers/prices/t
 
 ## Parsing and recovery
 
-The reply is cleaned before use: `<think>…</think>` blocks and Markdown code fences are removed and trailing commas fixed. If the reply was **truncated** mid-way, the parser cuts back to the last complete value and closes the open brackets. The last stock is then marked incomplete and the dashboard shows a red warning. If nothing can be recovered, the raw text is shown in the ANALYSIS tab instead.
+The reply is cleaned before use: `<think>…</think>` blocks and Markdown code fences are removed and trailing commas fixed. If the reply was **truncated** mid-way, the parser cuts back to the last complete value and closes the open brackets. The last stock is then marked incomplete and the dashboard shows a red warning. If nothing can be recovered, the raw text is shown in the REPORT tab instead.
 
 Unknown values are normalised: stance outside the five allowed values becomes WATCH; confidence outside HIGH/MEDIUM/LOW is dropped; the text values `null` and `none` are treated as missing; stocks without a ticker are discarded.
 

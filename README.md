@@ -34,6 +34,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 
 **History**
 - Browse every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
+- The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
@@ -95,10 +96,10 @@ The first transcription downloads the selected Whisper model, which can take a f
 ## Quick start
 
 1. Open **[ SETTINGS ] > ANALYSIS (LLM)**, enter your endpoint URL, API key and model (**[ PICK MODEL ]** lists the models your endpoint offers), then **[ SAVE ]**.
-2. Paste a YouTube URL into the **URL>** field and press **[ ANALYZE ]**.
+2. Paste a YouTube URL into the **URL>** field and press **[ RUN ]**.
 3. Watch the progress bar: *fetch info → download audio → transcribe → analyse*.
-4. The **DASHBOARD** tab opens when the analysis finishes. **ANALYSIS** shows the Markdown report, **TRANSCRIPT** the full text.
-5. Use **[ COPY ]** or **[ SAVE ]** to export the tab you are viewing.
+4. The **DASHBOARD** tab opens when the analysis finishes. **REPORT** shows the Markdown report, **TRANSCRIPT** the full text. The dashboard and report start with the video title and a clickable link.
+5. Use the copy and save buttons to export the tab you are viewing. They name that tab, for example **[ COPY TRANSCRIPT ]**.
 
 Full walkthrough: [User guide](docs/user-guide.md).
 
@@ -107,14 +108,14 @@ Full walkthrough: [User guide](docs/user-guide.md).
 | Control | What it does |
 |---|---|
 | **URL>** | YouTube video URL (`watch?v=`, `youtu.be/`, `shorts/`, `live/`, `embed/`) |
-| **[ ANALYZE ]** | Run the whole pipeline. Press **Enter** in the URL field for the same effect |
+| **[ RUN ]** | Run the whole pipeline. Press **Enter** in the URL field for the same effect |
 | **[ OPEN FILE ]** | Analyse an existing transcript file (`.txt`, `.md`, `.srt`, `.vtt`) |
 | **[ HISTORY ]** | Browse, reuse, resume, restart or delete past transcripts |
 | **[ PAUSE ] / [ RESUME ]** | Pause during download, model load or transcription |
 | **[ CANCEL ]** | Stop the current job (transcription progress is kept) |
 | **[ SETTINGS ]** | Open the settings dialog (also: click the grey summary line) |
-| **DASHBOARD / ANALYSIS / TRANSCRIPT** | The three result views |
-| **[ COPY ] / [ SAVE ]** | Copy or save the current view |
+| **DASHBOARD / REPORT / TRANSCRIPT** | The three result views |
+| **[ COPY … ] / [ SAVE … ]** | Copy or save the current view; the label names it (DASHBOARD, REPORT or TRANSCRIPT) |
 
 ## Settings
 
@@ -172,7 +173,7 @@ Local CPU transcription of a one-hour video can take a long time. The Colab engi
 
 ### Part 3: transcribe
 
-13. Back on the main window, paste a YouTube URL and press **[ ANALYZE ]**.
+13. Back on the main window, paste a YouTube URL and press **[ RUN ]**.
 14. Watch the status line: *downloading audio → compressing audio → uploading to Colab → Colab loading Whisper model → transcribing (COLAB CUDA) → analysing*.
     - The first run in a session downloads the Whisper model inside Colab (`large-v3` is about 3 GB), so "Colab loading Whisper model" can take a few minutes. Later runs in the same session skip this.
     - Compression and upload take roughly a minute or two per hour of audio, depending on your computer and connection.
@@ -197,7 +198,7 @@ In Colab press the stop button on the last cell, or use **Runtime > Disconnect a
 | `401 … wrong token` | The token belongs to a different session. Paste the new `URL TOKEN` line |
 | `Device: cpu` | No GPU attached. **Runtime > Change runtime type > T4 GPU**, then run the notebook again. If Colab says no GPU is available, try again later |
 | Install or server cell fails | Read the red error text; the last cell prints the server error too. Re-run all cells once; if it repeats, report the error text |
-| Job stops midway ("Colab server problem") | The session ended or the tunnel dropped. Run the notebook again, paste the new line, press **[ ANALYZE ]** and choose **[ RESUME ]** – nothing already transcribed is lost |
+| Job stops midway ("Colab server problem") | The session ended or the tunnel dropped. Run the notebook again, paste the new line, press **[ RUN ]** and choose **[ RESUME ]** – nothing already transcribed is lost |
 | Very slow first run | The model is downloading inside Colab; wait for it |
 
 More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.md#colab-engine).

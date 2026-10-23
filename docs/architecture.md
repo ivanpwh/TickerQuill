@@ -21,9 +21,9 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 | Event | Payload | Handled by |
 |---|---|---|
 | `status` | `(key, percent, extra)` | status line, progress bar, pause button state |
-| `transcript` | `(title, text)` | writes the TRANSCRIPT tab |
+| `transcript` | `(title, text, source)` | writes the TRANSCRIPT tab; `source` is `{"url": …}` or `{"file": <file name>}` and becomes `data["source"]` |
 | `report_raw` | `(raw LLM text, finish reason)` | `process_report` → `report.parse_report` → `report.compute` → dashboard |
-| `error` | message | status line, ANALYSIS tab, dashboard message |
+| `error` | message | status line, REPORT tab, dashboard message |
 | `done` | none | re-enables buttons |
 
 ```
@@ -82,7 +82,7 @@ Rules for contributors: never hard-code a hex colour in UI code (derive with `th
 
 ## Dashboard data flow
 
-`report.compute(raw, transcript, model)` returns a dict (`report`, `stocks`, `tone`, `reliability`, …). `report.blocks(data, ui)` turns it into a flat list of `(kind, value)` blocks (`title`, `para`, `gauge`, `stock`, `bullets`, …) with all text already localised. `DashboardView.render` draws them; `report.blocks_to_text` turns the same blocks into the text used for COPY/SAVE. Changing language re-runs `blocks` on the stored data; nothing is re-computed by the LLM.
+`report.compute(raw, transcript, model)` returns a dict (`report`, `stocks`, `tone`, `reliability`, …). `App.process_report` adds `data["source"]` (`{"title", "url"}` or `{"title", "file"}`) from the `transcript` event. `report.blocks(data, ui)` turns it into a flat list of `(kind, value)` blocks (`source`, `title`, `para`, `gauge`, `stock`, `bullets`, …) with all text already localised; `source` comes first when present and `report_markdown` starts with the same title and link. `DashboardView.render` draws them; `report.blocks_to_text` turns the same blocks into the text used for COPY/SAVE. Changing language re-runs `blocks` on the stored data; nothing is re-computed by the LLM.
 
 ## Colab Whisper server
 
