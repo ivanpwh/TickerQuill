@@ -24,7 +24,7 @@ Click a stock (on the Dashboard or in the Collection) to see its current price a
 - `parse_chart(data)` → `{symbol, name, currency, price, prev_close, change, change_pct, high, low, volume, time, points}`; `points` = `(datetime WIB, close, high, low)` with empty bars (lunch break) dropped. `prev_close` uses `previousClose`, else `chartPreviousClose` (only meaningful for the 1-day range).
 - `RANGES`: `1D` (1d, 5m) · `5D` (5d, 15m) · `1M` (1mo, 1d) · `3M` (3mo, 1d) · `1Y` (1y, 1d).
 - `market_open(now)` → IDX session check (weekday, 09:00–16:15 WIB).
-- `since(points, video_date, prices)` → from daily points: close on the first trading day on/after the video date, latest close, change %, highest high and lowest low after that day, `target_hit` / `stop_hit` (None when the level was not stated), distance to target in %. None when the video date is after the data.
+- `since(points, video_date, prices)` → from daily points: close on the first trading day on/after the video date, latest close, change %, highest high and lowest low after that day, `target_hit` / `stop_hit` (reached by a later high/low or by the latest price; None when the level was not stated), distance to target in %. None when the video date is after the data.
 
 ## 2. The window (`stockview.py`)
 
