@@ -10,6 +10,7 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 4. [Pause, cancel and resume](#4-pause-cancel-and-resume)
 5. [Using your own transcript](#5-using-your-own-transcript)
 6. [History](#6-history)
+6b. [Collection](#6b-collection)
 7. [Reading the results](#7-reading-the-results)
 8. [Copy and save](#8-copy-and-save)
 9. [Settings, language and themes](#9-settings-language-and-themes)
@@ -19,12 +20,12 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 
 ## Menus and pages
 
-The main window has two pages: **Analysis** (paste a URL, run, read the results) and **History** (saved transcripts). Switch with **View > Analysis** / **View > History** or `Ctrl+1` / `Ctrl+2`. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
+The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Collection** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
-| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Dashboard / Report / Transcript · Theme · Language |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Collection `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
@@ -93,8 +94,6 @@ The transcript is also saved to **History** as a **FILE** entry (the same conten
 
 The **History** page (**View > History**, `Ctrl+2`) lists everything in `cache/`, newest first: status (`DONE` or percent complete), title, audio language, Whisper model and date. Transcripts you opened with **[ OPEN FILE ]** are listed too, with `FILE` in the language column and `-` as the model.
 
-| Button | Action |
-|---|---|
 Selecting an item shows its full title and video link under the list. **[ OPEN LINK ]** opens the video in your browser and **[ COPY LINK ]** copies the link. For a `FILE` entry the line shows the original file path; COPY LINK copies the path and OPEN LINK is disabled.
 
 | Button | Action |
@@ -105,6 +104,32 @@ Selecting an item shows its full title and video link under the list. **[ OPEN L
 | **[ DELETE ]** | Removes the entry from the cache. The `.txt` in `transcripts/` and the audio in `work/` are kept |
 
 History can be browsed while a job is running; choosing an item then shows "A job is already running." in red and stays on the page. The list reloads whenever the page is opened and when a job ends.
+
+## 6b. Collection
+
+The **Collection** page (**View > Collection**, `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
+
+**Dates.** Videos are grouped by their **upload date**. New analyses record it automatically. Analyses made before this version (and transcript files) have no upload date yet: they use the analysis date and are marked `*`. **[ FILL IN VIDEO DATES ]** fetches the missing upload dates and channel names with yt-dlp (metadata only, no download); videos that cannot be reached are counted as failed and can be tried again later.
+
+**Left side.** The date list (all dates, then newest first, with the number of videos) and the stocks discussed in the selected date range (number of videos, `!` when the videos disagree). Type in **FIND>** to filter.
+
+**All dates.** Most-discussed stocks (videos, consensus, how many videos agree, `! SPLIT` for disagreement), the market tone per date (average tone score of that day's videos, −1 to +1), and the list of videos. Click a video title to open it on the Analysis page, **[ DELETE ]** to remove it from the Collection (its transcript stays in History).
+
+**One date.** That day's videos, the AI summary for the day, and a table of stocks discussed in more than one video that day: one stance badge per video, the consensus and the range of targets mentioned. Stocks mentioned in only one video are listed on one line.
+
+**One stock** (click a ticker anywhere; always across all dates):
+
+| Section | What it tells you |
+|---|---|
+| **Consensus** | Stance count, the majority stance and how many videos agree. A tie is shown as a tie, not as a majority. A red box appears when some videos say BUY and others SELL or AVOID |
+| **AI summary** | On request (see below) |
+| **Timeline** | Date, channel and title, stance, price levels as spoken, speaker confidence, `(!)` for doubtful names or numbers |
+| **Combined price zone** | For buy price, target and loss limit: lowest to highest, median and how many videos stated it; numbers stated in several videos; reward:risk from the medians when loss limit < buy < target |
+| **Changes of view** | Stance changes between consecutive videos, and target or loss-limit changes |
+| **Reliability** | How many videos marked the stock as doubtful, and the average speaker confidence |
+| **Reason per video** | Each video's reason, by date |
+
+**AI summary.** **[ AI SUMMARY ]** sends only the extracted data shown on the page (no transcripts) to your LLM and asks for 4–8 points: what the videos agree on, where they differ, how views changed and what to re-check. The result is saved in `analyses/ai/`, so it is not requested again. When a newer analysis for that stock or date arrives, the old summary is shown with a note and **[ UPDATE AI SUMMARY ]**. The button is disabled until an LLM API key and model are set. Like everything else here, it summarises what was said; it is not investment advice.
 
 ## 7. Reading the results
 

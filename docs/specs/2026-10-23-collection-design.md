@@ -1,6 +1,6 @@
 # COLLECTION page (combined dashboard): design
 
-Date: 2026-10-23 · Status: approved (section 1 reviewed; sections 2–5 decided during implementation at the user's request) · Sub-project B of the 1.2.0 plan
+Date: 2026-10-23 · Status: approved and implemented (section 1 reviewed; sections 2–5 decided during implementation at the user's request) · Sub-project B of the 1.2.0 plan
 
 ## Goal
 
@@ -56,7 +56,7 @@ For one ticker, a **view** is one video's opinion: date, title, channel, stance,
 
 | Function | Result |
 |---|---|
-| `consensus(views)` | Count per stance (BUY, WATCH, HOLD, SELL, AVOID), dominant stance (most votes; ties follow that order), agreement = 100 × dominant count / number of views |
+| `consensus(views)` | Count per stance (BUY, WATCH, HOLD, SELL, AVOID), `top` = every stance with the most votes (more than one = a tie, shown as such), agreement = 100 × top count / number of views |
 | `conflict(views)` | True when at least one BUY and at least one SELL or AVOID |
 | `price_zone(views)` | For entry, target, stop loss: min, max, median and number of videos that stated it. **Repeated levels**: numbers (any level kind) stated in at least 2 videos. **Combined reward:risk** from the medians, only when stop < entry < target |
 | `changes(views)` | Between consecutive views: stance changes, and target or stop-loss changes when both views state one |

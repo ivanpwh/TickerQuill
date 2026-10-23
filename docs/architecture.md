@@ -8,6 +8,8 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 |---|---|
 | `app.py` | Tk application (`App`) and its pages (the Analysis frame, `HistoryPage`), dialogs (`SettingsDialog`, `ChoiceDialog`, `ModelPicker`), settings helpers, UI strings (`STR`), the LLM system prompt, cache/history helpers and the `Pipeline` |
 | `report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
+| `archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
+| `collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
 | `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
 | `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
 | `theme.py` | Palettes, the live palette object `T`, `apply()` and `recolor()` |
@@ -58,18 +60,27 @@ cache/<video id>.<lang>.partial.json    checkpoint
 transcripts/<title>-<video id>.txt      plain text copy
 work/<video id>.<ext>                   downloaded audio
 work/upload/<video id>.ogg              compressed audio for Colab (deleted on success)
+analyses/<YYYYMMDD-HHMMSS>-<vid>.json   one archived analysis (Collection)
+analyses/.imported                      marker: old cache analyses were imported once
+analyses/ai/<kind>-<key>-<hash>.json    saved AI summary (kind = ticker or date)
 ```
 
 `<lang>` is the Whisper language code (`id`, `en`, …) or `auto`. Files are written atomically (temp file then rename).
 
 Transcripts opened with OPEN FILE are registered as `cache/file-<sha1 of the cleaned text, 10 hex>.file.json` (`lang` is the literal `file`, `url` is empty, `whisper_model` is `-`, plus a `source` path and the full `transcript`) so History can list them. Identical content maps to the same entry. Choosing one in History starts `Pipeline(preloaded=(title, transcript))`, which skips download and Whisper and goes straight to the analysis.
 
-Finished cache JSON: `title, url, vid, lang, whisper_model, duration, created, transcript`.
+Finished cache JSON: `title, url, vid, lang, whisper_model, duration, created, transcript`, plus `video_date` and `channel` when yt-dlp provided them, and `analysis` / `analysis_model` once analysed.
 Checkpoint JSON: the same without `transcript`, plus `lines` (timestamped lines so far) and `done_until` (seconds). A checkpoint is written every 10 segments and whenever a job is cancelled or fails with some text. `list_history()` reads this folder; there is no separate database.
+
+## Collection
+
+`Pipeline.save_analysis` writes the analysis into the cache entry and, through `archive.build_record`, an archive record with the video metadata, the raw reply and a compact per-stock summary (stance, share, level texts, parsed prices, reason, confidence, doubtful). The Collection page loads records through `App.collection_records()`, which imports cache analyses once (marker file) so deleting a video from the Collection is permanent. Records are reduced to the latest per video before any calculation. The effective date is `video_date`, else the analysis date (marked). `App.fill_video_dates` runs yt-dlp metadata calls in a worker thread and updates both the archive and the cache.
+
+AI summaries call `App.llm_complete(system, user)` in a worker thread with only the extracted data as input. The cache key hashes the ids of the records used plus the UI language, so a new analysis makes the stored summary stale (still shown, with an update button) instead of silently reusing it.
 
 ## Pages and menu
 
-`App.pages` holds the page frames (`analysis`, `history`). `show_page(name)` packs one and hides the others, so each keeps its widgets and state; it also sets the page name in the title row, reloads History, and updates the job indicator. `busy()` (the RUN button is disabled) is the single "a job is running" flag.
+`App.pages` holds the page frames (`analysis`, `history`, `collection`). `show_page(name)` packs one and hides the others, so each keeps its widgets and state; it also sets the page name in the title row, reloads History, and updates the job indicator. `busy()` (the RUN button is disabled) is the single "a job is running" flag.
 
 `menus.MenuBar` only calls methods on the `App` instance, so it does not import `app.py`. Each item is a row in one table: a label function, a command, the accelerator text, the key sequences bound on the main window, and an optional enabled condition. `refresh_labels()` runs on language changes; `refresh_state()` re-evaluates labels and enabled conditions after `start`, `finish`, tab/page switches and queue events. Copy/Save and Pause/Resume reuse the labels of their buttons. Key sequences that a Tk widget class already uses to edit text (`Ctrl+O` in `Text` inserts a line) are rebound on that class with the menu action and `"break"`.
 
@@ -115,4 +126,4 @@ Design notes: audio is compressed client-side to Opus mono 16 kHz (about 14 MB p
 
 ## Known gaps
 
-Automated tests cover only the pure logic (`report.py`, `textclean.py`, settings/history helpers, themes); the download, Whisper, LLM and Colab steps are verified manually. Analysis results are not persisted (History keeps transcripts only); single-job pipeline; Windows-only launcher and untested on macOS/Linux; fonts are fixed to a monospace family in every theme.
+Automated tests cover the pure logic (`report.py`, `archive.py`, `textclean.py`, settings/history helpers, themes) and the main GUI flows; the download, Whisper, LLM and Colab steps are verified manually. Single-job pipeline; Windows-only launcher and untested on macOS/Linux; fonts are fixed to a monospace family in every theme.

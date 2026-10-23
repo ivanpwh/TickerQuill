@@ -7,6 +7,8 @@
 - **History** shows the selected item's full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 - Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
 - Finished analyses are saved with their transcript, including files opened with **[ OPEN FILE ]**. Clicking a finished transcript in **History** shows its dashboard, analysis and transcript without calling the LLM; **[ REANALYZE ]** creates the analysis again.
+- **Collection** page (**View > Collection**, `Ctrl+3`): every analysis grouped by the video's upload date, the most-discussed stocks, market tone per date, a per-date comparison of stocks discussed in several videos, and a per-stock view with consensus, disagreement, timeline, combined price zone, changes of view and reliability. An optional AI summary per stock or date is made from the extracted data and saved. Earlier analyses are imported once; **[ FILL IN VIDEO DATES ]** adds missing upload dates.
+- New analyses also store the video's upload date and channel.
 - Menu bar: **File**, **View**, **Job**, **Tools**, **Help**, with shortcuts (`Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+C`, `Ctrl+1`, `Ctrl+2`, `Ctrl+,`, `Esc`). Theme and language can be switched from **View**.
 - While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 

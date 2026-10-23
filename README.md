@@ -36,6 +36,12 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - A page (**View > History**, `Ctrl+2`) listing every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
 - The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
+**Collection** (combined dashboard)
+- A page (**View > Collection**, `Ctrl+3`) with every analysis, grouped by the video's upload date (latest analysis per video).
+- Per stock across videos: consensus, disagreement flag, timeline, combined price zone with reward:risk from the medians, changes of view, reliability.
+- Per date: the stocks several videos discussed that day, side by side. Overall: most-discussed stocks and market tone per date.
+- Optional AI summary per stock or per date, made from the extracted data only and saved.
+
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
 - Themes: Retro Green, Retro Amber, Modern Dark, Light, Follow system.
@@ -105,12 +111,12 @@ Full walkthrough: [User guide](docs/user-guide.md).
 
 ## Main window
 
-The window has two pages, **Analysis** and **History**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`). Settings open in a separate dialog.
+The window has three pages, **Analysis**, **History** and **Collection**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`). Settings open in a separate dialog.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
-| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Dashboard / Report / Transcript · Theme · Language |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Collection `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
@@ -225,6 +231,7 @@ More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.m
 | `work/` | Downloaded audio (kept so a resumed job does not download again; delete it to free space) |
 | `cache/` | One JSON per video + language: finished transcripts and resumable checkpoints (this is what History lists) |
 | `transcripts/` | A plain `.txt` copy of every finished transcript |
+| `analyses/` | One JSON per analysis for the Collection page, plus saved AI summaries in `analyses/ai/` |
 | `.env` | Endpoint, API key and defaults |
 | `settings.json` | Theme, Whisper model, engine, Colab connection, last LLM model |
 
@@ -247,6 +254,9 @@ macOS and Linux have **not been tested**. The code is plain Python/Tk, so it may
 ```
 app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history
 report.py           parsing of the LLM reply, all calculations, tips, dashboard blocks
+archive.py          analysis archive and cross-video calculations (Collection)
+collection.py       Collection page
+menus.py            menu bar
 dashboard.py        scrollable dashboard view (canvas)
 theme.py            colour themes and live re-colouring
 textclean.py        removes repeated-phrase hallucinations from transcripts
