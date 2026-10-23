@@ -305,3 +305,121 @@ def test_history_page_stays_open_with_a_busy_message_while_a_job_runs(root, monk
         root.show_page("analysis")
         for item in app.list_history():
             item["path"].unlink()
+
+
+@pytest.fixture
+def collection(root):
+    """Two videos about TLKM (WATCH then BUY on another day) and a SELL on the same day: a disagreement."""
+    import shutil
+    from datetime import datetime
+
+    import archive
+
+    def add(vid, date, *stocks, at="2026-10-23 10:00"):
+        reply = json.dumps({"summary": "s", "stocks": [{"ticker": tk_, "stance": st, "levels": lv} for tk_, st, lv in stocks]})
+        meta = {"title": f"Video {vid}", "url": f"https://youtu.be/{vid}", "vid": vid, "video_date": date,
+                "channel": f"Kanal {vid}"}
+        archive.save_record(app.ARCHIVE, archive.build_record(reply, "", meta, f"{vid}.id.json", "m",
+                                                              datetime.strptime(at, "%Y-%m-%d %H:%M")))
+
+    app.ARCHIVE.mkdir(parents=True, exist_ok=True)
+    (app.ARCHIVE / archive.MARKER).write_text("x", encoding="utf-8")
+    add("v1", "2026-10-21", ("TLKM", "WATCH", {"entry": "2.100"}), ("BBCA", "BUY", {}))
+    add("v2", "2026-10-22", ("TLKM", "BUY", {"entry": "2.060", "target": "2.200"}))
+    add("v3", "2026-10-22", ("TLKM", "SELL", {}), ("BBRI", "HOLD", {}))
+    root.show_page("collection")
+    yield root.pages["collection"]
+    root.show_page("analysis")
+    shutil.rmtree(app.ARCHIVE, ignore_errors=True)
+
+
+def texts(widget):
+    return [w.cget("text") for w in all_widgets(widget) if isinstance(w, (tk.Label, tk.Button))]
+
+
+def test_collection_lists_dates_and_stocks_with_disagreement(collection):
+    page = collection
+    assert page.dates.get(0, "end") == (f"{root_tr(page, 'all_dates')} (3)", "2026-10-22  (2)", "2026-10-21  (1)")
+    stocks = page.stocks.get(0, "end")
+    assert stocks[0].startswith("TLKM") and stocks[0].rstrip().endswith("!") and len(stocks) == 3
+    page.dates.selection_clear(0, "end")
+    page.dates.selection_set(1)
+    page.pick_day()
+    assert [s.split()[0] for s in page.stocks.get(0, "end")] == ["TLKM", "BBRI"]
+    shown = texts(page.view.inner)
+    assert any("Video v2" in x for x in shown) and any("Video v3" in x for x in shown)
+    assert root_tr(page, "disagree") in shown  # TLKM: BUY in v2, SELL in v3 on the same day
+
+
+def root_tr(page, key):
+    import collection as col
+
+    return col.t(page.ui, key)
+
+
+def test_collection_stock_detail_shows_consensus_zone_and_changes(collection):
+    import collection as col
+
+    page = collection
+    page.select_ticker("TLKM")
+    shown = " | ".join(texts(page.view.inner))
+    assert col.t(page.ui, "conflict") in shown
+    assert "TLKM" in shown and "3" in shown
+    assert "2.060" in shown or "2,060" in shown  # buy-price zone
+    assert col.t(page.ui, "t_changes") in shown
+    page.clear_ticker()
+    assert page.ticker is None
+
+
+def test_collection_ai_summary_is_requested_once_and_cached(collection, root, monkeypatch):
+    import time
+
+    import collection as col
+
+    calls = []
+    monkeypatch.setattr(root, "llm_ready", lambda: True)
+    monkeypatch.setattr(root, "llm_complete", lambda system, user: calls.append(user) or "- semua membahas TLKM")
+    page = collection
+    page.select_ticker("TLKM")
+    button = next(w for w in all_widgets(page.view.inner)
+                  if isinstance(w, tk.Button) and w.cget("text") == col.t(page.ui, "ai_btn"))
+    button.invoke()
+    for _ in range(100):
+        root.update()
+        if page.ai_running is None:
+            break
+        time.sleep(0.02)
+    assert len(calls) == 1 and all(f'"{s}"' in calls[0] for s in ("WATCH", "BUY", "SELL"))  # extracted data only
+    assert "- semua membahas TLKM" in texts(page.view.inner)
+    assert len(list((app.ARCHIVE / "ai").glob("ticker-TLKM-*.json"))) == 1
+    page.render()
+    assert not any(isinstance(w, tk.Button) and w.cget("text") == col.t(page.ui, "ai_btn")
+                   for w in all_widgets(page.view.inner))
+
+
+def test_collection_open_record_without_history_entry_says_so(collection):
+    import collection as col
+
+    page = collection
+    page.open_record(page.records[0])
+    assert page.info.cget("text") == col.t(page.ui, "missing_entry")
+
+
+def test_collection_imports_saved_analyses_from_history_once(root):
+    import shutil
+
+    import archive
+
+    done, _ = app.cache_paths("abcdefghijk", "id")
+    app.write_json_atomic(done, {"title": "Lama", "url": "https://youtu.be/abcdefghijk", "vid": "abcdefghijk",
+                                 "lang": "Indonesia", "whisper_model": "tiny", "duration": 1, "created": "2026-10-21 09:00",
+                                 "transcript": "BBCA", "analysis": '{"stocks": [{"ticker": "BBCA", "stance": "BUY"}]}'})
+    try:
+        root.show_page("collection")
+        page = root.pages["collection"]
+        assert [r["vid"] for r in page.records] == ["abcdefghijk"]
+        assert (app.ARCHIVE / archive.MARKER).exists()
+    finally:
+        root.show_page("analysis")
+        done.unlink()
+        shutil.rmtree(app.ARCHIVE, ignore_errors=True)

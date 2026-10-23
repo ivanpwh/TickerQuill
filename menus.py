@@ -35,6 +35,8 @@ class MenuBar:
                  ("<Control-Key-1>",))
         self.add(m, lambda: tr("page_history").capitalize(), lambda: a.show_page("history"), "Ctrl+2",
                  ("<Control-Key-2>",))
+        self.add(m, lambda: tr("page_collection").capitalize(), lambda: a.show_page("collection"), "Ctrl+3",
+                 ("<Control-Key-3>",))
         m.add_separator()
         for pane, key in (("DASHBOARD", "tab_dash"), ("ANALISIS", "analysis_tab"), ("TRANSKRIP", "transcript_tab")):
             self.add(m, lambda k=key: tr(k).capitalize(), lambda p=pane: a.show_tab(p))

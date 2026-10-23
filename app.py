@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox
 import archive
 import remote
 import report
+from collection import CollectionPage
 from dashboard import DashboardView, open_url
 from menus import MenuBar
 from textclean import clean_repeats
@@ -174,7 +175,7 @@ STR = {
         "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
         "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
-        "page_analysis": "ANALISIS", "page_history": "RIWAYAT",
+        "page_analysis": "ANALISIS", "page_history": "RIWAYAT", "page_collection": "KOLEKSI",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
                     "pilihan lain ke settings.json. Kosongkan kolom teks untuk kembali ke nilai bawaan.",
         "set_tab_general": "UMUM", "set_tab_trans": "TRANSKRIPSI", "set_tab_llm": "ANALISIS (LLM)",
@@ -254,7 +255,7 @@ STR = {
         "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
         "mi_guide": "User guide", "mi_about": "About TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
-        "page_analysis": "ANALYSIS", "page_history": "HISTORY",
+        "page_analysis": "ANALYSIS", "page_history": "HISTORY", "page_collection": "COLLECTION",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
                     "other choices go to settings.json. Clear a text field to fall back to its default.",
         "set_tab_general": "GENERAL", "set_tab_trans": "TRANSCRIPTION", "set_tab_llm": "ANALYSIS (LLM)",
@@ -879,6 +880,7 @@ class App(tk.Tk):
         self.update_export_labels()
         self.page_lbl.config(text=f"›  {self.tr('page_' + self.page)}")
         self.pages["history"].apply_lang()
+        self.pages["collection"].apply_lang()
         if self.menubar:
             self.menubar.refresh_labels()
         self.update_summary()
@@ -980,7 +982,7 @@ class App(tk.Tk):
         holder = tk.Frame(self, bg=T.BG)  # wadah halaman: satu tampil, yang lain tetap utuh di belakang
         holder.pack(fill="both", expand=True)
         page = tk.Frame(holder, bg=T.BG)  # halaman ANALISIS
-        self.pages = {"analysis": page, "history": HistoryPage(holder, self)}
+        self.pages = {"analysis": page, "history": HistoryPage(holder, self), "collection": CollectionPage(holder, self)}
 
         row = tk.Frame(page, bg=T.BG)
         row.pack(fill="x", padx=14)
@@ -1096,8 +1098,8 @@ class App(tk.Tk):
         self.page_lbl.config(text=f"›  {self.tr('page_' + name)}")
         if name == "analysis":
             self.job_mark = None
-        elif name == "history":
-            self.pages["history"].reload()
+        elif name in ("history", "collection"):
+            self.pages[name].reload()
         self.update_indicator()
         self.refresh_menu()
 
@@ -1212,6 +1214,81 @@ class App(tk.Tk):
     def pick_model(self):
         ModelPicker(self)
 
+    def open_entry(self, it, mode):
+        """Buka entri riwayat di halaman ANALISIS. False bila proses lain masih berjalan."""
+        if self.busy():
+            return False
+        if it["is_file"]:  # transkrip dari berkas: tampilkan hasil tersimpan, atau analisis ulang bila diminta
+            self.start(preloaded=(it["meta"]["title"], it["meta"]["transcript"]),
+                       mode="view" if mode == "auto" else "reanalyze", entry=it["path"])
+            return True
+        if mode == "auto":  # belum selesai: lanjutkan; selesai: tampilkan dashboard, analisis, dan transkrip
+            mode = "resume" if it["partial"] else "view"
+        elif mode == "reanalyze" and it["partial"]:  # analisis butuh transkrip lengkap: selesaikan dulu
+            mode = "resume"
+        self.url_var.set(it["url"])
+        self.audio_var.set(AUDIO_LABEL_OF.get(it["code"], "Auto"))
+        self.start(mode=mode)
+        return True
+
+    # --- untuk halaman KOLEKSI ---------------------------------------------------------------------------------
+    def archive_dir(self):
+        return ARCHIVE
+
+    def collection_records(self):
+        """Semua rekaman arsip; analisis lama di cache diimpor sekali sebelum dipakai."""
+        if not (ARCHIVE / archive.MARKER).exists():
+            archive.import_entries(ARCHIVE, [(it["path"], it["meta"]) for it in list_history()
+                                             if not it["partial"] and it["meta"].get("analysis")])
+        return archive.load_records(ARCHIVE)
+
+    def open_record(self, rec):
+        """Buka video dari KOLEKSI lewat entri riwayatnya: 'ok', 'busy', atau 'missing'."""
+        it = next((it for it in list_history() if it["path"].name == rec.get("entry")), None)
+        if it is None:
+            return "missing"
+        return "ok" if self.open_entry(it, "auto") else "busy"
+
+    @staticmethod
+    def fill_video_dates(missing):
+        """Tanggal upload + channel lewat yt-dlp (tanpa unduh) untuk {vid: url}. Jalan di thread: tidak menyentuh Tk.
+        Kembalikan (berhasil, gagal)."""
+        import yt_dlp
+
+        ok = failed = 0
+        with yt_dlp.YoutubeDL({"quiet": True, "noplaylist": True, "no_warnings": True}) as ydl:
+            for vid, url in missing.items():
+                try:
+                    info = ydl.extract_info(url, download=False)
+                except Exception:  # video dihapus/privat atau jaringan putus: lewati, hitung sebagai gagal
+                    failed += 1
+                    continue
+                date, channel = archive.upload_date(info), info.get("channel") or info.get("uploader") or ""
+                archive.set_video_meta(ARCHIVE, vid, date, channel)
+                for path in CACHE.glob(f"{vid}.*.json"):
+                    try:
+                        data = json.loads(path.read_text(encoding="utf-8"))
+                        data.update(video_date=date or data.get("video_date", ""), channel=channel or data.get("channel", ""))
+                        write_json_atomic(path, data)
+                    except (OSError, ValueError):
+                        pass
+                ok += 1
+        return ok, failed
+
+    def llm_complete(self, system, user):
+        """Satu permintaan chat (streaming dikumpulkan) untuk ringkasan KOLEKSI. Dipanggil dari thread pekerja."""
+        from openai import OpenAI
+
+        client = OpenAI(base_url=setting("NINEROUTER_BASE_URL", NINEROUTER_URL), api_key=setting("NINEROUTER_API_KEY"))
+        stream = client.chat.completions.create(model=self.model, stream=True, max_tokens=2000,
+                                                messages=[{"role": "system", "content": system},
+                                                          {"role": "user", "content": user}])
+        text = ""
+        for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.content:
+                text += chunk.choices[0].delta.content
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
+
     def test_colab(self):
         self.open_settings(page="trans").test()
 
@@ -1236,6 +1313,7 @@ class App(tk.Tk):
         self.show(self.current)
         if self.data:
             self.render_report()
+        self.pages["collection"].render()  # isi KOLEKSI digambar dengan warna saat render
 
     def open_file(self):
         path = filedialog.askopenfilename(
@@ -1322,6 +1400,8 @@ class App(tk.Tk):
             cancelled = self.last_status and self.last_status[0] == "cancelled"
             self.job_mark = "!" if failed else "■" if cancelled else "✓"
         self.pages["history"].reload()  # entri atau analisis baru langsung terlihat
+        if self.page == "collection":
+            self.pages["collection"].reload()
         self.update_indicator()
         self.refresh_menu()
 
@@ -1506,20 +1586,8 @@ class HistoryPage(tk.Frame):
         it = self.selected()
         if not it:
             return
-        if self.app.busy():  # proses lain masih berjalan: tetap di halaman ini
+        if not self.app.open_entry(it, mode):  # proses lain masih berjalan: tetap di halaman ini
             self.info.config(text=self.app.tr("busy"), fg=T.RED)
-            return
-        if it["is_file"]:  # transkrip dari berkas: tampilkan hasil tersimpan, atau analisis ulang bila diminta
-            self.app.start(preloaded=(it["meta"]["title"], it["meta"]["transcript"]),
-                           mode="view" if mode == "auto" else "reanalyze", entry=it["path"])
-            return
-        if mode == "auto":  # belum selesai: lanjutkan; selesai: tampilkan dashboard, analisis, dan transkrip
-            mode = "resume" if it["partial"] else "view"
-        elif mode == "reanalyze" and it["partial"]:  # analisis butuh transkrip lengkap: selesaikan dulu
-            mode = "resume"
-        self.app.url_var.set(it["url"])
-        self.app.audio_var.set(AUDIO_LABEL_OF.get(it["code"], "Auto"))
-        self.app.start(mode=mode)
 
     def delete(self):
         it = self.selected()
