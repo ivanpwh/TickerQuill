@@ -63,7 +63,7 @@ class StockWindow(tk.Toplevel):
         self.loading = False
         self.auto_id = None
         self.configure(bg=T.BG)
-        self.geometry("820x660")
+        self.geometry("960x700")
 
         top = tk.Frame(self, bg=T.BG)
         top.pack(fill="x", padx=12, pady=(12, 4))
@@ -108,7 +108,7 @@ class StockWindow(tk.Toplevel):
         self.load(full=True)
 
     def line(self, font, fg, pady=0):
-        lbl = tk.Label(self, text="", font=font, bg=T.BG, fg=fg, anchor="w", justify="left", wraplength=790)
+        lbl = tk.Label(self, text="", font=font, bg=T.BG, fg=fg, anchor="w", justify="left", wraplength=930)
         lbl.pack(fill="x", padx=12, pady=pady)
         return lbl
 
@@ -118,6 +118,11 @@ class StockWindow(tk.Toplevel):
 
     def num(self, x):
         return report.fmt_num(x, self.ui) if x is not None else "-"
+
+    def short(self, x):
+        """238.9 -> '238,9' (ID) / '238.9' (EN); angka bulat tanpa desimal."""
+        s = f"{x:.1f}".rstrip("0").rstrip(".")
+        return s.replace(".", ",") if self.ui != "EN" else s
 
     def pct(self, x):
         s = f"{x:+.2f}%"
@@ -213,7 +218,7 @@ class StockWindow(tk.Toplevel):
                 self.change_lbl.config(text=f"{'+' if q['change'] >= 0 else ''}{self.num(q['change'])} ({self.pct(q['change_pct'])})",
                                        fg=T.GOOD if q["change"] >= 0 else T.RED)
             vol = q["volume"]
-            volume = t(ui, "million", x=self.num(round(vol / 1e6, 1))) if vol else "-"
+            volume = t(ui, "million", x=self.short(vol / 1e6)) if vol else "-"
             self.stats_lbl.config(text=t(ui, "stats", h=self.num(q["high"]), l=self.num(q["low"]), v=volume))
             when = q["time"].strftime("%d/%m %H:%M") if q["time"] else "-"
             self.time_lbl.config(text=t(ui, "time", t=when, state=t(ui, "open" if market.market_open() else "closed")))
@@ -288,7 +293,7 @@ class StockWindow(tk.Toplevel):
         self.since_title.config(text=t(ui, "t_since"))
         if not videos:
             tk.Label(self.since, text=t(ui, "no_dates"), font=FONT, bg=T.BG, fg=T.DIM, anchor="w", justify="left",
-                     wraplength=790).grid(row=0, column=0, sticky="w")
+                     wraplength=930).grid(row=0, column=0, sticky="w")
             return
         heads = ("c_date", "c_video", "c_stance", "c_move", "c_target", "c_stop")
         for col, key in enumerate(heads):
@@ -296,7 +301,7 @@ class StockWindow(tk.Toplevel):
         for row, v in enumerate(videos, start=1):
             s = market.since(self.daily, v["date"], v["prices"]) if self.daily else None
             self.cell(row, 0, v["date"] + ("*" if v.get("fallback") else ""))
-            self.cell(row, 1, v["title"][:38])
+            self.cell(row, 1, v["title"][:30])
             self.cell(row, 2, report.t(ui, "stance_" + v["stance"]))
             if s is None:
                 self.cell(row, 3, t(ui, "no_since") if self.daily is not None else "...", T.DIM)

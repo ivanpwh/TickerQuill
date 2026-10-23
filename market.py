@@ -107,6 +107,7 @@ def since(points, video_date, prices):
     target, stop = prices.get("target"), prices.get("stop_loss")
     return {"start": start, "start_date": start_dt.date().isoformat(), "now": now,
             "change_pct": (now - start) / start * 100, "max_high": high, "min_low": low,
-            "target_hit": (high is not None and high >= target) if target else None,
-            "stop_hit": (low is not None and low <= stop) if stop else None,
+            # tersentuh bila harga sesudah hari video, atau harga terakhir, mencapai level itu
+            "target_hit": ((high is not None and high >= target) or now >= target) if target else None,
+            "stop_hit": ((low is not None and low <= stop) or now <= stop) if stop else None,
             "to_target_pct": (target - now) / now * 100 if target else None}

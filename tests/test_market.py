@@ -114,4 +114,6 @@ def test_since_handles_weekends_missing_levels_and_future_dates():
     assert s["start_date"] == "2026-10-23" and s["target_hit"] is None and s["stop_hit"] is None
     assert s["max_high"] is None  # nothing after the start day yet
     assert market.since(pts, "2026-10-30", {}) is None
+    same_day = market.since(pts, "2026-10-23", {"target": 2100.0, "stop_loss": 2300.0})
+    assert same_day["target_hit"] is True and same_day["stop_hit"] is True  # the latest price already passed both
     assert market.since(pts, "", {}) is None
