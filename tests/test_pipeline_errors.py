@@ -341,7 +341,7 @@ def test_download_failure_with_checkpoint_says_it_is_still_saved(no_wait, monkey
     app.Pipeline(URL, "tiny", "Indonesia", "EN", out).run()
     kind, msg = drain(out)[-1]
     assert kind == "error" and msg.startswith("Step 1/3 failed: RuntimeError: network unreachable")
-    assert "still saved" in msg and "HISTORY" in msg
+    assert "still saved" in msg and "View > History" in msg
 
 
 def test_history_click_without_saved_analysis_does_not_call_the_llm(no_wait, monkeypatch):

@@ -51,19 +51,19 @@ def test_recolor_swaps_widget_colours(root):
     frame.destroy()
 
 
-def test_history_dialog_reanalyses_file_entries_from_the_cached_copy(root, monkeypatch):
+def test_history_page_reanalyses_file_entries_from_the_cached_copy(root, monkeypatch):
     app.save_file_entry("my notes", "[00:00:01] BBCA", "somewhere.txt")
     started = {}
     monkeypatch.setattr(root, "start", lambda **kw: started.update(kw))
-    dialog = app.HistoryDialog(root)
+    root.show_page("history")
+    page = root.pages["history"]
     try:
-        assert len(dialog.items) == 1 and "my notes" in dialog.list.get(0)
-        entry_path = dialog.items[0]["path"]
-        dialog.list.selection_set(0)
-        dialog.go("auto")
+        assert len(page.items) == 1 and "my notes" in page.list.get(0)
+        entry_path = page.items[0]["path"]
+        page.list.selection_set(0)
+        page.go("auto")
     finally:
-        if dialog.winfo_exists():
-            dialog.destroy()
+        root.show_page("analysis")
     assert started == {"preloaded": ("my notes", "[00:00:01] BBCA"), "mode": "view", "entry": entry_path}
     for item in app.list_history():
         item["path"].unlink()
@@ -147,7 +147,8 @@ def test_history_detail_line_shows_and_copies_the_link(root, monkeypatch):
                                  "whisper_model": "tiny", "duration": 10, "created": "2026-10-21 12:03",
                                  "transcript": "[00:00:01] BBCA"})
     app.save_file_entry("my notes", "[00:00:01] TLKM", "C:/notes/my notes.txt")
-    dialog = app.HistoryDialog(root)
+    root.show_page("history")
+    dialog = root.pages["history"]
     try:
         assert dialog.d_title.cget("text") == "" and dialog.open_link_btn.cget("state") == "disabled"
         assert dialog.copy_link_btn.cget("state") == "disabled"
@@ -169,6 +170,137 @@ def test_history_detail_line_shows_and_copies_the_link(root, monkeypatch):
         dialog.copy_link()
         assert root.clipboard_get() == "C:/notes/my notes.txt"
     finally:
-        dialog.destroy()
+        root.show_page("analysis")
+        for item in app.list_history():
+            item["path"].unlink()
+
+
+def menu_entry(root, menu_key, label):
+    """(menu, index) of the item whose label starts with `label` in the cascade named by STR key `menu_key`."""
+    bar = root.menubar.bar
+    for i in range(bar.index("end") + 1):
+        if bar.entrycget(i, "label") == root.tr(menu_key):
+            menu = root.nametowidget(bar.entrycget(i, "menu"))
+            for j in range(menu.index("end") + 1):
+                if menu.type(j) != "separator" and menu.entrycget(j, "label").startswith(label):
+                    return menu, j
+    raise AssertionError(f"no menu item {label!r} under {menu_key}")
+
+
+def test_pages_switch_from_the_menu_and_keep_the_title_in_sync(root):
+    menu, i = menu_entry(root, "m_view", root.tr("page_history").capitalize())
+    menu.invoke(i)
+    assert root.page == "history" and root.pages["history"].winfo_ismapped() is not None
+    assert root.page_lbl.cget("text").endswith(root.tr("page_history"))
+    menu, i = menu_entry(root, "m_view", root.tr("transcript_tab").capitalize())
+    menu.invoke(i)
+    assert root.page == "analysis" and root.current == "TRANSKRIP"
+    root.show("DASHBOARD")
+
+
+def test_job_indicator_shows_progress_and_result_on_other_pages(root):
+    root.go_btn.config(state="disabled")  # as start() does while a job runs
+    try:
+        root.last_status = ("s_tr", 45, "")
+        root.render_status()
+        assert root.job_lbl.cget("text") == ""  # ANALYSIS page: the status row already shows it
+        root.show_page("history")
+        assert root.job_lbl.cget("text").startswith("● ") and root.job_lbl.cget("text").endswith("45%")
+    finally:
+        root.finish()
+    assert root.job_lbl.cget("text").startswith("✓ ")
+    root.show_page("analysis")
+    assert root.job_lbl.cget("text") == "" and root.job_mark is None
+    root.last_status = None
+    root.render_status()
+
+
+def test_menu_state_and_labels_follow_the_job_and_language(root):
+    run_label = root.tr("analyze").strip("[] ").capitalize()
+    run, i = menu_entry(root, "m_job", run_label)
+    cancel, c = menu_entry(root, "m_job", root.tr("cancel").strip("[] ").capitalize())
+    root.refresh_menu()
+    assert run.entrycget(i, "state") == "normal" and cancel.entrycget(c, "state") == "disabled"
+    root.go_btn.config(state="disabled")
+    try:
+        root.refresh_menu()
+        assert run.entrycget(i, "state") == "disabled" and cancel.entrycget(c, "state") == "normal"
+    finally:
+        root.go_btn.config(state="normal")
+        root.refresh_menu()
+
+    root.show("TRANSKRIP")
+    root.clear("TRANSKRIP")
+    copy, k = menu_entry(root, "m_file", root.copy_btn.cget("text").strip("[] ").capitalize())
+    root.refresh_menu()
+    assert copy.entrycget(k, "state") == "disabled"  # nothing to copy yet
+    root.write("TRANSKRIP", "text")
+    root.refresh_menu()
+    assert copy.entrycget(k, "state") == "normal"
+    root.clear("TRANSKRIP")
+    root.show("DASHBOARD")
+
+    before = root.ui
+    try:
+        root.ui_var.set("EN")
+        root.apply_lang()
+        assert root.menubar.bar.entrycget(2, "label") == "Job"
+        menu_entry(root, "m_file", "Copy dashboard")
+    finally:
+        root.ui_var.set(before)
+        root.apply_lang()
+
+
+def test_language_and_theme_radio_items_apply_and_persist(root):
+    before_ui, before_theme = root.ui, theme.current
+    lang = root.nametowidget(menu_entry(root, "m_view", root.tr("mi_lang"))[0].entrycget(
+        menu_entry(root, "m_view", root.tr("mi_lang"))[1], "menu"))
+    try:
+        lang.invoke(1)  # English
+        assert root.ui == "EN" and "APP_LANG=EN" in app.ENV_FILE.read_text(encoding="utf-8")
+        assert root.go_btn.cget("text") == "[ RUN ]"
+        menu, i = menu_entry(root, "m_view", root.tr("mi_theme"))
+        themes = root.nametowidget(menu.entrycget(i, "menu"))
+        themes.invoke(theme.CHOICES.index("light"))
+        assert theme.current == "light" and root.theme_var.get() == "light"
+        assert json.loads(app.SETTINGS_FILE.read_text(encoding="utf-8"))["theme"] == "light"
+    finally:
+        root.set_lang(before_ui)
+        root.set_theme(before_theme)
+
+
+def test_ctrl_o_in_a_text_pane_opens_the_file_dialog_once_without_editing(root, monkeypatch):
+    calls = []
+    monkeypatch.setattr(app.filedialog, "askopenfilename", lambda **kw: calls.append(kw) or "")
+    txt = root.panes["TRANSKRIP"][1]
+    root.show("TRANSKRIP")
+    root.clear("TRANSKRIP")
+    txt.insert("1.0", "abc")
+    txt.mark_set("insert", "1.1")
+    root.update()
+    txt.focus_force()
+    root.update()
+    txt.event_generate("<Control-o>")
+    root.update()
+    assert len(calls) == 1 and txt.get("1.0", "end-1c") == "abc"
+    root.clear("TRANSKRIP")
+    root.show("DASHBOARD")
+
+
+def test_history_page_stays_open_with_a_busy_message_while_a_job_runs(root, monkeypatch):
+    app.save_file_entry("busy notes", "[00:00:01] BBCA", "x.txt")
+    started = []
+    monkeypatch.setattr(root, "start", lambda **kw: started.append(kw))
+    root.show_page("history")
+    page = root.pages["history"]
+    root.go_btn.config(state="disabled")
+    try:
+        page.list.selection_set(0)
+        page.go("auto")
+        assert started == [] and root.page == "history"
+        assert page.info.cget("text") == root.tr("busy")
+    finally:
+        root.go_btn.config(state="normal")
+        root.show_page("analysis")
         for item in app.list_history():
             item["path"].unlink()

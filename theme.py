@@ -92,6 +92,8 @@ def recolor(root, old, new):
         return mapping.get(str(value).lower())
 
     def walk(w):
+        if isinstance(w, tk.Menu):  # menu bar bawaan Windows memakai warna sistem, tidak ikut tema
+            return
         for opt in COLOR_OPTIONS:
             try:
                 new_value = conv(w.cget(opt))

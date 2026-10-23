@@ -13,6 +13,7 @@ from tkinter import filedialog, messagebox
 import remote
 import report
 from dashboard import DashboardView, open_url
+from menus import MenuBar
 from textclean import clean_repeats
 import theme
 from theme import FONT, FONT_B, T
@@ -26,6 +27,7 @@ CACHE.mkdir(exist_ok=True)
 WORK.mkdir(exist_ok=True)
 
 ENV_FILE = BASE / ".env"
+GUIDE_URL = "https://github.com/ivanpwh/TickerQuill/blob/main/docs/user-guide.md"
 
 
 def setting(name, default=None):
@@ -134,7 +136,7 @@ STR = {
         "tab_dash": "DASHBOARD", "pause": "[ JEDA ]", "resume": "[ LANJUT ]", "paused": "DIJEDA",
         "dash_hint": "Dashboard muncul di sini setelah analisis selesai.",
         "s_resume": "2/3 MELANJUTKAN TRANSKRIP", "no_speech": "Tidak ada ucapan terdeteksi di audio ini.",
-        "hist_btn": "[ RIWAYAT ]", "hist_file": "BERKAS", "hist_title": "Riwayat transkrip", "hist_empty": "Belum ada transkrip tersimpan.",
+        "hist_file": "BERKAS", "hist_title": "Riwayat transkrip", "hist_empty": "Belum ada transkrip tersimpan.",
         "hist_done": "SELESAI", "hist_go": "[ PAKAI / LANJUTKAN ]", "hist_fresh": "[ ULANG DARI AWAL ]",
         "hist_del": "[ HAPUS ]", "hist_info": "{n} transkrip. Pilih satu, lalu tekan PAKAI / LANJUTKAN.",
         "hist_del_q": "Hapus transkrip ini dari riwayat? File .txt di folder transcripts tidak ikut dihapus.",
@@ -154,18 +156,23 @@ STR = {
         "colab_test": "[ TES KONEKSI ]",
         "colab_testing": "Menghubungi server...", "colab_ok": "Terhubung. Perangkat: {device}, status: {status}.",
         "colab_empty": "Isi URL dan token terlebih dulu.",
-        "err_colab_cfg": "Server Colab belum diatur. Buka PENGATURAN > TRANSKRIPSI, isi URL dan token dari notebook, atau pilih Whisper di Local.",
+        "err_colab_cfg": "Server Colab belum diatur. Buka Alat > Pengaturan > TRANSKRIPSI, isi URL dan token dari notebook, atau pilih Whisper di Local.",
         "s_comp": "2/3 MENGOMPRESI AUDIO", "s_up": "2/3 MENGUNGGAH KE COLAB", "s_remote": "2/3 COLAB MEMUAT MODEL WHISPER",
-        "err_colab": "Server Colab bermasalah: {e}\nPastikan notebook masih berjalan dan URL/token di PENGATURAN > TRANSKRIPSI masih yang terbaru.",
+        "err_colab": "Server Colab bermasalah: {e}\nPastikan notebook masih berjalan dan URL/token di Alat > Pengaturan > TRANSKRIPSI masih yang terbaru.",
         "s_retry_2": "2/3 MENCOBA LAGI KE COLAB", "s_retry_3": "3/3 MENCOBA LAGI ANALISIS",
         "err_step": "Langkah {step}/3 gagal: {e}", "err_tries": "Sudah dicoba {n} kali, tetap gagal.",
         "hint_tr_part": "Transkrip sebagian tersimpan. Tekan [ PROSES ], lalu pilih [ LANJUTKAN ] untuk meneruskan dari titik terakhir.",
         "hint_tr_none": "Tekan [ PROSES ] untuk mencoba lagi.",
         "hint_an": "Transkrip sudah tersimpan. Tekan [ PROSES ], lalu pilih [ PAKAI ULANG ] untuk menganalisis lagi tanpa transkripsi ulang.",
-        "hint_dl_part": "Transkrip sebagian masih tersimpan: buka dari RIWAYAT untuk melanjutkan setelah koneksi pulih.",
+        "hint_dl_part": "Transkrip sebagian masih tersimpan: buka dari Lihat > Riwayat untuk melanjutkan setelah koneksi pulih.",
         "hist_reanalyze": "[ ANALISIS ULANG ]", "hist_open_link": "[ BUKA LINK ]", "hist_copy_link": "[ SALIN LINK ]",
-        "no_saved": "Transkrip tersedia, tetapi belum ada analisis tersimpan. Tekan [ ANALISIS ULANG ] di RIWAYAT untuk membuatnya.",
-        "set_btn": "[ PENGATURAN ]", "set_title": "Pengaturan",
+        "no_saved": "Transkrip tersedia, tetapi belum ada analisis tersimpan. Tekan [ ANALISIS ULANG ] di Lihat > Riwayat untuk membuatnya.",
+        "set_title": "Pengaturan",
+        "m_file": "File", "m_view": "Lihat", "m_job": "Proses", "m_tools": "Alat", "m_help": "Bantuan",
+        "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
+        "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
+        "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
+        "page_analysis": "ANALISIS", "page_history": "RIWAYAT",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
                     "pilihan lain ke settings.json. Kosongkan kolom teks untuk kembali ke nilai bawaan.",
         "set_tab_general": "UMUM", "set_tab_trans": "TRANSKRIPSI", "set_tab_llm": "ANALISIS (LLM)",
@@ -177,10 +184,10 @@ STR = {
         "set_applang": "Bahasa aplikasi", "set_audiolang": "Bahasa audio bawaan",
         "set_engine": "Whisper dijalankan di", "set_colab_url": "URL server Colab", "set_colab_token": "Token Colab",
         "set_pick": "[ PILIH MODEL ]",
-        "err_model": "Model LLM belum diatur. Buka PENGATURAN > ANALISIS (LLM), lalu ketik atau pilih model (tombol PILIH MODEL). Transkrip tetap tersedia di tab TRANSKRIP.",
+        "err_model": "Model LLM belum diatur. Buka Alat > Pengaturan > ANALISIS (LLM), lalu ketik atau pilih model (tombol PILIH MODEL). Transkrip tetap tersedia di tab TRANSKRIP.",
         "not_set": "(belum diatur)", "llm_title": "LLM belum diatur",
         "llm_missing": "API key atau model LLM belum diisi, jadi tahap analisis akan gagal setelah transkripsi selesai (transkrip tetap tersimpan). " "Lanjutkan hanya untuk transkripsi?",
-        "llm_open": "Buka PENGATURAN > ANALISIS (LLM), isi API key dan model, lalu tekan [ PROSES ] lagi.",
+        "llm_open": "Membuka Alat > Pengaturan > ANALISIS (LLM), isi API key dan model, lalu tekan [ PROSES ] lagi.",
         "set_show": "[ TAMPIL ]", "set_hide": "[ SEMBUNYI ]", "set_save": "[ SIMPAN ]",
         "set_saved": "Tersimpan ({n} kolom) di {path}.", "set_nochange": "Tidak ada perubahan.",
         "set_err": "Gagal menyimpan: {e}",
@@ -209,7 +216,7 @@ STR = {
         "tab_dash": "DASHBOARD", "pause": "[ PAUSE ]", "resume": "[ RESUME ]", "paused": "PAUSED",
         "dash_hint": "The dashboard appears here once the analysis is done.",
         "s_resume": "2/3 RESUMING TRANSCRIPTION", "no_speech": "No speech was detected in this audio.",
-        "hist_btn": "[ HISTORY ]", "hist_file": "FILE", "hist_title": "Transcript history", "hist_empty": "No saved transcripts yet.",
+        "hist_file": "FILE", "hist_title": "Transcript history", "hist_empty": "No saved transcripts yet.",
         "hist_done": "DONE", "hist_go": "[ USE / RESUME ]", "hist_fresh": "[ RESTART ]",
         "hist_del": "[ DELETE ]", "hist_info": "{n} transcripts. Pick one, then press USE / RESUME.",
         "hist_del_q": "Delete this transcript from history? The .txt file in the transcripts folder is kept.",
@@ -229,18 +236,23 @@ STR = {
         "colab_test": "[ TEST CONNECTION ]",
         "colab_testing": "Contacting the server...", "colab_ok": "Connected. Device: {device}, status: {status}.",
         "colab_empty": "Enter the URL and token first.",
-        "err_colab_cfg": "The Colab server is not set up. Open SETTINGS > TRANSCRIPTION, enter the URL and token from the notebook, or set Whisper to Local.",
+        "err_colab_cfg": "The Colab server is not set up. Open Tools > Settings > TRANSCRIPTION, enter the URL and token from the notebook, or set Whisper to Local.",
         "s_comp": "2/3 COMPRESSING AUDIO", "s_up": "2/3 UPLOADING TO COLAB", "s_remote": "2/3 COLAB LOADING WHISPER MODEL",
-        "err_colab": "Colab server problem: {e}\nMake sure the notebook is still running and the URL/token in SETTINGS > TRANSCRIPTION are the latest.",
+        "err_colab": "Colab server problem: {e}\nMake sure the notebook is still running and the URL/token in Tools > Settings > TRANSCRIPTION are the latest.",
         "s_retry_2": "2/3 RETRYING COLAB", "s_retry_3": "3/3 RETRYING ANALYSIS",
         "err_step": "Step {step}/3 failed: {e}", "err_tries": "Tried {n} times, still failing.",
         "hint_tr_part": "A partial transcript is saved. Press [ RUN ], then choose [ RESUME ] to continue from the last point.",
         "hint_tr_none": "Press [ RUN ] to try again.",
         "hint_an": "The transcript is saved. Press [ RUN ], then choose [ REUSE ] to analyse again without transcribing.",
-        "hint_dl_part": "The partial transcript is still saved: open it from HISTORY to resume once the connection is back.",
+        "hint_dl_part": "The partial transcript is still saved: open it from View > History to resume once the connection is back.",
         "hist_reanalyze": "[ REANALYZE ]", "hist_open_link": "[ OPEN LINK ]", "hist_copy_link": "[ COPY LINK ]",
-        "no_saved": "The transcript is available, but no analysis is saved yet. Press [ REANALYZE ] in HISTORY to create it.",
-        "set_btn": "[ SETTINGS ]", "set_title": "Settings",
+        "no_saved": "The transcript is available, but no analysis is saved yet. Press [ REANALYZE ] in View > History to create it.",
+        "set_title": "Settings",
+        "m_file": "File", "m_view": "View", "m_job": "Job", "m_tools": "Tools", "m_help": "Help",
+        "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
+        "mi_guide": "User guide", "mi_about": "About TickerQuill",
+        "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
+        "page_analysis": "ANALYSIS", "page_history": "HISTORY",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
                     "other choices go to settings.json. Clear a text field to fall back to its default.",
         "set_tab_general": "GENERAL", "set_tab_trans": "TRANSCRIPTION", "set_tab_llm": "ANALYSIS (LLM)",
@@ -252,10 +264,10 @@ STR = {
         "set_applang": "App language", "set_audiolang": "Default audio language",
         "set_engine": "Run Whisper on", "set_colab_url": "Colab server URL", "set_colab_token": "Colab token",
         "set_pick": "[ PICK MODEL ]",
-        "err_model": "No LLM model is set. Open SETTINGS > ANALYSIS (LLM) and type or pick a model (PICK MODEL button). The transcript is still available in the TRANSCRIPT tab.",
+        "err_model": "No LLM model is set. Open Tools > Settings > ANALYSIS (LLM) and type or pick a model (PICK MODEL button). The transcript is still available in the TRANSCRIPT tab.",
         "not_set": "(not set)", "llm_title": "LLM not set up",
         "llm_missing": "The LLM API key or model is empty, so the analysis step will fail after transcription finishes (the transcript is kept). " "Continue with transcription only?",
-        "llm_open": "Opening SETTINGS > ANALYSIS (LLM). Enter the API key and model, then press [ RUN ] again.",
+        "llm_open": "Opening Tools > Settings > ANALYSIS (LLM). Enter the API key and model, then press [ RUN ] again.",
         "set_show": "[ SHOW ]", "set_hide": "[ HIDE ]", "set_save": "[ SAVE ]",
         "set_saved": "Saved ({n} fields) to {path}.", "set_nochange": "No changes.",
         "set_err": "Could not save: {e}",
@@ -828,7 +840,11 @@ class App(tk.Tk):
         self.data = None  # hasil report.compute() untuk dashboard
         self.transcript_text = ""
         self.source = None  # {"title", "url"} atau {"title", "file"}: header hasil
+        self.page = "analysis"  # halaman aktif: analysis | history
+        self.job_mark = None  # proses berakhir saat halaman lain terbuka: tanda di baris judul sampai ANALISIS dibuka
+        self.menubar = None
         self.build()
+        self.menubar = MenuBar(self, UI_LANGS)
         self.apply_lang()
         self.after(100, self.poll)
         self.after(500, self.tick_cursor)
@@ -849,10 +865,12 @@ class App(tk.Tk):
         self.go_btn.config(text=self.tr("analyze"))
         self.stop_btn.config(text=self.tr("cancel"))
         self.open_btn.config(text=self.tr("open"))
-        self.hist_btn.config(text=self.tr("hist_btn"))
         self.update_cache_hint()
         self.update_export_labels()
-        self.settings_btn.config(text=self.tr("set_btn"))
+        self.page_lbl.config(text=f"›  {self.tr('page_' + self.page)}")
+        self.pages["history"].apply_lang()
+        if self.menubar:
+            self.menubar.refresh_labels()
         self.update_summary()
         self.disclaimer_lbl.config(text=self.tr("disclaimer"))
         for pane, key in (("DASHBOARD", "tab_dash"), ("ANALISIS", "analysis_tab"), ("TRANSKRIP", "transcript_tab")):
@@ -865,11 +883,13 @@ class App(tk.Tk):
             self.render_report()
         elif self.hint_shown:
             self.dash.message(self.tr("dash_hint"))
+        self.refresh_menu()
 
     def render_status(self):
         if self.last_status is None:
             self.status.config(text=self.tr("ready"), fg=T.AMBER)
             self.pause_btn.config(text=self.tr("pause"), state="disabled")
+            self.update_indicator()
             return
         key, pct, extra = self.last_status
         self.status.config(text=self.tr(key) + extra, fg=T.AMBER)
@@ -877,6 +897,7 @@ class App(tk.Tk):
         pausable = key in ("s_dl", "s_load", "s_tr", "paused")
         self.pause_btn.config(text=self.tr("resume" if key == "paused" else "pause"),
                               state="normal" if pausable else "disabled")
+        self.update_indicator()
 
     def toggle_pause(self):
         p = self.pipeline
@@ -931,15 +952,27 @@ class App(tk.Tk):
     def build(self):
         head = tk.Frame(self, bg=T.BG)
         head.pack(fill="x", padx=14, pady=(12, 0))
-        self.settings_btn = self.button(head, "", self.open_settings)
-        self.settings_btn.pack(side="right")
         self.title_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.AMBER, anchor="w")
-        self.title_lbl.pack(side="left", fill="x", expand=True)
+        self.title_lbl.pack(side="left")
+        self.page_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.FG, anchor="w")
+        self.page_lbl.pack(side="left", padx=(6, 0))
+        # status proses saat halaman lain terbuka; klik untuk kembali ke ANALISIS
+        self.job_lbl = tk.Label(head, text="", font=FONT_B, bg=T.BG, fg=T.CYAN, anchor="e", cursor="hand2")
+        self.job_lbl.pack(side="right")
+        self.job_lbl.bind("<Button-1>", lambda e: self.show_page("analysis"))
         self.subtitle_lbl = tk.Label(self, text="", font=FONT, bg=T.BG, fg=T.DIM, anchor="w")
         self.subtitle_lbl.pack(fill="x", padx=14)
         tk.Frame(self, bg=T.FG, height=1).pack(fill="x", padx=14, pady=8)
+        self.disclaimer_lbl = tk.Label(self, text="", font=("Consolas", 9), bg=T.BG, fg=T.DIM, anchor="w")
+        self.disclaimer_lbl.pack(side="bottom", fill="x", padx=14, pady=(0, 8))
+        self.theme_var = tk.StringVar(value=theme.current)
 
-        row = tk.Frame(self, bg=T.BG)
+        holder = tk.Frame(self, bg=T.BG)  # wadah halaman: satu tampil, yang lain tetap utuh di belakang
+        holder.pack(fill="both", expand=True)
+        page = tk.Frame(holder, bg=T.BG)  # halaman ANALISIS
+        self.pages = {"analysis": page, "history": HistoryPage(holder, self)}
+
+        row = tk.Frame(page, bg=T.BG)
         row.pack(fill="x", padx=14)
         tk.Label(row, text="URL>", font=FONT_B, bg=T.BG, fg=T.FG).pack(side="left")
         self.url_var = tk.StringVar()
@@ -951,15 +984,7 @@ class App(tk.Tk):
         self.go_btn.pack(side="left")
         self.open_btn = self.button(row, "", self.open_file)
         self.open_btn.pack(side="left", padx=(6, 0))
-        self.hist_btn = self.button(row, "", self.show_history)
-        self.hist_btn.pack(side="left", padx=(6, 0))
-        self.pause_btn = self.button(row, "", self.toggle_pause)
-        self.pause_btn.pack(side="left", padx=(6, 0))
-        self.pause_btn.config(state="disabled")
-        self.stop_btn = self.button(row, "", self.stop)
-        self.stop_btn.pack(side="left", padx=(6, 0))
-        self.stop_btn.config(state="disabled")
-        self.cache_lbl = tk.Label(self, text="", font=("Consolas", 10), bg=T.BG, fg=T.CYAN, anchor="w")
+        self.cache_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.CYAN, anchor="w")
         self.cache_lbl.pack(fill="x", padx=14, pady=(4, 0))
 
         whisper = load_settings().get("whisper_model")
@@ -973,19 +998,27 @@ class App(tk.Tk):
         self.engine_var.trace_add("write", lambda *_: save_settings(engine=self.engine_var.get()))
         self.url_var.trace_add("write", self.update_cache_hint)
         self.audio_var.trace_add("write", self.update_cache_hint)
-        # pengaturan Whisper/bahasa/model ada di menu PENGATURAN; di sini cukup ringkasan yang bisa diklik
-        self.summary_lbl = tk.Label(self, text="", font=("Consolas", 10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
+        # pengaturan Whisper/bahasa/model ada di Alat > Pengaturan; di sini cukup ringkasan yang bisa diklik
+        self.summary_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
         self.summary_lbl.pack(fill="x", padx=14, pady=(6, 0))
         self.summary_lbl.bind("<Button-1>", lambda e: self.open_settings())
         for var in (self.model_var, self.audio_var, self.engine_var):
             var.trace_add("write", lambda *_: self.update_summary())
 
-        self.status = tk.Label(self, text="", font=FONT_B, bg=T.BG, fg=T.AMBER, anchor="w")
-        self.status.pack(fill="x", padx=14, pady=(10, 0))
-        self.bar = tk.Label(self, text=self.bar_text(0), font=FONT, bg=T.BG, fg=T.FG, anchor="w")
+        status_row = tk.Frame(page, bg=T.BG)  # status + kontrol proses yang sedang berjalan
+        status_row.pack(fill="x", padx=14, pady=(10, 0))
+        self.stop_btn = self.button(status_row, "", self.stop)
+        self.stop_btn.pack(side="right")
+        self.stop_btn.config(state="disabled")
+        self.pause_btn = self.button(status_row, "", self.toggle_pause)
+        self.pause_btn.pack(side="right", padx=6)
+        self.pause_btn.config(state="disabled")
+        self.status = tk.Label(status_row, text="", font=FONT_B, bg=T.BG, fg=T.AMBER, anchor="w")
+        self.status.pack(side="left", fill="x", expand=True)
+        self.bar = tk.Label(page, text=self.bar_text(0), font=FONT, bg=T.BG, fg=T.FG, anchor="w")
         self.bar.pack(fill="x", padx=14)
 
-        tabs = tk.Frame(self, bg=T.BG)
+        tabs = tk.Frame(page, bg=T.BG)
         tabs.pack(fill="x", padx=14, pady=(10, 0))
         self.tab_btns = {}
         for name in ("DASHBOARD", "ANALISIS", "TRANSKRIP"):
@@ -998,7 +1031,7 @@ class App(tk.Tk):
         self.copy_btn.pack(side="right", padx=6)
 
         self.panes = {}
-        holder = tk.Frame(self, bg=T.BG, highlightthickness=1, highlightbackground=T.FG)
+        holder = tk.Frame(page, bg=T.BG, highlightthickness=1, highlightbackground=T.FG)
         holder.pack(fill="both", expand=True, padx=14, pady=8)
         for name in ("ANALISIS", "TRANSKRIP"):
             frame = tk.Frame(holder, bg=T.BG)
@@ -1019,9 +1052,7 @@ class App(tk.Tk):
             self.panes[name] = (frame, txt)
         self.dash = DashboardView(holder)
         self.show("DASHBOARD")
-
-        self.disclaimer_lbl = tk.Label(self, text="", font=("Consolas", 9), bg=T.BG, fg=T.DIM, anchor="w")
-        self.disclaimer_lbl.pack(fill="x", padx=14, pady=(0, 8))
+        page.pack(fill="both", expand=True)
 
     def bar_text(self, pct, width=40):
         n = int(width * pct / 100)
@@ -1040,6 +1071,51 @@ class App(tk.Tk):
         (self.dash if name == "DASHBOARD" else self.panes[name][0]).pack(fill="both", expand=True)
         self.mark_tabs(self.tab_btns, name)
         self.update_export_labels()
+        self.refresh_menu()
+
+    def show_tab(self, name):
+        """Dari menu Lihat: buka halaman ANALISIS pada tab hasil tertentu."""
+        self.show_page("analysis")
+        self.show(name)
+
+    def show_page(self, name):
+        self.page = name
+        for frame in self.pages.values():
+            frame.pack_forget()
+        self.pages[name].pack(fill="both", expand=True)
+        self.page_lbl.config(text=f"›  {self.tr('page_' + name)}")
+        if name == "analysis":
+            self.job_mark = None
+        elif name == "history":
+            self.pages["history"].reload()
+        self.update_indicator()
+        self.refresh_menu()
+
+    def update_indicator(self):
+        """Ringkasan proses di baris judul, hanya saat halaman lain terbuka."""
+        text, color = "", T.CYAN
+        if self.page != "analysis":
+            if self.busy():
+                pct = self.last_status[1] if self.last_status else 0
+                text = f"● {self.status.cget('text')} {int(pct)}%"
+            elif self.job_mark:
+                text = f"{self.job_mark} {self.status.cget('text')}"
+                color = T.RED if self.job_mark == "!" else T.CYAN
+        self.job_lbl.config(text=text, fg=color)
+
+    def busy(self):
+        return self.go_btn["state"] == "disabled"
+
+    def can_export(self):
+        if self.page != "analysis":
+            return False
+        if self.current == "DASHBOARD":
+            return bool(self.data)
+        return bool(self.panes[self.current][1].get("1.0", "end").strip())
+
+    def refresh_menu(self):
+        if self.menubar:
+            self.menubar.refresh_state()
 
     def update_export_labels(self):
         """SALIN/SIMPAN menyebut isi tab yang aktif."""
@@ -1093,16 +1169,56 @@ class App(tk.Tk):
             whisper=self.model_var.get(), engine=self.engine_var.get(), audio=self.audio_var.get(),
             model=self.model or self.tr("not_set")))
 
-    def open_settings(self, **kw):
+    def open_settings(self, page=None, **kw):
         dlg = getattr(self, "settings_dlg", None)
         if dlg is not None and dlg.winfo_exists():
             dlg.lift()
+            if page:
+                dlg.show(page)
+            return dlg
+        self.settings_dlg = SettingsDialog(self, page=page or "general", **kw)
+        return self.settings_dlg
+
+    def reopen_settings(self):
+        """Tema/bahasa diganti dari menu: dialog Pengaturan yang terbuka dibuat ulang dengan nilai baru."""
+        dlg = getattr(self, "settings_dlg", None)
+        if dlg is not None and dlg.winfo_exists():
+            page = dlg.page
+            dlg.destroy()
+            self.open_settings(page=page)
+
+    def menu_theme(self, name):
+        self.set_theme(name)
+        self.reopen_settings()
+
+    def set_lang(self, code):
+        if code == self.ui:
             return
-        self.settings_dlg = SettingsDialog(self, **kw)
+        write_env({"APP_LANG": code})
+        self.ui_var.set(code)
+        self.apply_lang()
+        self.reopen_settings()
+
+    def pick_model(self):
+        ModelPicker(self)
+
+    def test_colab(self):
+        self.open_settings(page="trans").test()
+
+    def open_guide(self):
+        try:
+            os.startfile(BASE / "docs" / "user-guide.md")  # salinan lokal sesuai versi aplikasi ini
+        except (AttributeError, OSError):  # bukan Windows, berkas tidak ada, atau tanpa aplikasi pembuka .md
+            open_url(GUIDE_URL)
+
+    def show_about(self):
+        messagebox.showinfo(self.tr("mi_about"), self.tr("about").format(
+            name=APP_NAME, v=APP_VERSION, disclaimer=self.tr("disclaimer")), parent=self)
 
     def set_theme(self, name):
         """Ganti tema langsung: warnai ulang widget yang ada, gambar ulang dashboard (canvas), simpan pilihan."""
         save_settings(theme=name)
+        self.theme_var.set(name)
         if name == theme.current:
             return
         old = theme.apply(name)
@@ -1142,12 +1258,10 @@ class App(tk.Tk):
                                        model=meta["whisper_model"]),
             [("resume", self.tr("o_resume")), ("fresh", self.tr("o_restart")), (None, self.tr("o_cancel"))])
 
-    def show_history(self):
-        HistoryDialog(self)  # boleh dibuka saat proses berjalan; memulai proses dicek di HistoryDialog.go
-
     def start(self, transcript_path=None, mode=None, preloaded=None, entry=None):
-        if self.go_btn["state"] == "disabled":
+        if self.busy():
             return
+        self.show_page("analysis")
         url = self.url.get().strip()
         from_file = bool(transcript_path or preloaded)  # hanya analisis: tanpa unduh dan Whisper
         if not from_file and not re.match(r"^https?://", url):
@@ -1175,27 +1289,34 @@ class App(tk.Tk):
         self.dash.message(self.tr("dash_hint"))
         self.go_btn.config(state="disabled")
         self.open_btn.config(state="disabled")
-        self.hist_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
+        self.job_mark = None
         self.pipeline = Pipeline(url, self.model_var.get(), self.audio_var.get(), self.ui, self.q,
                                  transcript_path=transcript_path, model=self.model, mode=mode or "auto",
                                  engine=self.engine_var.get(), preloaded=preloaded, entry=entry)
         threading.Thread(target=self.pipeline.run, daemon=True).start()
+        self.refresh_menu()
 
     def stop(self):
         if self.pipeline:
             self.pipeline.cancel.set()
             self.status.config(text=self.tr("cancelling"))
 
-    def finish(self):
+    def finish(self, failed=False):
         self.go_btn.config(state="normal")
         self.open_btn.config(state="normal")
-        self.hist_btn.config(state="normal")
         self.stop_btn.config(state="disabled")
         self.pause_btn.config(state="disabled")
         self.update_cache_hint()
+        if self.page != "analysis":  # tidak pindah halaman sendiri; tandai di baris judul
+            cancelled = self.last_status and self.last_status[0] == "cancelled"
+            self.job_mark = "!" if failed else "■" if cancelled else "✓"
+        self.pages["history"].reload()  # entri atau analisis baru langsung terlihat
+        self.update_indicator()
+        self.refresh_menu()
 
     def poll(self):
+        got = False
         try:
             while True:
                 kind, p = self.q.get_nowait()
@@ -1213,15 +1334,18 @@ class App(tk.Tk):
                     self.write("ANALISIS", f"\n! {p}\n", "err")
                     self.dash.message(f"! {p}")
                     self.show("ANALISIS")
-                    self.finish()
+                    self.finish(failed=True)
                 elif kind == "notice":
                     self.write("ANALISIS", f"\n{p}\n", "dim")
                     self.dash.message(p)
                     self.show("DASHBOARD")
                 elif kind == "done":
                     self.finish()
+                got = True
         except queue.Empty:
             pass
+        if got:
+            self.refresh_menu()
         self.after(100, self.poll)
 
     def content(self):
@@ -1274,20 +1398,16 @@ class ChoiceDialog(tk.Toplevel):
         return dlg.choice
 
 
-class HistoryDialog(tk.Toplevel):
-    """Daftar transkrip tersimpan: pakai ulang yang selesai, lanjutkan yang sebagian, atau hapus."""
+class HistoryPage(tk.Frame):
+    """Halaman RIWAYAT: transkrip tersimpan; pakai ulang yang selesai, lanjutkan yang sebagian, atau hapus."""
 
-    def __init__(self, app):
-        super().__init__(app)
+    def __init__(self, parent, app):
+        super().__init__(parent, bg=T.BG)
         self.app, self.items = app, []
-        self.title(app.tr("hist_title"))
-        self.configure(bg=T.BG)
-        self.geometry("820x520")
-        self.transient(app)
         self.info = tk.Label(self, text="", font=FONT, bg=T.BG, fg=T.AMBER, anchor="w")
-        self.info.pack(fill="x", padx=12, pady=(12, 4))
+        self.info.pack(fill="x", padx=14, pady=(0, 4))
         holder = tk.Frame(self, bg=T.BG, highlightthickness=1, highlightbackground=T.FG)
-        holder.pack(fill="both", expand=True, padx=12, pady=6)
+        holder.pack(fill="both", expand=True, padx=14, pady=6)
         sb = tk.Scrollbar(holder, troughcolor=T.BG, bg=T.DIM, relief="flat", bd=0, width=12)
         self.list = tk.Listbox(holder, font=FONT, bg=T.BG, fg=T.FG, selectbackground=T.FG, selectforeground=T.BG,
                                relief="flat", highlightthickness=0, activestyle="none", yscrollcommand=sb.set)
@@ -1297,25 +1417,31 @@ class HistoryDialog(tk.Toplevel):
         self.list.bind("<Double-Button-1>", lambda e: self.go("auto"))
         self.list.bind("<<ListboxSelect>>", lambda e: self.update_detail())
         detail = tk.Frame(self, bg=T.BG)  # judul lengkap + link video (atau path berkas) dari item terpilih
-        detail.pack(fill="x", padx=12, pady=(0, 8))
+        detail.pack(fill="x", padx=14, pady=(0, 8))
         self.d_title = tk.Label(detail, text="", font=FONT_B, bg=T.BG, fg=T.AMBER, anchor="w", justify="left",
                                 wraplength=780)
         self.d_title.pack(fill="x")
         row = tk.Frame(detail, bg=T.BG)
         row.pack(fill="x", pady=(2, 0))
-        self.copy_link_btn = app.button(row, app.tr("hist_copy_link"), self.copy_link)
+        self.copy_link_btn = app.button(row, "", self.copy_link)
         self.copy_link_btn.pack(side="right")
-        self.open_link_btn = app.button(row, app.tr("hist_open_link"), self.open_link)
+        self.open_link_btn = app.button(row, "", self.open_link)
         self.open_link_btn.pack(side="right", padx=6)
         self.d_link = tk.Label(row, text="", font=FONT, bg=T.BG, fg=T.CYAN, anchor="w")
         self.d_link.pack(side="left", fill="x", expand=True)
         bottom = tk.Frame(self, bg=T.BG)
-        bottom.pack(fill="x", padx=12, pady=(0, 12))
-        app.button(bottom, app.tr("hist_go"), lambda: self.go("auto")).pack(side="left")
-        app.button(bottom, app.tr("hist_reanalyze"), lambda: self.go("reanalyze")).pack(side="left", padx=6)
-        app.button(bottom, app.tr("hist_fresh"), lambda: self.go("fresh")).pack(side="left")
-        app.button(bottom, app.tr("hist_del"), self.delete).pack(side="left")
-        app.button(bottom, app.tr("close"), self.destroy).pack(side="right")
+        bottom.pack(fill="x", padx=14, pady=(0, 8))
+        self.labelled = [(self.copy_link_btn, "hist_copy_link"), (self.open_link_btn, "hist_open_link")]
+        for key, cmd, pad in (("hist_go", lambda: self.go("auto"), 0), ("hist_reanalyze", lambda: self.go("reanalyze"), 6),
+                              ("hist_fresh", lambda: self.go("fresh"), 0), ("hist_del", self.delete, 6)):
+            b = app.button(bottom, "", cmd)
+            b.pack(side="left", padx=pad)
+            self.labelled.append((b, key))
+        self.apply_lang()
+
+    def apply_lang(self):
+        for b, key in self.labelled:
+            b.config(text=self.app.tr(key))
         self.reload()
 
     def reload(self):
@@ -1327,7 +1453,7 @@ class HistoryDialog(tk.Toplevel):
             label = self.app.tr("hist_file") if it["is_file"] else AUDIO_LABEL_OF.get(it["code"], it["code"])
             self.list.insert("end", f"{status:>8}  {m['title'][:46]:<46}  {label:<9} {m['whisper_model']:<9} {m['created']}")
         self.info.config(text=self.app.tr("hist_info").format(n=len(self.items)) if self.items
-                         else self.app.tr("hist_empty"))
+                         else self.app.tr("hist_empty"), fg=T.AMBER)
         self.update_detail()
 
     def link_of(self, it):
@@ -1370,11 +1496,10 @@ class HistoryDialog(tk.Toplevel):
         it = self.selected()
         if not it:
             return
-        if self.app.go_btn["state"] == "disabled":  # proses lain masih berjalan: riwayat tetap terbuka
-            messagebox.showinfo(self.app.tr("hist_title"), self.app.tr("busy"), parent=self)
+        if self.app.busy():  # proses lain masih berjalan: tetap di halaman ini
+            self.info.config(text=self.app.tr("busy"), fg=T.RED)
             return
         if it["is_file"]:  # transkrip dari berkas: tampilkan hasil tersimpan, atau analisis ulang bila diminta
-            self.destroy()
             self.app.start(preloaded=(it["meta"]["title"], it["meta"]["transcript"]),
                            mode="view" if mode == "auto" else "reanalyze", entry=it["path"])
             return
@@ -1384,12 +1509,11 @@ class HistoryDialog(tk.Toplevel):
             mode = "resume"
         self.app.url_var.set(it["url"])
         self.app.audio_var.set(AUDIO_LABEL_OF.get(it["code"], "Auto"))
-        self.destroy()
         self.app.start(mode=mode)
 
     def delete(self):
         it = self.selected()
-        if it and messagebox.askyesno(self.app.tr("hist_title"), self.app.tr("hist_del_q"), parent=self):
+        if it and messagebox.askyesno(self.app.tr("hist_title"), self.app.tr("hist_del_q"), parent=self.app):
             it["path"].unlink(missing_ok=True)
             self.reload()
             self.app.update_cache_hint()
