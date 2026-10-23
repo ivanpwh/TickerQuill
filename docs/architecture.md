@@ -11,6 +11,7 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 | `archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
 | `collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
 | `market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `tradingview_url` (`IDX:<TICKER>` chart link), `since` (move and target/stop hits since a video date). No Tk |
+| `chartview.py` | Candle chart process: `pywebview` window (Edge WebView2) showing `assets/chart.html` with the bundled Lightweight Charts; `Api.init`/`Api.bars` are called from JavaScript; `video_markers` places stance markers. Importable without pywebview |
 | `stockview.py` | `StockWindow`: price header, canvas chart with level lines, since-video table; fetches in a worker thread, refreshes every 60 s while the IDX is open |
 | `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
 | `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
@@ -83,6 +84,10 @@ AI summaries call `App.llm_complete(system, user)` in a worker thread with only 
 ## Stock price window
 
 `App.open_stock(ticker, context)` keeps one `StockWindow` per symbol (`market.symbol_for`, IDX `.JK`). `context` = `{"levels": {entry, target, stop_loss}, "videos": [{date, title, stance, prices, fallback}]}`: the Dashboard passes the clicked card's levels and the current video (its `video_date` comes from the `transcript` event's source), Market Overview passes the median levels and every video. A load fetches the 1-day quote, the selected range when it is not 1D, and (once, or on RELOAD) one year of daily bars for "since the video". Results come back through `self.result` and `poll()`; a failed refresh keeps the last good data and shows the error. Theme and language changes re-render open windows.
+
+### Candle chart (separate process)
+
+`App.open_chart(ticker, context)` writes the context (symbol, UI language, theme palette, stance colours and labels, levels, videos) to `%TEMP%/tickerquill-chart-<symbol>.json` and starts `pythonw chartview.py <file>`. A separate process is needed because Tk and pywebview each run their own GUI loop on the main thread. One process per symbol: opening it again terminates the old one; `App.destroy` terminates all of them. In the chart page, JavaScript calls `pywebview.api.bars(range)`; Python fetches through `market.py` and returns `ohlc_bars` (daily bars as `YYYY-MM-DD`, intraday as epoch seconds shifted to WIB because Lightweight Charts shows UTC), markers, a header and whether the IDX is open (the page then reloads after 60 s). Lightweight Charts v5.2.1 is inlined into the page from `assets/lightweight-charts/` (Apache 2.0; LICENSE and NOTICE kept there, attribution logo left on). If `pywebview` is not installed, `open_chart` shows how to install it; WebView2 failures are shown by the chart process in a Windows message box.
 
 ## Pages and menu
 

@@ -47,6 +47,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - **Since the video**: the move from each video's date to now, and whether its target or loss limit has been reached.
 - Data from Yahoo Finance (unofficial, IDX delayed about 15 minutes), fetched only while the window is open; refreshes every 60 s during IDX hours.
 - **[ TRADINGVIEW ]** opens the stock on TradingView.com (`IDX:<TICKER>`) for its full charting tools.
+- **[ CANDLE CHART ]** opens a TradingView-style candlestick window (TradingView Lightweight Charts™) with volume, the videos' levels as price lines and each video's stance marked on its date.
 
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
@@ -82,6 +83,7 @@ Details: [Architecture](docs/architecture.md) · [Methodology](docs/methodology.
 - **Python 3.10 or newer** with Tk (included in the standard Windows installer). Only Python 3.11 has been tested.
 - An **OpenAI-compatible LLM endpoint** and API key for the analysis step. The app was developed against a local 9router proxy (`http://localhost:20128/v1`); any endpoint that supports chat completions with streaming should work, but only 9router has been used so far. Transcription works without it.
 - Disk space for the Whisper model (`large-v3` is about 3 GB) and downloaded audio.
+- Optional, for the candle chart window: `pywebview` (in `requirements.txt`) and the Microsoft Edge WebView2 Runtime (built into Windows 11; a free download for Windows 10). The rest of the app works without them.
 - Optional: an NVIDIA GPU with CUDA for fast local transcription, or a Google account for the Colab engine (free-tier GPU availability varies).
 
 ## Installation (Windows)
@@ -266,6 +268,8 @@ collection.py       Market Overview page
 menus.py            menu bar
 market.py           Yahoo Finance prices and price-since-video calculations
 stockview.py        stock price window
+chartview.py        candle chart window (separate pywebview process)
+assets/             chart page and the bundled TradingView Lightweight Charts™ (Apache 2.0)
 dashboard.py        scrollable dashboard view (canvas)
 theme.py            colour themes and live re-colouring
 textclean.py        removes repeated-phrase hallucinations from transcripts
@@ -306,3 +310,5 @@ TickerQuill is a tool for summarising video content. Its output is **not investm
 ## License
 
 [MIT](LICENSE) © 2026 [ivanpwh](https://github.com/ivanpwh). Dependencies (faster-whisper, yt-dlp, openai and others) and the Whisper model weights are installed or downloaded separately and keep their own licenses.
+
+The candle chart uses [TradingView Lightweight Charts™](https://www.tradingview.com/lightweight-charts/) v5.2.1, Copyright © TradingView, Inc. ([tradingview.com](https://www.tradingview.com/)), bundled in `assets/lightweight-charts/` under the Apache License 2.0 (see the `LICENSE` and `NOTICE` files there). Its attribution logo stays visible on the chart. TickerQuill is not affiliated with TradingView; market data in the app comes from Yahoo Finance, not from TradingView.

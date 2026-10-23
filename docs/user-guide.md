@@ -142,6 +142,12 @@ Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock 
 - **Chart**: **1D** (today, 5-minute points), **5D** (15-minute points), **1M**, **3M** or **1Y** (daily points). The labels are the same in both languages, as on TradingView. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from Market Overview. Levels far outside the chart's range are listed under it instead.
 - **Since the video**: for each video, the close on its date (the next trading day for weekends) and the latest price, the change in %, and whether the target or loss limit has been reached since then (counting the highs and lows after the video day and the latest price). This needs the video's upload date; dates marked `*` are analysis dates (fill in upload dates on the Market Overview page), and without any date the section says so.
 
+- **[ CANDLE CHART ]** opens a TradingView-style chart in its own window (TradingView Lightweight Charts™, using the same Yahoo Finance data):
+  - Candles and volume for **1D**, **5D**, **1M**, **3M** (the default) or **1Y**; scroll to zoom, drag to pan, and the crosshair shows each bar's price.
+  - The buy price, target and loss limit are dashed price lines with labels on the price axis.
+  - Each video is a marker on its date: an up arrow for BUY, a down arrow for SELL/AVOID, a dot otherwise, labelled with the stance and date.
+  - It refreshes every 60 seconds during IDX hours. Opening the chart again for the same stock replaces the window; closing the app closes it.
+  - It needs `pywebview` and the Edge WebView2 Runtime (see the [troubleshooting](troubleshooting.md#settings-and-files) page if it does not open).
 - **[ TRADINGVIEW ]** opens the same stock on TradingView.com (`IDX:<TICKER>`) in your browser, with its full chart tools. How current its data is depends on your TradingView account. The same button is on each stock in Market Overview.
 
 Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.

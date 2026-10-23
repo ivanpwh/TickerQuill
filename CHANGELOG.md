@@ -11,6 +11,7 @@
 - New analyses also store the video's upload date and channel.
 - **Stock price window**: click a ticker on a Dashboard card, or **[ STOCK PRICE ]** in Market Overview, for the delayed Yahoo Finance price, a 1D–1Y chart with the videos' buy/target/loss-limit levels, and the move since each video with target and loss-limit hits. Refreshes every 60 s during IDX hours; prices are fetched only while the window is open. Chart ranges use TradingView's labels (1D, 5D, 1M, 3M, 1Y) in both languages.
 - **[ TRADINGVIEW ]** in the price window and on each stock in Market Overview opens the stock on TradingView.com.
+- **[ CANDLE CHART ]** in the price window: a TradingView-style candlestick window (TradingView Lightweight Charts™ v5.2.1, Apache 2.0, bundled) with volume, the videos' levels as price lines and their stances as markers; 1D–1Y; refreshes during IDX hours. Needs the new optional dependency `pywebview` and Edge WebView2.
 - Menu bar: **File**, **View**, **Job**, **Tools**, **Help**, with shortcuts (`Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+C`, `Ctrl+1`, `Ctrl+2`, `Ctrl+,`, `Esc`). Theme and language can be switched from **View**.
 - While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 

@@ -86,6 +86,12 @@ More in [colab/README.md](../colab/README.md).
 **History is empty**
 History reads `cache/`. Entries appear after a transcription finishes or is cancelled with some text.
 
+**[ CANDLE CHART ] says pywebview is missing**
+Install the requirements again (`pip install -r requirements.txt`, or `pip install pywebview`) in the same environment that runs the app, then restart it.
+
+**The candle chart window shows an error about WebView2, or nothing appears**
+The chart runs in Microsoft Edge WebView2. It is part of Windows 11; on Windows 10 install the free "WebView2 Runtime" from Microsoft. The price window (with its own simple chart) keeps working without it.
+
 **Disk space is growing**
 `work/` keeps downloaded audio and `transcripts/` keeps text copies. Delete files you no longer need; entries remain in History but a restart will download again.
 
