@@ -109,3 +109,27 @@ def test_blocks_and_text_export_contain_the_stocks():
         assert {"title", "gauge", "stock"} <= {kind for kind, _ in blocks}
         assert "BBCA" in report.blocks_to_text(blocks)
         assert "BBCA" in report.report_markdown(d, ui)
+
+
+def test_source_header_comes_first_and_is_exported():
+    d = report.compute({"stocks": [stock("BBCA")]}, "BBCA", "m")
+    d["source"] = {"title": "Saham pekan ini", "url": "https://youtu.be/abcdefghijk"}
+    blocks = report.blocks(d, "ID")
+    assert blocks[0] == ("source", {"title": "Saham pekan ini", "url": "https://youtu.be/abcdefghijk",
+                                    "line": "Sumber: https://youtu.be/abcdefghijk"})
+    assert report.blocks_to_text(blocks).startswith("# Saham pekan ini\nSumber: https://youtu.be/abcdefghijk\n")
+    assert report.report_markdown(d, "EN").startswith("# Saham pekan ini\nSource: https://youtu.be/abcdefghijk\n")
+
+
+def test_file_source_has_no_link():
+    d = report.compute({"stocks": [stock("BBCA")]}, "BBCA", "m")
+    d["source"] = {"title": "notes", "file": "notes.txt"}
+    head = report.blocks(d, "EN")[0]
+    assert head == ("source", {"title": "notes", "url": "", "line": "File: notes.txt"})
+    assert report.report_markdown(d, "ID").startswith("# notes\nBerkas: notes.txt\n")
+
+
+def test_no_source_means_no_header():
+    d = report.compute({"stocks": [stock("BBCA")]}, "BBCA", "m")
+    assert all(kind != "source" for kind, _ in report.blocks(d, "EN"))
+    assert report.report_markdown(d, "EN").startswith("## SUMMARY")

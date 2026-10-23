@@ -64,9 +64,9 @@ _T = {
     "unknown": ("tidak disebut", "not stated"),
     "trunc_warn": ("(!) Jawaban model terpotong sebelum selesai. Yang berhasil dibaca ditampilkan ({n} saham); "
                    "saham terakhir{l} mungkin tidak lengkap dan saham sesudahnya tidak ikut terbaca. "
-                   "Tekan ANALISIS lagi (transkrip dipakai ulang dari cache) atau pilih model lain untuk hasil lengkap.",
+                   "Tekan [ PROSES ] lagi (transkrip dipakai ulang dari cache) atau pilih model lain untuk hasil lengkap.",
                    "(!) The model's reply was cut off before it finished. What could be read is shown ({n} stocks); "
-                   "the last stock{l} may be incomplete and any after it were not read. Press ANALYZE again "
+                   "the last stock{l} may be incomplete and any after it were not read. Press [ RUN ] again "
                    "(the transcript is reused from cache) or pick another model for a complete result."),
     "trunc_stock": ("(!) Data saham ini terpotong dari jawaban model dan mungkin tidak lengkap.",
                     "(!) This stock's data was cut off in the model's reply and may be incomplete."),
@@ -174,6 +174,7 @@ _T = {
 
     "md_h_summary": ("RINGKASAN", "SUMMARY"), "md_h_stocks": ("SAHAM YANG DIBAHAS", "STOCKS DISCUSSED"),
     "md_h_market": ("PREDIKSI PASAR / IHSG", "MARKET OUTLOOK"), "md_h_risks": ("RISIKO & CATATAN", "RISKS & NOTES"),
+    "src_label": ("Sumber", "Source"), "src_file": ("Berkas", "File"),
     "md_disclaimer": ("Ini rangkuman isi video, bukan nasihat investasi.",
                       "This is a summary of the video content, not investment advice."),
 }
@@ -373,11 +374,24 @@ def advice(d, ui):
     return out + [t(ui, "a_size"), t(ui, "a_time"), t(ui, "a_pro")]
 
 
+def source_header(d, ui):
+    """Blok judul + sumber (link video atau nama berkas), atau None bila data tidak membawa sumber."""
+    src = d.get("source")
+    if not src:
+        return None
+    url = src.get("url") or ""
+    line = f"{t(ui, 'src_label')}: {url}" if url else f"{t(ui, 'src_file')}: {src.get('file') or src['title']}"
+    return {"title": src["title"], "url": url, "line": line}
+
+
 def blocks(d, ui):
     """Daftar blok tampilan netral-UI; dipakai oleh DashboardView dan ekspor teks."""
     rep, stocks = d["report"], d["stocks"]
     pct = lambda x: f"{x:.0f}"
     b = []
+    head = source_header(d, ui)
+    if head:
+        b.append(("source", head))
     if d.get("truncated"):
         last = next((s["ticker"] for s in stocks if s["truncated"]), "")
         b.append(("warn", t(ui, "trunc_warn", n=len(stocks), l=f" ({last})" if last else "")))
@@ -462,7 +476,9 @@ def blocks(d, ui):
 def blocks_to_text(bl):
     lines = []
     for kind, v in bl:
-        if kind == "title":
+        if kind == "source":
+            lines += [f"# {v['title']}", v["line"]]
+        elif kind == "title":
             lines += ["", "## " + v]
         elif kind == "method_h":
             lines += ["", "**" + v + "**"]
@@ -487,7 +503,9 @@ def blocks_to_text(bl):
 
 def report_markdown(d, ui):
     rep = d["report"]
-    out = [f"## {t(ui, 'md_h_summary')}", rep["summary"], f"## {t(ui, 'md_h_stocks')}"]
+    head = source_header(d, ui)
+    out = [f"# {head['title']}", head["line"], ""] if head else []
+    out += [f"## {t(ui, 'md_h_summary')}", rep["summary"], f"## {t(ui, 'md_h_stocks')}"]
     for s in d["stocks"]:
         out.append(f"### {s['ticker']} - {t(ui, 'stance_' + s['stance'])}" + (f" ({s['name']})" if s["name"] else ""))
         if s["reason"]:
