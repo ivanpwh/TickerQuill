@@ -1,7 +1,7 @@
 """Jendela harga saham: harga terakhir, grafik dengan level dari video, dan pergerakan sejak tiap video.
 
 Data dari market.py (Yahoo Finance, tertunda ±15 menit), diambil di thread dan diperbarui tiap 60 detik selama bursa
-buka. Konteks (level yang digambar, daftar video) diberikan oleh pembuka: kartu Dashboard atau halaman KOLEKSI.
+buka. Konteks (level yang digambar, daftar video) diberikan oleh pembuka: kartu Dashboard atau halaman RINGKASAN PASAR.
 """
 import threading
 import tkinter as tk
@@ -37,8 +37,8 @@ _T = {
     "c_move": ("SAAT VIDEO -> SEKARANG", "AT VIDEO -> NOW"), "c_target": ("TARGET", "TARGET"),
     "c_stop": ("BATAS RUGI", "LOSS LIMIT"),
     "hit": ("tersentuh", "hit"), "safe": ("aman", "not hit"), "no_since": ("belum ada data", "no data yet"),
-    "no_dates": ("Tanggal video belum diketahui, jadi pergerakan sejak video tidak bisa dihitung. Lengkapi tanggal di halaman KOLEKSI.",
-                 "The video date is unknown, so the move since the video cannot be computed. Fill in dates on the COLLECTION page."),
+    "no_dates": ("Tanggal video belum diketahui, jadi pergerakan sejak video tidak bisa dihitung. Lengkapi tanggal di halaman RINGKASAN PASAR.",
+                 "The video date is unknown, so the move since the video cannot be computed. Fill in dates on the MARKET OVERVIEW page."),
     "fallback": ("* tanggal analisis (tanggal upload belum ada)", "* analysis date (no upload date yet)"),
     "disclaimer": ("! Harga dari Yahoo Finance (tidak resmi, tertunda ±15 menit). Bukan nasihat investasi.",
                    "! Prices from Yahoo Finance (unofficial, delayed about 15 min). Not investment advice."),

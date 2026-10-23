@@ -1,4 +1,4 @@
-"""Arsip analisis (folder analyses/) dan perhitungan lintas video untuk halaman KOLEKSI. Tanpa Tk.
+"""Arsip analisis (folder analyses/) dan perhitungan lintas video untuk halaman RINGKASAN PASAR. Tanpa Tk.
 
 Satu berkas JSON per analisis. Dashboard gabungan memakai analisis terbaru per video; semua angka dihitung di sini.
 """
@@ -90,7 +90,7 @@ def delete_video(folder, vid):
 
 def import_entries(folder, entries):
     """Impor sekali dari cache. entries: (path entri cache, meta berisi 'analysis' dan 'transcript').
-    Setelah itu penanda ditulis, jadi video yang dihapus dari KOLEKSI tidak muncul lagi."""
+    Setelah itu penanda ditulis, jadi video yang dihapus dari RINGKASAN PASAR tidak muncul lagi."""
     folder = Path(folder)
     if (folder / MARKER).exists():
         return 0

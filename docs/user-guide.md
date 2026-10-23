@@ -10,7 +10,7 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 4. [Pause, cancel and resume](#4-pause-cancel-and-resume)
 5. [Using your own transcript](#5-using-your-own-transcript)
 6. [History](#6-history)
-6b. [Collection](#6b-collection)
+6b. [Market Overview](#6b-market-overview)
 6c. [Stock price window](#6c-stock-price-window)
 7. [Reading the results](#7-reading-the-results)
 8. [Copy and save](#8-copy-and-save)
@@ -21,13 +21,14 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 
 ## Menus and pages
 
-The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Collection** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
+The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Market Overview** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`; **Market Overview** is also an item directly on the menu bar. Once you have saved analyses, the app opens on Market Overview; before that it opens on Analysis. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
-| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Collection `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
+| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
 
@@ -106,15 +107,15 @@ Selecting an item shows its full title and video link under the list. **[ OPEN L
 
 History can be browsed while a job is running; choosing an item then shows "A job is already running." in red and stays on the page. The list reloads whenever the page is opened and when a job ends.
 
-## 6b. Collection
+## 6b. Market Overview
 
-The **Collection** page (**View > Collection**, `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
+The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **Market Overview** on the menu bar, or `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
 
 **Dates.** Videos are grouped by their **upload date**. New analyses record it automatically. Analyses made before this version (and transcript files) have no upload date yet: they use the analysis date and are marked `*`. **[ FILL IN VIDEO DATES ]** fetches the missing upload dates and channel names with yt-dlp (metadata only, no download); videos that cannot be reached are counted as failed and can be tried again later.
 
 **Left side.** The date list (all dates, then newest first, with the number of videos) and the stocks discussed in the selected date range (number of videos, `!` when the videos disagree). Type in **FIND>** to filter.
 
-**All dates.** Most-discussed stocks (videos, consensus, how many videos agree, `! SPLIT` for disagreement), the market tone per date (average tone score of that day's videos, −1 to +1), and the list of videos. Click a video title to open it on the Analysis page, **[ DELETE ]** to remove it from the Collection (its transcript stays in History).
+**All dates.** Most-discussed stocks (videos, consensus, how many videos agree, `! SPLIT` for disagreement), the market tone per date (average tone score of that day's videos, −1 to +1), and the list of videos. Click a video title to open it on the Analysis page, **[ DELETE ]** to remove it from Market Overview (its transcript stays in History).
 
 **One date.** That day's videos, the AI summary for the day, and a table of stocks discussed in more than one video that day: one stance badge per video, the consensus and the range of targets mentioned. Stocks mentioned in only one video are listed on one line.
 
@@ -134,12 +135,12 @@ The **Collection** page (**View > Collection**, `Ctrl+3`) gathers every analysis
 
 ## 6c. Stock price window
 
-Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock in the Collection, to open its price window. Each symbol gets one window; several can be open at once.
+Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock in Market Overview, to open its price window. Each symbol gets one window; several can be open at once.
 
 - **Source**: Yahoo Finance, fetched only while a price window is open. It is unofficial and IDX prices are **delayed by about 15 minutes**. The ticker gets the `.JK` suffix (IDX). If the ticker was misheard, correct it in **SYMBOL>** and press **[ GO ]**; an unknown symbol is reported as not found.
 - **Header**: last price, change from the previous close, day high/low, volume, the update time (WIB) and whether the IDX is open. While it is open (Mon–Fri 09:00–16:15 WIB) the window refreshes every 60 seconds; otherwise press **[ RELOAD ]**.
-- **Chart**: 1D, 5D, 1M, 3M or 1Y. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from the Collection. Levels far outside the chart's range are listed under it instead.
-- **Since the video**: for each video, the close on its date (the next trading day for weekends) and the latest price, the change in %, and whether the target or loss limit has been reached since then (counting the highs and lows after the video day and the latest price). This needs the video's upload date; dates marked `*` are analysis dates (fill in upload dates on the Collection page), and without any date the section says so.
+- **Chart**: 1D, 5D, 1M, 3M or 1Y. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from Market Overview. Levels far outside the chart's range are listed under it instead.
+- **Since the video**: for each video, the close on its date (the next trading day for weekends) and the latest price, the change in %, and whether the target or loss limit has been reached since then (counting the highs and lows after the video day and the latest price). This needs the video's upload date; dates marked `*` are analysis dates (fill in upload dates on the Market Overview page), and without any date the section says so.
 
 Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.
 

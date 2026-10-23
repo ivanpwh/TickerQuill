@@ -62,7 +62,7 @@ cache/<video id>.<lang>.partial.json    checkpoint
 transcripts/<title>-<video id>.txt      plain text copy
 work/<video id>.<ext>                   downloaded audio
 work/upload/<video id>.ogg              compressed audio for Colab (deleted on success)
-analyses/<YYYYMMDD-HHMMSS>-<vid>.json   one archived analysis (Collection)
+analyses/<YYYYMMDD-HHMMSS>-<vid>.json   one archived analysis (Market Overview)
 analyses/.imported                      marker: old cache analyses were imported once
 analyses/ai/<kind>-<key>-<hash>.json    saved AI summary (kind = ticker or date)
 ```
@@ -74,15 +74,15 @@ Transcripts opened with OPEN FILE are registered as `cache/file-<sha1 of the cle
 Finished cache JSON: `title, url, vid, lang, whisper_model, duration, created, transcript`, plus `video_date` and `channel` when yt-dlp provided them, and `analysis` / `analysis_model` once analysed.
 Checkpoint JSON: the same without `transcript`, plus `lines` (timestamped lines so far) and `done_until` (seconds). A checkpoint is written every 10 segments and whenever a job is cancelled or fails with some text. `list_history()` reads this folder; there is no separate database.
 
-## Collection
+## Market Overview (code name: collection)
 
-`Pipeline.save_analysis` writes the analysis into the cache entry and, through `archive.build_record`, an archive record with the video metadata, the raw reply and a compact per-stock summary (stance, share, level texts, parsed prices, reason, confidence, doubtful). The Collection page loads records through `App.collection_records()`, which imports cache analyses once (marker file) so deleting a video from the Collection is permanent. Records are reduced to the latest per video before any calculation. The effective date is `video_date`, else the analysis date (marked). `App.fill_video_dates` runs yt-dlp metadata calls in a worker thread and updates both the archive and the cache.
+`Pipeline.save_analysis` writes the analysis into the cache entry and, through `archive.build_record`, an archive record with the video metadata, the raw reply and a compact per-stock summary (stance, share, level texts, parsed prices, reason, confidence, doubtful). The Market Overview page (`CollectionPage`, page key `collection`) loads records through `App.collection_records()`, which imports cache analyses once (marker file) so deleting a video from Market Overview is permanent. Records are reduced to the latest per video before any calculation. The effective date is `video_date`, else the analysis date (marked). `App.fill_video_dates` runs yt-dlp metadata calls in a worker thread and updates both the archive and the cache.
 
 AI summaries call `App.llm_complete(system, user)` in a worker thread with only the extracted data as input. The cache key hashes the ids of the records used plus the UI language, so a new analysis makes the stored summary stale (still shown, with an update button) instead of silently reusing it.
 
 ## Stock price window
 
-`App.open_stock(ticker, context)` keeps one `StockWindow` per symbol (`market.symbol_for`, IDX `.JK`). `context` = `{"levels": {entry, target, stop_loss}, "videos": [{date, title, stance, prices, fallback}]}`: the Dashboard passes the clicked card's levels and the current video (its `video_date` comes from the `transcript` event's source), the Collection passes the median levels and every video. A load fetches the 1-day quote, the selected range when it is not 1D, and (once, or on RELOAD) one year of daily bars for "since the video". Results come back through `self.result` and `poll()`; a failed refresh keeps the last good data and shows the error. Theme and language changes re-render open windows.
+`App.open_stock(ticker, context)` keeps one `StockWindow` per symbol (`market.symbol_for`, IDX `.JK`). `context` = `{"levels": {entry, target, stop_loss}, "videos": [{date, title, stance, prices, fallback}]}`: the Dashboard passes the clicked card's levels and the current video (its `video_date` comes from the `transcript` event's source), Market Overview passes the median levels and every video. A load fetches the 1-day quote, the selected range when it is not 1D, and (once, or on RELOAD) one year of daily bars for "since the video". Results come back through `self.result` and `poll()`; a failed refresh keeps the last good data and shows the error. Theme and language changes re-render open windows.
 
 ## Pages and menu
 

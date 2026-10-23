@@ -177,7 +177,7 @@ STR = {
         "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
         "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
-        "page_analysis": "ANALISIS", "page_history": "RIWAYAT", "page_collection": "KOLEKSI",
+        "page_analysis": "ANALISIS", "page_history": "RIWAYAT", "page_collection": "RINGKASAN PASAR", "m_overview": "Ringkasan Pasar",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
                     "pilihan lain ke settings.json. Kosongkan kolom teks untuk kembali ke nilai bawaan.",
         "set_tab_general": "UMUM", "set_tab_trans": "TRANSKRIPSI", "set_tab_llm": "ANALISIS (LLM)",
@@ -257,7 +257,7 @@ STR = {
         "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
         "mi_guide": "User guide", "mi_about": "About TickerQuill",
         "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
-        "page_analysis": "ANALYSIS", "page_history": "HISTORY", "page_collection": "COLLECTION",
+        "page_analysis": "ANALYSIS", "page_history": "HISTORY", "page_collection": "MARKET OVERVIEW", "m_overview": "Market Overview",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
                     "other choices go to settings.json. Clear a text field to fall back to its default.",
         "set_tab_general": "GENERAL", "set_tab_trans": "TRANSCRIPTION", "set_tab_llm": "ANALYSIS (LLM)",
@@ -661,7 +661,7 @@ class Pipeline:
             return None
 
     def save_analysis(self, raw, finish, transcript=""):
-        """Simpan analisis yang selesai di entri transkrip (riwayat tanpa LLM) dan sebagai rekaman arsip (KOLEKSI)."""
+        """Simpan analisis yang selesai di entri transkrip (riwayat tanpa LLM) dan sebagai rekaman arsip (RINGKASAN PASAR)."""
         if not self.done_path or not self.done_path.exists() or not raw.strip() or str(finish).startswith("error"):
             return
         try:
@@ -867,6 +867,7 @@ class App(tk.Tk):
         self.build()
         self.menubar = MenuBar(self, UI_LANGS)
         self.apply_lang()
+        self.start_page()
         self.after(100, self.poll)
         self.after(500, self.tick_cursor)
 
@@ -1098,6 +1099,12 @@ class App(tk.Tk):
         self.update_export_labels()
         self.refresh_menu()
 
+    def start_page(self):
+        """Halaman pertama: RINGKASAN PASAR bila sudah ada analisis tersimpan, selain itu ANALISIS."""
+        self.show_page("collection")
+        if not self.pages["collection"].records:
+            self.show_page("analysis")
+
     def show_tab(self, name):
         """Dari menu Lihat: buka halaman ANALISIS pada tab hasil tertentu."""
         self.show_page("analysis")
@@ -1285,7 +1292,7 @@ class App(tk.Tk):
         return archive.load_records(ARCHIVE)
 
     def open_record(self, rec):
-        """Buka video dari KOLEKSI lewat entri riwayatnya: 'ok', 'busy', atau 'missing'."""
+        """Buka video dari RINGKASAN PASAR lewat entri riwayatnya: 'ok', 'busy', atau 'missing'."""
         it = next((it for it in list_history() if it["path"].name == rec.get("entry")), None)
         if it is None:
             return "missing"
@@ -1318,7 +1325,7 @@ class App(tk.Tk):
         return ok, failed
 
     def llm_complete(self, system, user):
-        """Satu permintaan chat (streaming dikumpulkan) untuk ringkasan KOLEKSI. Dipanggil dari thread pekerja."""
+        """Satu permintaan chat (streaming dikumpulkan) untuk ringkasan AI di RINGKASAN PASAR. Dipanggil dari thread pekerja."""
         from openai import OpenAI
 
         client = OpenAI(base_url=setting("NINEROUTER_BASE_URL", NINEROUTER_URL), api_key=setting("NINEROUTER_API_KEY"))

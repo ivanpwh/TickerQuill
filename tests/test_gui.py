@@ -513,3 +513,22 @@ def test_dashboard_ticker_opens_the_price_window_with_its_levels(root, monkeypat
     [(ticker, ctx)] = opened
     assert ticker == "BBCA" and ctx["levels"] == {"entry": 9000.0, "target": 9500.0, "stop_loss": 8800.0}
     assert ctx["videos"][0]["date"] == "2026-10-21" and ctx["videos"][0]["stance"] == "BUY"
+
+
+def test_market_overview_is_on_the_menu_bar_and_is_the_start_page(collection, root):
+    import archive
+
+    bar = root.menubar.bar
+    labels = [bar.entrycget(i, "label") for i in range(bar.index("end") + 1)]
+    i = labels.index(root.tr("m_overview"))
+    assert bar.type(i) == "command"  # one click, no submenu
+    root.show_page("analysis")
+    bar.invoke(i)
+    assert root.page == "collection" and root.page_lbl.cget("text").endswith(root.tr("page_collection"))
+    root.show_page("analysis")
+    root.start_page()
+    assert root.page == "collection"  # saved analyses exist
+    for rec in collection.records:
+        archive.delete_video(app.ARCHIVE, rec["vid"])
+    root.start_page()
+    assert root.page == "analysis"  # nothing to show yet

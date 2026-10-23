@@ -1,4 +1,4 @@
-"""Halaman KOLEKSI: semua analisis tersimpan, dikelompokkan per tanggal video, dan perbandingan emiten lintas video.
+"""Halaman RINGKASAN PASAR: semua analisis tersimpan, dikelompokkan per tanggal video, dan perbandingan emiten lintas video.
 
 Angka dari archive.py; ringkasan AI hanya saat tombolnya ditekan, lalu disimpan. Bicara dengan aplikasi hanya lewat
 method App (collection_records, archive_dir, fill_video_dates, open_record, llm_ready, llm_complete, button, tr).
@@ -40,8 +40,8 @@ _T = {
     "c_source": ("SUMBER", "SOURCE"), "c_stance": ("SIKAP", "STANCE"), "c_levels": ("LEVEL HARGA", "PRICE LEVELS"),
     "c_conf": ("YAKIN", "CONF."), "c_tone": ("NADA", "TONE"), "c_per_video": ("SIKAP PER VIDEO", "STANCE PER VIDEO"),
     "disagree": ("! BEDA", "! SPLIT"), "delete": ("[ HAPUS ]", "[ DELETE ]"),
-    "del_q": ("Hapus video ini dari KOLEKSI (semua versi analisisnya)? Transkrip di Riwayat tidak ikut terhapus.",
-              "Remove this video from the COLLECTION (all its analysis versions)? The transcript in History is kept."),
+    "del_q": ("Hapus video ini dari RINGKASAN PASAR (semua versi analisisnya)? Transkrip di Riwayat tidak ikut terhapus.",
+              "Remove this video from the MARKET OVERVIEW (all its analysis versions)? The transcript in History is kept."),
     "missing_entry": ("Transkrip video ini sudah tidak ada di Riwayat, jadi hasilnya tidak bisa dibuka di halaman ANALISIS.",
                       "This video's transcript is no longer in History, so it cannot be opened on the ANALYSIS page."),
     "back": ("‹ kembali", "‹ back"),

@@ -36,14 +36,14 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - A page (**View > History**, `Ctrl+2`) listing every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
 - The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
-**Collection** (combined dashboard)
-- A page (**View > Collection**, `Ctrl+3`) with every analysis, grouped by the video's upload date (latest analysis per video).
+**Market Overview** (combined dashboard)
+- The start page once you have analyses (**Market Overview** on the menu bar, `Ctrl+3`), with every analysis, grouped by the video's upload date (latest analysis per video).
 - Per stock across videos: consensus, disagreement flag, timeline, combined price zone with reward:risk from the medians, changes of view, reliability.
 - Per date: the stocks several videos discussed that day, side by side. Overall: most-discussed stocks and market tone per date.
 - Optional AI summary per stock or per date, made from the extracted data only and saved.
 
 **Stock price window**
-- Click a ticker (Dashboard card or Collection) for its price, change, day range and volume, and a 1D–1Y chart with the videos' buy, target and loss-limit levels drawn in.
+- Click a ticker (Dashboard card or Market Overview) for its price, change, day range and volume, and a 1D–1Y chart with the videos' buy, target and loss-limit levels drawn in.
 - **Since the video**: the move from each video's date to now, and whether its target or loss limit has been reached.
 - Data from Yahoo Finance (unofficial, IDX delayed about 15 minutes), fetched only while the window is open; refreshes every 60 s during IDX hours.
 
@@ -116,13 +116,14 @@ Full walkthrough: [User guide](docs/user-guide.md).
 
 ## Main window
 
-The window has three pages, **Analysis**, **History** and **Collection**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`). Settings open in a separate dialog.
+The window has three pages, **Analysis**, **History** and **Market Overview**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); **Market Overview** is also a one-click item on the menu bar and the start page once you have analyses. Settings open in a separate dialog.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
-| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Collection `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
+| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
 
@@ -236,7 +237,7 @@ More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.m
 | `work/` | Downloaded audio (kept so a resumed job does not download again; delete it to free space) |
 | `cache/` | One JSON per video + language: finished transcripts and resumable checkpoints (this is what History lists) |
 | `transcripts/` | A plain `.txt` copy of every finished transcript |
-| `analyses/` | One JSON per analysis for the Collection page, plus saved AI summaries in `analyses/ai/` |
+| `analyses/` | One JSON per analysis for the Market Overview page, plus saved AI summaries in `analyses/ai/` |
 | `.env` | Endpoint, API key and defaults |
 | `settings.json` | Theme, Whisper model, engine, Colab connection, last LLM model |
 
@@ -259,8 +260,8 @@ macOS and Linux have **not been tested**. The code is plain Python/Tk, so it may
 ```
 app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history
 report.py           parsing of the LLM reply, all calculations, tips, dashboard blocks
-archive.py          analysis archive and cross-video calculations (Collection)
-collection.py       Collection page
+archive.py          analysis archive and cross-video calculations (Market Overview)
+collection.py       Market Overview page
 menus.py            menu bar
 market.py           Yahoo Finance prices and price-since-video calculations
 stockview.py        stock price window

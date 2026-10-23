@@ -35,7 +35,7 @@ class MenuBar:
                  ("<Control-Key-1>",))
         self.add(m, lambda: tr("page_history").capitalize(), lambda: a.show_page("history"), "Ctrl+2",
                  ("<Control-Key-2>",))
-        self.add(m, lambda: tr("page_collection").capitalize(), lambda: a.show_page("collection"), "Ctrl+3",
+        self.add(m, lambda: tr("m_overview"), lambda: a.show_page("collection"), "Ctrl+3",
                  ("<Control-Key-3>",))
         m.add_separator()
         for pane, key in (("DASHBOARD", "tab_dash"), ("ANALISIS", "analysis_tab"), ("TRANSKRIP", "transcript_tab")):
@@ -55,6 +55,9 @@ class MenuBar:
         self.add(m, lambda: plain(a.pause_btn.cget("text")), a.toggle_pause, "",
                  (), lambda: a.pause_btn.cget("state") == "normal")
         self.add(m, lambda: plain(tr("cancel")), a.stop, "Esc", ("<Escape>",), a.busy)
+
+        # langsung di menu bar: satu klik membuka halaman RINGKASAN PASAR (Ctrl+3 di-bind lewat menu Lihat)
+        self.add(self.bar, lambda: tr("m_overview"), lambda: a.show_page("collection"))
 
         m = self.cascade(self.bar, "m_tools")
         self.add(m, lambda: tr("set_title") + "…", a.open_settings, "Ctrl+,", ("<Control-comma>",))
