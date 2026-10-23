@@ -117,3 +117,10 @@ def test_since_handles_weekends_missing_levels_and_future_dates():
     same_day = market.since(pts, "2026-10-23", {"target": 2100.0, "stop_loss": 2300.0})
     assert same_day["target_hit"] is True and same_day["stop_hit"] is True  # the latest price already passed both
     assert market.since(pts, "", {}) is None
+
+
+@pytest.mark.parametrize("symbol, expected", [
+    ("TLKM.JK", "IDX%3ATLKM"), ("tlkm", "IDX%3ATLKM"), ("AAPL.US", "AAPL"),
+])
+def test_tradingview_url_uses_the_idx_prefix(symbol, expected):
+    assert market.tradingview_url(symbol) == f"https://www.tradingview.com/chart/?symbol={expected}"

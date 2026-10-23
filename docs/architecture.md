@@ -10,7 +10,7 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 | `report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
 | `archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
 | `collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
-| `market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `since` (move and target/stop hits since a video date). No Tk |
+| `market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `tradingview_url` (`IDX:<TICKER>` chart link), `since` (move and target/stop hits since a video date). No Tk |
 | `stockview.py` | `StockWindow`: price header, canvas chart with level lines, since-video table; fetches in a worker thread, refreshes every 60 s while the IDX is open |
 | `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
 | `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |

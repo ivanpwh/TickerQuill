@@ -29,7 +29,7 @@ Click a stock (on the Dashboard or in the Collection) to see its current price a
 ## 2. The window (`stockview.py`)
 
 ```
-SIMBOL> [TLKM.JK ] [ CARI ]   [1H] [5H] [1B] [3B] [1T]          [ MUAT ULANG ]
+SIMBOL> [TLKM.JK ] [ CARI ] [ TRADINGVIEW ]   [1D] [5D] [1M] [3M] [1Y]   [ MUAT ULANG ]
 TLKM.JK  Telkom Indonesia (Persero) Tbk.
 2.240   +40 (+1,82%)        tinggi 2.250 · rendah 2.160 · volume 238,9 jt
 update 23/10 15:14 WIB · tertunda ±15 menit (Yahoo Finance) · bursa buka, otomatis tiap 60 detik

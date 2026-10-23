@@ -46,6 +46,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - Click a ticker (Dashboard card or Market Overview) for its price, change, day range and volume, and a 1D–1Y chart with the videos' buy, target and loss-limit levels drawn in.
 - **Since the video**: the move from each video's date to now, and whether its target or loss limit has been reached.
 - Data from Yahoo Finance (unofficial, IDX delayed about 15 minutes), fetched only while the window is open; refreshes every 60 s during IDX hours.
+- **[ TRADINGVIEW ]** opens the stock on TradingView.com (`IDX:<TICKER>`) for its full charting tools.
 
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.

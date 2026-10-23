@@ -8,6 +8,7 @@ import tkinter as tk
 
 import market
 import report
+from dashboard import open_url
 from theme import FONT, FONT_B, FONT_BIG, T, mix
 
 REFRESH_MS = 60_000
@@ -15,8 +16,6 @@ LEVEL_ROLES = {"entry": "AMBER", "target": "GOOD", "stop_loss": "RED"}
 _T = {
     "title": ("Harga {s}", "{s} price"), "symbol": ("SIMBOL>", "SYMBOL>"), "go": ("[ CARI ]", "[ GO ]"),
     "reload": ("[ MUAT ULANG ]", "[ RELOAD ]"),
-    "range_1D": ("1H", "1D"), "range_5D": ("5H", "5D"), "range_1M": ("1B", "1M"), "range_3M": ("3B", "3M"),
-    "range_1Y": ("1T", "1Y"),
     "loading": ("Memuat harga {s}...", "Loading {s}..."),
     "stats": ("tinggi {h} · rendah {l} · volume {v}", "high {h} · low {l} · volume {v}"),
     "time": ("update {t} WIB · tertunda ±15 menit (Yahoo Finance) · {state}",
@@ -76,11 +75,12 @@ class StockWindow(tk.Toplevel):
         entry.bind("<Return>", lambda e: self.change_symbol())
         self.go_btn = app.button(top, "", self.change_symbol)
         self.go_btn.pack(side="left")
+        app.button(top, "[ TRADINGVIEW ]", self.open_tradingview).pack(side="left", padx=(6, 0))
         self.reload_btn = app.button(top, "", lambda: self.load(full=True))
         self.reload_btn.pack(side="right")
         self.range_btns = {}
-        for key in reversed(list(market.RANGES)):
-            b = app.button(top, "", lambda k=key: self.set_range(k))
+        for key in reversed(list(market.RANGES)):  # 1D 5D 1M 3M 1Y: konvensi TradingView di kedua bahasa
+            b = app.button(top, f"[ {key} ]", lambda k=key: self.set_range(k))
             b.pack(side="right", padx=(0, 4))
             self.range_btns[key] = b
 
@@ -133,8 +133,6 @@ class StockWindow(tk.Toplevel):
         self.symbol_lbl.config(text=t(self.ui, "symbol"))
         self.go_btn.config(text=t(self.ui, "go"))
         self.reload_btn.config(text=t(self.ui, "reload"))
-        for key, b in self.range_btns.items():
-            b.config(text=f"[ {t(self.ui, 'range_' + key)} ]")
         self.app.mark_tabs(self.range_btns, self.range)
         self.disclaimer_lbl.config(text=t(self.ui, "disclaimer"))
         self.render()
@@ -150,6 +148,9 @@ class StockWindow(tk.Toplevel):
         self.range = key
         self.app.mark_tabs(self.range_btns, key)
         self.load()
+
+    def open_tradingview(self):
+        open_url(market.tradingview_url(self.symbol))
 
     def change_symbol(self):
         symbol = market.symbol_for(self.symbol_var.get())

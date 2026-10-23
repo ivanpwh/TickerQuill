@@ -10,8 +10,9 @@ from datetime import datetime
 from tkinter import messagebox
 
 import archive
+import market
 import report
-from dashboard import DashboardView, stance_color
+from dashboard import DashboardView, open_url, stance_color
 from theme import FONT, FONT_B, T
 
 _T = {
@@ -391,7 +392,8 @@ class CollectionPage(tk.Frame):
                             p=c["agreement"])))
         if archive.conflict(vs):
             b.append(("warn", t(ui, "conflict")))
-        b.append(("actions", [(t(ui, "price_btn"), lambda: self.open_price(ticker, vs), True)]))
+        b.append(("actions", [(t(ui, "price_btn"), lambda: self.open_price(ticker, vs), True),
+                              ("[ TRADINGVIEW ]", lambda: open_url(market.tradingview_url(ticker)), True)]))
         used = [r for r in recs if any(s["ticker"] == ticker for s in r["stocks"])]
         b += self.ai_blocks("ticker", ticker, used, self.ticker_payload(vs))
 

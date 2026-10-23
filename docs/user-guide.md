@@ -139,8 +139,10 @@ Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock 
 
 - **Source**: Yahoo Finance, fetched only while a price window is open. It is unofficial and IDX prices are **delayed by about 15 minutes**. The ticker gets the `.JK` suffix (IDX). If the ticker was misheard, correct it in **SYMBOL>** and press **[ GO ]**; an unknown symbol is reported as not found.
 - **Header**: last price, change from the previous close, day high/low, volume, the update time (WIB) and whether the IDX is open. While it is open (Mon–Fri 09:00–16:15 WIB) the window refreshes every 60 seconds; otherwise press **[ RELOAD ]**.
-- **Chart**: 1D, 5D, 1M, 3M or 1Y. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from Market Overview. Levels far outside the chart's range are listed under it instead.
+- **Chart**: **1D** (today, 5-minute points), **5D** (15-minute points), **1M**, **3M** or **1Y** (daily points). The labels are the same in both languages, as on TradingView. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from Market Overview. Levels far outside the chart's range are listed under it instead.
 - **Since the video**: for each video, the close on its date (the next trading day for weekends) and the latest price, the change in %, and whether the target or loss limit has been reached since then (counting the highs and lows after the video day and the latest price). This needs the video's upload date; dates marked `*` are analysis dates (fill in upload dates on the Market Overview page), and without any date the section says so.
+
+- **[ TRADINGVIEW ]** opens the same stock on TradingView.com (`IDX:<TICKER>`) in your browser, with its full chart tools. How current its data is depends on your TradingView account. The same button is on each stock in Market Overview.
 
 Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.
 

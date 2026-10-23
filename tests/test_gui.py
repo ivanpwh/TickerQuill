@@ -532,3 +532,31 @@ def test_market_overview_is_on_the_menu_bar_and_is_the_start_page(collection, ro
         archive.delete_video(app.ARCHIVE, rec["vid"])
     root.start_page()
     assert root.page == "analysis"  # nothing to show yet
+
+
+def test_price_window_uses_international_ranges_and_opens_tradingview(root, fake_market, monkeypatch):
+    import stockview
+
+    opened = []
+    monkeypatch.setattr(stockview, "open_url", opened.append)
+    w = root.open_stock("TLKM", {})
+    try:
+        wait_loaded(root, w)
+        assert [b.cget("text") for b in w.range_btns.values()] == ["[ 1Y ]", "[ 3M ]", "[ 1M ]", "[ 5D ]", "[ 1D ]"]
+        button = next(x for x in all_widgets(w) if isinstance(x, tk.Button) and x.cget("text") == "[ TRADINGVIEW ]")
+        button.invoke()
+        assert opened == ["https://www.tradingview.com/chart/?symbol=IDX%3ATLKM"]
+    finally:
+        w.close()
+
+
+def test_overview_stock_detail_links_to_tradingview(collection, monkeypatch):
+    import collection as col
+
+    opened = []
+    monkeypatch.setattr(col, "open_url", opened.append)
+    collection.select_ticker("TLKM")
+    button = next(x for x in all_widgets(collection.view.inner)
+                  if isinstance(x, tk.Button) and x.cget("text") == "[ TRADINGVIEW ]")
+    button.invoke()
+    assert opened == ["https://www.tradingview.com/chart/?symbol=IDX%3ATLKM"]

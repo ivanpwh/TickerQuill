@@ -9,6 +9,7 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 
 CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range={range}&interval={interval}"
+TRADINGVIEW_URL = "https://www.tradingview.com/chart/?symbol={symbol}"
 SUFFIX = ".JK"  # Bursa Efek Indonesia
 WIB = timezone(timedelta(hours=7))
 RANGES = {"1D": ("1d", "5m"), "5D": ("5d", "15m"), "1M": ("1mo", "1d"), "3M": ("3mo", "1d"), "1Y": ("1y", "1d")}
@@ -26,6 +27,13 @@ class MarketError(Exception):
 def symbol_for(ticker):
     t = (ticker or "").strip().upper()
     return t if "." in t else t + SUFFIX
+
+
+def tradingview_url(symbol):
+    """Grafik di TradingView.com: 'TLKM.JK' (atau 'TLKM') -> IDX:TLKM; simbol bursa lain tanpa akhirannya."""
+    base, dot, suffix = (symbol or "").strip().upper().partition(".")
+    tv = f"IDX:{base}" if not dot or "." + suffix == SUFFIX else base
+    return TRADINGVIEW_URL.format(symbol=urllib.parse.quote(tv, safe=""))
 
 
 def fetch_chart(symbol, rng="1d", interval="5m", timeout=15):
