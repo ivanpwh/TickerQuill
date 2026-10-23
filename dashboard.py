@@ -33,6 +33,7 @@ class DashboardView(tk.Frame):
         self.inner = tk.Frame(self.canvas, bg=T.BG)
         self.win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.wrap_labels = []
+        self.on_ticker = None  # opsional: klik ticker di kartu saham (jendela harga)
         self.inner.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.bind("<Configure>", self.on_resize)
         self.canvas.bind("<Enter>", lambda e: self.canvas.bind_all("<MouseWheel>", self.on_wheel))
@@ -143,7 +144,11 @@ class DashboardView(tk.Frame):
         pad.pack(fill="x", padx=10, pady=8)
         head = tk.Frame(pad, bg=T.BG)
         head.pack(fill="x")
-        tk.Label(head, text=v["ticker"], fg=T.AMBER, bg=T.BG, font=FONT_BIG).pack(side="left")
+        ticker = tk.Label(head, text=v["ticker"], fg=T.AMBER, bg=T.BG, font=FONT_BIG)
+        ticker.pack(side="left")
+        if self.on_ticker:
+            ticker.config(cursor="hand2", font=(*FONT_BIG, "underline"))
+            ticker.bind("<Button-1>", lambda e, tk_=v["ticker"]: self.on_ticker(tk_))
         if v["name"]:
             tk.Label(head, text=v["name"], fg=T.DIM, bg=T.BG, font=FONT).pack(side="left", padx=10)
         tk.Label(head, text=f" {v['stance_label']} ", fg=T.BG, bg=stance_color(v["stance"]), font=FONT_B).pack(side="right")

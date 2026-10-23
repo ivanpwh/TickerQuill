@@ -423,3 +423,93 @@ def test_collection_imports_saved_analyses_from_history_once(root):
         root.show_page("analysis")
         done.unlink()
         shutil.rmtree(app.ARCHIVE, ignore_errors=True)
+
+
+@pytest.fixture
+def fake_market(monkeypatch):
+    """Yahoo stand-in: TLKM.JK at 2.240 (prev 2.200); daily history 20-23/10; anything else is not found."""
+    from datetime import datetime as dt
+
+    import market
+
+    def chart(stamps, closes, highs, lows, price=2240.0):
+        return {"chart": {"result": [{"meta": {"symbol": "TLKM.JK", "shortName": "Telkom Indonesia", "currency": "IDR",
+                                               "regularMarketPrice": price, "previousClose": 2200.0,
+                                               "regularMarketDayHigh": 2250.0, "regularMarketDayLow": 2160.0,
+                                               "regularMarketVolume": 238905400, "regularMarketTime": stamps[-1]},
+                                      "timestamp": stamps, "indicators": {"quote": [{"close": closes, "high": highs,
+                                                                                     "low": lows}]}}]}}
+
+    days = [int(dt(2026, 10, d, 9, tzinfo=market.WIB).timestamp()) for d in (20, 21, 22, 23)]
+    calls = []
+
+    def fetch(symbol, rng="1d", interval="5m", timeout=15):
+        calls.append((symbol, rng))
+        if symbol != "TLKM.JK":
+            raise market.MarketError("not_found", symbol)
+        if rng == "1d":
+            return chart([days[-1], days[-1] + 300], [2230.0, 2240.0], [2235.0, 2250.0], [2160.0, 2230.0])
+        return chart(days, [2060.0, 2180.0, 2200.0, 2240.0], [2070.0, 2190.0, 2210.0, 2250.0],
+                     [2040.0, 2100.0, 2170.0, 2160.0])
+
+    monkeypatch.setattr(market, "fetch_chart", fetch)
+    monkeypatch.setattr(market, "market_open", lambda now=None: False)  # no 60 s refresh timer in tests
+    return calls
+
+
+def wait_loaded(root, window):
+    import time
+
+    for _ in range(200):
+        root.update()
+        if not window.loading:
+            return
+        time.sleep(0.01)
+    raise AssertionError("price window did not finish loading")
+
+
+def test_stock_window_shows_price_chart_levels_and_move_since_video(root, fake_market):
+    ctx = {"levels": {"entry": 2080.0, "target": 2200.0, "stop_loss": 1985.0},
+           "videos": [{"date": "2026-10-20", "title": "14 Saham Rebound", "stance": "BUY",
+                       "prices": {"entry": None, "target": 2200.0, "stop_loss": 1985.0}}]}
+    w = root.open_stock("tlkm", ctx)
+    try:
+        wait_loaded(root, w)
+        assert w.symbol == "TLKM.JK" and w.price_lbl.cget("text") in ("2.240", "2,240")
+        assert w.change_lbl.cget("text").startswith("+40")
+        shown = [x.cget("text") for x in w.since.winfo_children()]
+        assert any(x.startswith(("2.060 -> 2.240", "2,060 -> 2,240")) for x in shown)
+        assert any(x in ("2.200 tersentuh", "2,200 hit") for x in shown)  # target reached after the video
+        assert any(x in ("1.985 aman", "1,985 not hit") for x in shown)  # loss limit never touched
+        assert w.canvas.find_all() and "1985" not in w.legend_lbl.cget("text")
+        assert ("TLKM.JK", "1y") in fake_market
+        assert root.open_stock("TLKM", ctx) is w  # same symbol: same window
+    finally:
+        w.close()
+
+
+def test_stock_window_explains_an_unknown_ticker(root, fake_market):
+    import stockview
+
+    w = root.open_stock("ZZZQ", {})
+    try:
+        wait_loaded(root, w)
+        assert w.msg_lbl.cget("text") == stockview.t(root.ui, "not_found", s="ZZZQ.JK")
+        assert w.price_lbl.cget("text") == ""
+    finally:
+        w.close()
+
+
+def test_dashboard_ticker_opens_the_price_window_with_its_levels(root, monkeypatch):
+    opened = []
+    monkeypatch.setattr(root, "open_stock", lambda ticker, ctx: opened.append((ticker, ctx)))
+    root.q.put(("transcript", ("Video", "BBCA", {"url": "https://youtu.be/x", "video_date": "2026-10-21"})))
+    root.q.put(("report_raw", ('{"stocks": [{"ticker": "BBCA", "stance": "BUY", "levels": {"entry": "9.000", '
+                               '"target": "9.500", "stop_loss": "8.800"}}]}', "stop")))
+    root.poll()
+    root.update()
+    label = next(x for x in all_widgets(root.dash.inner) if isinstance(x, tk.Label) and x.cget("text") == "BBCA")
+    label.event_generate("<Button-1>")
+    [(ticker, ctx)] = opened
+    assert ticker == "BBCA" and ctx["levels"] == {"entry": 9000.0, "target": 9500.0, "stop_loss": 8800.0}
+    assert ctx["videos"][0]["date"] == "2026-10-21" and ctx["videos"][0]["stance"] == "BUY"

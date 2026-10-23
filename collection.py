@@ -73,6 +73,7 @@ _T = {
             "{d} of {n} videos marked this stock's name/numbers as doubtful (possibly misheard)."),
     "rel_conf": (" Rata-rata keyakinan pembicara: {c} (dari {r} video).", " Average speaker confidence: {c} (from {r} videos)."),
     "t_reasons": ("ALASAN PER VIDEO", "REASON PER VIDEO"),
+    "price_btn": ("[ HARGA SAHAM ]", "[ STOCK PRICE ]"),
     "t_ai": ("RINGKASAN AI", "AI SUMMARY"), "ai_btn": ("[ RANGKUM AI ]", "[ AI SUMMARY ]"),
     "ai_update": ("[ PERBARUI RINGKASAN AI ]", "[ UPDATE AI SUMMARY ]"),
     "ai_running": ("Merangkum dengan {m}...", "Summarising with {m}..."),
@@ -390,6 +391,7 @@ class CollectionPage(tk.Frame):
                             p=c["agreement"])))
         if archive.conflict(vs):
             b.append(("warn", t(ui, "conflict")))
+        b.append(("actions", [(t(ui, "price_btn"), lambda: self.open_price(ticker, vs), True)]))
         used = [r for r in recs if any(s["ticker"] == ticker for s in r["stocks"])]
         b += self.ai_blocks("ticker", ticker, used, self.ticker_payload(vs))
 
@@ -513,6 +515,14 @@ class CollectionPage(tk.Frame):
         self.render()
 
     # --- aksi ------------------------------------------------------------------------------------------------------
+    def open_price(self, ticker, vs):
+        """Jendela harga dengan nilai tengah level dari semua video dan pergerakan sejak tiap video."""
+        zone = archive.price_zone(vs)["levels"]
+        self.app.open_stock(ticker, {
+            "levels": {k: lv["median"] for k, lv in zone.items()},
+            "videos": [{"date": v["date"], "title": v["title"], "stance": v["stance"], "prices": v["prices"],
+                        "fallback": v["fallback"]} for v in vs]})
+
     def open_record(self, rec):
         result = self.app.open_record(rec)
         if result == "busy":

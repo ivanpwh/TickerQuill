@@ -11,11 +11,13 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 
 import archive
+import market
 import remote
 import report
 from collection import CollectionPage
 from dashboard import DashboardView, open_url
 from menus import MenuBar
+from stockview import StockWindow
 from textclean import clean_repeats
 import theme
 from theme import FONT, FONT_B, T
@@ -564,7 +566,14 @@ class Pipeline:
                 return {"file": Path(read_meta(self.done_path)["source"]).name}
             except (AttributeError, OSError, ValueError, KeyError, TypeError):  # tanpa entri riwayat atau tanpa 'source'
                 return {"file": title}
-        return {"url": self.url}
+        src = {"url": self.url}
+        try:  # tanggal upload untuk jendela harga ('sejak video')
+            video_date = self.video_meta.get("video_date") or read_meta(self.done_path).get("video_date")
+        except (AttributeError, OSError, ValueError, TypeError):
+            video_date = None
+        if video_date:
+            src["video_date"] = video_date
+        return src
 
     def read_transcript_file(self):
         self.status("s_file", 50)
@@ -854,6 +863,7 @@ class App(tk.Tk):
         self.page = "analysis"  # halaman aktif: analysis | history
         self.job_mark = None  # proses berakhir saat halaman lain terbuka: tanda di baris judul sampai ANALISIS dibuka
         self.menubar = None
+        self.stock_windows = []  # jendela harga yang terbuka (satu per simbol)
         self.build()
         self.menubar = MenuBar(self, UI_LANGS)
         self.apply_lang()
@@ -881,6 +891,8 @@ class App(tk.Tk):
         self.page_lbl.config(text=f"›  {self.tr('page_' + self.page)}")
         self.pages["history"].apply_lang()
         self.pages["collection"].apply_lang()
+        for w in self.open_stock_windows():
+            w.apply_lang()
         if self.menubar:
             self.menubar.refresh_labels()
         self.update_summary()
@@ -1063,6 +1075,7 @@ class App(tk.Tk):
             txt.tag_bind("link", "<Leave>", lambda e, t=txt: t.config(cursor="xterm"))
             self.panes[name] = (frame, txt)
         self.dash = DashboardView(holder)
+        self.dash.on_ticker = self.stock_from_report
         self.show("DASHBOARD")
         page.pack(fill="both", expand=True)
 
@@ -1231,6 +1244,35 @@ class App(tk.Tk):
         self.start(mode=mode)
         return True
 
+    # --- jendela harga saham ---------------------------------------------------------------------------------
+    def open_stock_windows(self):
+        self.stock_windows = [w for w in self.stock_windows if w.winfo_exists()]
+        return self.stock_windows
+
+    def open_stock(self, ticker, context):
+        """Jendela harga untuk ticker; simbol yang sama memakai jendela yang sudah terbuka."""
+        symbol = market.symbol_for(ticker)
+        for w in self.open_stock_windows():
+            if w.symbol == symbol:
+                w.set_context(context)
+                w.deiconify()
+                w.lift()
+                return w
+        w = StockWindow(self, ticker, context)
+        self.stock_windows.append(w)
+        return w
+
+    def stock_from_report(self, ticker):
+        """Dari kartu saham di Dashboard: level dari analisis ini dan tanggal videonya (bila diketahui)."""
+        s = next((s for s in self.data["stocks"] if s["ticker"] == ticker), None) if self.data else None
+        if s is None:
+            return
+        prices = dict(zip(("entry", "target", "stop_loss"), s["prices"]))
+        src = self.data.get("source") or {}
+        videos = ([{"date": src["video_date"], "title": src.get("title", ""), "stance": s["stance"], "prices": prices}]
+                  if src.get("video_date") else [])
+        self.open_stock(ticker, {"levels": prices, "videos": videos})
+
     # --- untuk halaman KOLEKSI ---------------------------------------------------------------------------------
     def archive_dir(self):
         return ARCHIVE
@@ -1314,6 +1356,8 @@ class App(tk.Tk):
         if self.data:
             self.render_report()
         self.pages["collection"].render()  # isi KOLEKSI digambar dengan warna saat render
+        for w in self.open_stock_windows():
+            w.render()  # grafik di canvas
 
     def open_file(self):
         path = filedialog.askopenfilename(
