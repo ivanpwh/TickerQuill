@@ -49,6 +49,7 @@ _T = {
     "head_one": ("{t} · dibahas di 1 video ({a})", "{t} · discussed in 1 video ({a})"),
     "t_consensus": ("KONSENSUS", "CONSENSUS"),
     "consensus": ("{counts}  ->  mayoritas {dom} ({p}% video sepakat)", "{counts}  ->  majority {dom} ({p}% of videos agree)"),
+    "consensus_tie": ("{counts}  ->  seri, tidak ada mayoritas ({dom})", "{counts}  ->  tied, no majority ({dom})"),
     "conflict": ("(!) Beda pendapat: ada video yang menyarankan BELI dan ada yang menyarankan JUAL/HINDARI. Bandingkan alasannya di timeline.",
                  "(!) Disagreement: some videos say BUY and others SELL/AVOID. Compare their reasons in the timeline."),
     "t_timeline": ("TIMELINE", "TIMELINE"),
@@ -336,7 +337,7 @@ class CollectionPage(tk.Frame):
         if any(archive.date_is_fallback(r) for r in self.records):
             b.append(("dim", t(ui, "fallback")))
         b.append(("title", t(ui, "t_trending")))
-        rows = [[self.ticker_cell(r["ticker"]), str(r["videos"]), {"badges": [self.stance(r["dominant"])]},
+        rows = [[self.ticker_cell(r["ticker"]), str(r["videos"]), {"badges": [self.stance(s) for s in r["top"]]},
                  f"{r['agreement']}%", {"text": t(ui, "disagree") if r["conflict"] else "", "fg": "RED"}]
                 for r in archive.trending(self.records)[:20]]
         b.append(("table", {"cols": [t(ui, k) for k in ("c_ticker", "c_videos", "c_consensus", "c_agree")] + [""],
@@ -361,7 +362,7 @@ class CollectionPage(tk.Frame):
             targets = [v["prices"]["target"] for v in vs if v["prices"].get("target")]
             span = (self.num(min(targets)) + (f" - {self.num(max(targets))}" if max(targets) != min(targets) else "")) if targets else "-"
             rows.append([self.ticker_cell(r["ticker"]), str(r["videos"]), {"badges": [self.stance(v["stance"]) for v in vs]},
-                         f"{report.t(ui, 'stance_' + r['dominant'])} {r['agreement']}%", span,
+                         " / ".join(report.t(ui, "stance_" + s) for s in r["top"]) + f" {r['agreement']}%", span,
                          {"text": t(ui, "disagree") if r["conflict"] else "", "fg": "RED"}])
         if rows:
             b.append(("table", {"cols": [t(ui, k) for k in ("c_ticker", "c_videos", "c_per_video", "c_consensus", "c_target")] + [""],
@@ -384,7 +385,9 @@ class CollectionPage(tk.Frame):
         b.append(("title", head))
         c = archive.consensus(vs)
         counts = " · ".join(f"{report.t(ui, 'stance_' + s)} {n}" for s, n in c["counts"].items())
-        b.append(("para", t(ui, "consensus", counts=counts, dom=report.t(ui, "stance_" + c["dominant"]), p=c["agreement"])))
+        dom = " / ".join(report.t(ui, "stance_" + s) for s in c["top"])
+        b.append(("para", t(ui, "consensus" if len(c["top"]) == 1 else "consensus_tie", counts=counts, dom=dom,
+                            p=c["agreement"])))
         if archive.conflict(vs):
             b.append(("warn", t(ui, "conflict")))
         used = [r for r in recs if any(s["ticker"] == ticker for s in r["stocks"])]
@@ -396,7 +399,8 @@ class CollectionPage(tk.Frame):
             rec = next(r for r in recs if r["vid"] == v["vid"])
             levels = " · ".join(f"{report.t(ui, 'lv_' + k)} {x}" for k, x in v["levels"].items()) or "-"
             rows.append([v["date"] + ("*" if v["fallback"] else ""),
-                         {"text": f"{v['channel'] or '-'}: {v['title']}", "wrap": 300, "cmd": lambda r=rec: self.open_record(r)},
+                         {"text": f"{v['channel']}: {v['title']}" if v["channel"] else v["title"], "wrap": 300,
+                          "cmd": lambda r=rec: self.open_record(r)},
                          {"badges": [self.stance(v["stance"])]}, {"text": levels, "wrap": 300},
                          report.t(ui, "conf_" + v["confidence"]) if v["confidence"] else "-",
                          {"text": "(!)" if v["doubtful"] else "", "fg": "RED"}])

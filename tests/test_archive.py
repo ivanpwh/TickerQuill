@@ -110,8 +110,10 @@ def test_group_by_date_uses_video_date_newest_first(tlkm):
 
 def test_consensus_and_agreement(tlkm):
     c = archive.consensus(archive.views(tlkm, "TLKM"))
-    assert c == {"counts": {"BUY": 1, "WATCH": 4}, "dominant": "WATCH", "agreement": 80}
+    assert c == {"counts": {"BUY": 1, "WATCH": 4}, "dominant": "WATCH", "top": ["WATCH"], "agreement": 80}
     assert archive.consensus([])["dominant"] is None
+    tie = archive.consensus([{"stance": "WATCH"}, {"stance": "BUY"}])
+    assert tie["top"] == ["BUY", "WATCH"] and tie["agreement"] == 50  # a tie is not a majority
 
 
 def test_conflict_needs_buy_and_sell_or_avoid(tlkm):

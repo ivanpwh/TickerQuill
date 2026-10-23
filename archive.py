@@ -167,12 +167,14 @@ def tickers(records):
 
 # --- perhitungan -----------------------------------------------------------------------------------------------------
 def consensus(vs):
+    """top: semua sikap dengan suara terbanyak (lebih dari satu = seri, tidak ada mayoritas)."""
     counts = Counter(v["stance"] for v in vs)
     if not vs:
-        return {"counts": {}, "dominant": None, "agreement": 0}
-    dominant = max(STANCES, key=lambda s: (counts[s], -STANCES.index(s)))
-    return {"counts": {s: counts[s] for s in STANCES if counts[s]}, "dominant": dominant,
-            "agreement": round(100 * counts[dominant] / len(vs))}
+        return {"counts": {}, "dominant": None, "top": [], "agreement": 0}
+    best = max(counts.values())
+    top = [s for s in STANCES if counts[s] == best]
+    return {"counts": {s: counts[s] for s in STANCES if counts[s]}, "dominant": top[0], "top": top,
+            "agreement": round(100 * best / len(vs))}
 
 
 def conflict(vs):
@@ -226,7 +228,7 @@ def trending(records):
         vs = views(records, t)
         c = consensus(vs)
         rows.append({"ticker": t, "videos": len(vs), "share": sum(v["share"] for v in vs) / len(vs),
-                     "dominant": c["dominant"], "agreement": c["agreement"], "conflict": conflict(vs)})
+                     "dominant": c["dominant"], "top": c["top"], "agreement": c["agreement"], "conflict": conflict(vs)})
     return sorted(rows, key=lambda r: (-r["videos"], -r["share"], r["ticker"]))
 
 
