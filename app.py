@@ -106,6 +106,7 @@ AUDIO_LANGS = {"Auto": None, "Indonesia": "id", "English": "en", "Melayu": "ms",
                "Mandarin": "zh", "Japanese": "ja", "Korean": "ko", "Arabic": "ar"}
 UI_LANGS = ["ID", "EN"]
 SAVE_NAME = {"DASHBOARD": "dashboard", "ANALISIS": "analysis", "TRANSKRIP": "transcript"}  # nama berkas simpan per tab
+EXPORT_KEY = {"DASHBOARD": "x_dash", "ANALISIS": "x_report", "TRANSKRIP": "x_transcript"}  # isi label SALIN/SIMPAN per tab
 ENGINES = ["Local", "Colab"]  # tempat Whisper berjalan: komputer ini atau GPU Google Colab
 
 STR = {
@@ -117,10 +118,12 @@ STR = {
         "fetch_err": "Gagal memuat daftar ({e}). Ketik nama model secara manual di kolom CARI lalu tekan PILIH.",
         "open": "[ BUKA FILE ]", "open_title": "Pilih file transkrip", "empty_file": "File transkrip kosong.",
         "s_file": "2/3 MEMBACA FILE TRANSKRIP",
-        "analyze": "[ ANALISIS ]", "cancel": "[ BATAL ]", "save": "[ SIMPAN ]", "copy": "[ SALIN ]",
+        "analyze": "[ PROSES ]", "cancel": "[ BATAL ]",
+        "copy_fmt": "[ SALIN {x} ]", "save_fmt": "[ SIMPAN {x} ]", "x_dash": "DASHBOARD", "x_report": "HASIL",
+        "x_transcript": "TRANSKRIP",
         "whisper": "MODEL WHISPER:", "audio_lang": "BAHASA AUDIO:", "ui_lang": "BAHASA APP:",
-        "analysis_for": "ANALISIS", "analysis_tab": "ANALISIS", "transcript_tab": "TRANSKRIP",
-        "ready": "SIAP.", "hint": "Tempel URL video YouTube di atas, lalu tekan ANALISIS.\n",
+        "analysis_tab": "HASIL ANALISIS", "transcript_tab": "TRANSKRIP",
+        "ready": "SIAP.", "hint": "Tempel URL video YouTube di atas, lalu tekan [ PROSES ].\n",
         "disclaimer": "! Rangkuman isi video, bukan nasihat investasi. Transkrip ASR bisa salah dengar ticker/angka.",
         "bad_url_title": "URL", "bad_url": "Masukkan URL video YouTube yang valid.",
         "cancelling": "MEMBATALKAN...", "cancelled": "DIBATALKAN", "done": "SELESAI", "error": "ERROR",
@@ -144,7 +147,7 @@ STR = {
         "dlg_part": "{title}\nSelesai {pct}% (sampai {t}), model: {model}\n\nLanjutkan dari {t} atau ulangi dari awal?",
         "o_reuse": "[ PAKAI ULANG ]", "o_fresh": "[ TRANSKRIP ULANG ]", "o_resume": "[ LANJUTKAN ]",
         "o_restart": "[ ULANGI DARI AWAL ]", "o_cancel": "[ BATAL ]",
-        "parse_fail": "Jawaban model bukan JSON yang valid, dashboard tidak bisa dibuat. Teks mentah ditampilkan di tab ANALISIS. Coba lagi atau pilih model lain.",
+        "parse_fail": "Jawaban model bukan JSON yang valid, dashboard tidak bisa dibuat. Teks mentah ditampilkan di tab HASIL ANALISIS. Coba lagi atau pilih model lain.",
         "engine": "WHISPER DI:",
         "colab_help": "Untuk engine Colab: jalankan colab/Whisper_Server.ipynb di Google Colab (runtime GPU), lalu salin baris "
                       "\"URL TOKEN\" yang dicetak notebook dan tempel ke kolom URL. URL berubah setiap sesi Colab.",
@@ -156,9 +159,9 @@ STR = {
         "err_colab": "Server Colab bermasalah: {e}\nPastikan notebook masih berjalan dan URL/token di PENGATURAN > TRANSKRIPSI masih yang terbaru.",
         "s_retry_2": "2/3 MENCOBA LAGI KE COLAB", "s_retry_3": "3/3 MENCOBA LAGI ANALISIS",
         "err_step": "Langkah {step}/3 gagal: {e}", "err_tries": "Sudah dicoba {n} kali, tetap gagal.",
-        "hint_tr_part": "Transkrip sebagian tersimpan. Tekan [ ANALISIS ], lalu pilih [ LANJUTKAN ] untuk meneruskan dari titik terakhir.",
-        "hint_tr_none": "Tekan [ ANALISIS ] untuk mencoba lagi.",
-        "hint_an": "Transkrip sudah tersimpan. Tekan [ ANALISIS ], lalu pilih [ PAKAI ULANG ] untuk menganalisis lagi tanpa transkripsi ulang.",
+        "hint_tr_part": "Transkrip sebagian tersimpan. Tekan [ PROSES ], lalu pilih [ LANJUTKAN ] untuk meneruskan dari titik terakhir.",
+        "hint_tr_none": "Tekan [ PROSES ] untuk mencoba lagi.",
+        "hint_an": "Transkrip sudah tersimpan. Tekan [ PROSES ], lalu pilih [ PAKAI ULANG ] untuk menganalisis lagi tanpa transkripsi ulang.",
         "hint_dl_part": "Transkrip sebagian masih tersimpan: buka dari RIWAYAT untuk melanjutkan setelah koneksi pulih.",
         "hist_reanalyze": "[ ANALISIS ULANG ]",
         "no_saved": "Transkrip tersedia, tetapi belum ada analisis tersimpan. Tekan [ ANALISIS ULANG ] di RIWAYAT untuk membuatnya.",
@@ -177,7 +180,7 @@ STR = {
         "err_model": "Model LLM belum diatur. Buka PENGATURAN > ANALISIS (LLM), lalu ketik atau pilih model (tombol PILIH MODEL). Transkrip tetap tersedia di tab TRANSKRIP.",
         "not_set": "(belum diatur)", "llm_title": "LLM belum diatur",
         "llm_missing": "API key atau model LLM belum diisi, jadi tahap analisis akan gagal setelah transkripsi selesai (transkrip tetap tersimpan). " "Lanjutkan hanya untuk transkripsi?",
-        "llm_open": "Buka PENGATURAN > ANALISIS (LLM), isi API key dan model, lalu tekan ANALISIS lagi.",
+        "llm_open": "Buka PENGATURAN > ANALISIS (LLM), isi API key dan model, lalu tekan [ PROSES ] lagi.",
         "set_show": "[ TAMPIL ]", "set_hide": "[ SEMBUNYI ]", "set_save": "[ SIMPAN ]",
         "set_saved": "Tersimpan ({n} kolom) di {path}.", "set_nochange": "Tidak ada perubahan.",
         "set_err": "Gagal menyimpan: {e}",
@@ -190,10 +193,12 @@ STR = {
         "fetch_err": "Could not load the list ({e}). Type a model name manually in FIND and press SELECT.",
         "open": "[ OPEN FILE ]", "open_title": "Select transcript file", "empty_file": "The transcript file is empty.",
         "s_file": "2/3 READING TRANSCRIPT FILE",
-        "analyze": "[ ANALYZE ]", "cancel": "[ CANCEL ]", "save": "[ SAVE ]", "copy": "[ COPY ]",
+        "analyze": "[ RUN ]", "cancel": "[ CANCEL ]",
+        "copy_fmt": "[ COPY {x} ]", "save_fmt": "[ SAVE {x} ]", "x_dash": "DASHBOARD", "x_report": "REPORT",
+        "x_transcript": "TRANSCRIPT",
         "whisper": "WHISPER MODEL:", "audio_lang": "AUDIO LANG:", "ui_lang": "APP LANG:",
-        "analysis_for": "ANALYSIS", "analysis_tab": "ANALYSIS", "transcript_tab": "TRANSCRIPT",
-        "ready": "READY.", "hint": "Paste a YouTube video URL above, then press ANALYZE.\n",
+        "analysis_tab": "REPORT", "transcript_tab": "TRANSCRIPT",
+        "ready": "READY.", "hint": "Paste a YouTube video URL above, then press [ RUN ].\n",
         "disclaimer": "! Summary of the video's content, not investment advice. ASR may mishear tickers/numbers.",
         "bad_url_title": "URL", "bad_url": "Enter a valid YouTube video URL.",
         "cancelling": "CANCELLING...", "cancelled": "CANCELLED", "done": "DONE", "error": "ERROR",
@@ -217,7 +222,7 @@ STR = {
         "dlg_part": "{title}\n{pct}% done (up to {t}), model: {model}\n\nResume from {t} or start over?",
         "o_reuse": "[ REUSE ]", "o_fresh": "[ TRANSCRIBE AGAIN ]", "o_resume": "[ RESUME ]",
         "o_restart": "[ START OVER ]", "o_cancel": "[ CANCEL ]",
-        "parse_fail": "The model's reply was not valid JSON, so no dashboard can be built. The raw text is shown in the ANALYSIS tab. Try again or pick another model.",
+        "parse_fail": "The model's reply was not valid JSON, so no dashboard can be built. The raw text is shown in the REPORT tab. Try again or pick another model.",
         "engine": "WHISPER ON:",
         "colab_help": "For the Colab engine: run colab/Whisper_Server.ipynb in Google Colab (GPU runtime), then copy the "
                       "\"URL TOKEN\" line the notebook prints and paste it into the URL field. The URL changes every Colab session.",
@@ -229,9 +234,9 @@ STR = {
         "err_colab": "Colab server problem: {e}\nMake sure the notebook is still running and the URL/token in SETTINGS > TRANSCRIPTION are the latest.",
         "s_retry_2": "2/3 RETRYING COLAB", "s_retry_3": "3/3 RETRYING ANALYSIS",
         "err_step": "Step {step}/3 failed: {e}", "err_tries": "Tried {n} times, still failing.",
-        "hint_tr_part": "A partial transcript is saved. Press [ ANALYZE ], then choose [ RESUME ] to continue from the last point.",
-        "hint_tr_none": "Press [ ANALYZE ] to try again.",
-        "hint_an": "The transcript is saved. Press [ ANALYZE ], then choose [ REUSE ] to analyse again without transcribing.",
+        "hint_tr_part": "A partial transcript is saved. Press [ RUN ], then choose [ RESUME ] to continue from the last point.",
+        "hint_tr_none": "Press [ RUN ] to try again.",
+        "hint_an": "The transcript is saved. Press [ RUN ], then choose [ REUSE ] to analyse again without transcribing.",
         "hint_dl_part": "The partial transcript is still saved: open it from HISTORY to resume once the connection is back.",
         "hist_reanalyze": "[ REANALYZE ]",
         "no_saved": "The transcript is available, but no analysis is saved yet. Press [ REANALYZE ] in HISTORY to create it.",
@@ -250,7 +255,7 @@ STR = {
         "err_model": "No LLM model is set. Open SETTINGS > ANALYSIS (LLM) and type or pick a model (PICK MODEL button). The transcript is still available in the TRANSCRIPT tab.",
         "not_set": "(not set)", "llm_title": "LLM not set up",
         "llm_missing": "The LLM API key or model is empty, so the analysis step will fail after transcription finishes (the transcript is kept). " "Continue with transcription only?",
-        "llm_open": "Opening SETTINGS > ANALYSIS (LLM). Enter the API key and model, then press ANALYZE again.",
+        "llm_open": "Opening SETTINGS > ANALYSIS (LLM). Enter the API key and model, then press [ RUN ] again.",
         "set_show": "[ SHOW ]", "set_hide": "[ HIDE ]", "set_save": "[ SAVE ]",
         "set_saved": "Saved ({n} fields) to {path}.", "set_nochange": "No changes.",
         "set_err": "Could not save: {e}",
@@ -846,8 +851,7 @@ class App(tk.Tk):
         self.open_btn.config(text=self.tr("open"))
         self.hist_btn.config(text=self.tr("hist_btn"))
         self.update_cache_hint()
-        self.save_btn.config(text=self.tr("save"))
-        self.copy_btn.config(text=self.tr("copy"))
+        self.update_export_labels()
         self.settings_btn.config(text=self.tr("set_btn"))
         self.update_summary()
         self.disclaimer_lbl.config(text=self.tr("disclaimer"))
@@ -1035,6 +1039,13 @@ class App(tk.Tk):
             frame.pack_forget()
         (self.dash if name == "DASHBOARD" else self.panes[name][0]).pack(fill="both", expand=True)
         self.mark_tabs(self.tab_btns, name)
+        self.update_export_labels()
+
+    def update_export_labels(self):
+        """SALIN/SIMPAN menyebut isi tab yang aktif."""
+        x = self.tr(EXPORT_KEY[self.current])
+        self.copy_btn.config(text=self.tr("copy_fmt").format(x=x))
+        self.save_btn.config(text=self.tr("save_fmt").format(x=x))
 
     def write(self, pane, text, tag=None):
         txt = self.panes[pane][1]

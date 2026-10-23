@@ -158,7 +158,7 @@ def test_colab_auth_error_is_not_retried_and_says_which_step(no_wait, monkeypatc
 
     msg = pipeline.failure(err.value.step, err.value.detail, err.value.tries)
     assert msg.startswith("Step 2/3 failed: Server Colab menjawab 401: token salah")
-    assert "[ ANALYZE ]" in msg and "Tried" not in msg
+    assert "[ RUN ]" in msg and "Tried" not in msg
 
 
 def test_step_2_failure_in_run_is_tagged_with_saved_checkpoint_hint(no_wait, monkeypatch):
@@ -212,7 +212,7 @@ def test_llm_failure_after_retries_is_step_3_and_keeps_the_transcript(no_wait, m
     kind, msg = events[-1]
     assert kind == "error"
     assert msg.startswith("Step 3/3 failed: APIError: upstream connection lost")
-    assert "Tried 3 times" in msg and "[ ANALYZE ]" in msg and "[ REUSE ]" in msg
+    assert "Tried 3 times" in msg and "[ RUN ]" in msg and "[ REUSE ]" in msg
 
 
 def test_llm_auth_error_is_not_retried(no_wait, monkeypatch):

@@ -114,3 +114,25 @@ def test_source_link_is_shown_on_the_dashboard_and_in_the_report(root, monkeypat
     assert txt.get(start, end) == url
     assert txt.get("1.0", "1.end") == "Video saham"
     assert opened == [url]
+
+
+def test_run_button_and_export_labels_name_what_they_do(root):
+    labels = lambda: (root.go_btn.cget("text"), root.copy_btn.cget("text"), root.save_btn.cget("text"))
+    before = root.ui_var.get()
+    try:
+        root.ui_var.set("ID")
+        root.apply_lang()
+        root.show("DASHBOARD")
+        assert labels() == ("[ PROSES ]", "[ SALIN DASHBOARD ]", "[ SIMPAN DASHBOARD ]")
+        root.show("ANALISIS")
+        assert root.tab_btns["ANALISIS"].cget("text") == "[ HASIL ANALISIS ]"
+        assert labels()[1:] == ("[ SALIN HASIL ]", "[ SIMPAN HASIL ]")
+        root.ui_var.set("EN")
+        root.apply_lang()
+        assert labels() == ("[ RUN ]", "[ COPY REPORT ]", "[ SAVE REPORT ]")
+        root.show("TRANSKRIP")
+        assert labels()[1:] == ("[ COPY TRANSCRIPT ]", "[ SAVE TRANSCRIPT ]")
+    finally:
+        root.ui_var.set(before)
+        root.apply_lang()
+        root.show("DASHBOARD")
