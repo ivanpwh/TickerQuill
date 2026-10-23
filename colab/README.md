@@ -10,7 +10,7 @@ Short version (the full illustrated walk-through, including what you should see 
 
 1. Open `Whisper_Server.ipynb` in Google Colab (**File > Upload notebook**), then **Runtime > Change runtime type > T4 GPU**.
 2. **Runtime > Run all**. The last cell prints one `URL TOKEN` line and keeps running. Leave it running.
-3. In the app: **[ SETTINGS ] > TRANSCRIPTION** → **Run Whisper on = Colab**, paste the whole line into **Colab server URL**, **[ TEST CONNECTION ]** (expect `Connected. Device: cuda …`), **[ SAVE ]**.
+3. In the app: **Tools > Settings > TRANSCRIPTION** → **Run Whisper on = Colab**, paste the whole line into **Colab server URL**, **[ TEST CONNECTION ]** (expect `Connected. Device: cuda …`), **[ SAVE ]**.
 4. Press **[ ANALYZE ]** as usual.
 
 The URL and token change every Colab session. Alternative without the dialog: set `COLAB_WHISPER_URL`, `COLAB_WHISPER_TOKEN` and `WHISPER_ENGINE=Colab` in `.env` (see [`.env.example`](../.env.example)).

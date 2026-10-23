@@ -33,7 +33,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - Plain-language tips, a step-by-step explanation of every formula, and a glossary.
 
 **History**
-- Browse every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
+- A page (**View > History**, `Ctrl+2`) listing every transcript you have processed (including transcript files you opened), reuse it, resume unfinished ones, restart, or delete.
 - The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
 **Settings and themes**
@@ -95,7 +95,7 @@ The first transcription downloads the selected Whisper model, which can take a f
 
 ## Quick start
 
-1. Open **[ SETTINGS ] > ANALYSIS (LLM)**, enter your endpoint URL, API key and model (**[ PICK MODEL ]** lists the models your endpoint offers), then **[ SAVE ]**.
+1. Open **Tools > Settings** (`Ctrl+,`) **> ANALYSIS (LLM)**, enter your endpoint URL, API key and model (**[ PICK MODEL ]** lists the models your endpoint offers), then **[ SAVE ]**.
 2. Paste a YouTube URL into the **URL>** field and press **[ RUN ]**.
 3. Watch the progress bar: *fetch info → download audio → transcribe → analyse*.
 4. The **DASHBOARD** tab opens when the analysis finishes. **REPORT** shows the Markdown report, **TRANSCRIPT** the full text. The dashboard and report start with the video title and a clickable link.
@@ -105,21 +105,34 @@ Full walkthrough: [User guide](docs/user-guide.md).
 
 ## Main window
 
+The window has two pages, **Analysis** and **History**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`). Settings open in a separate dialog.
+
+| Menu | Items |
+|---|---|
+| **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Dashboard / Report / Transcript · Theme · Language |
+| **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
+| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
+| **Help** | User guide · About TickerQuill |
+
+Analysis page:
+
 | Control | What it does |
 |---|---|
 | **URL>** | YouTube video URL (`watch?v=`, `youtu.be/`, `shorts/`, `live/`, `embed/`) |
 | **[ RUN ]** | Run the whole pipeline. Press **Enter** in the URL field for the same effect |
 | **[ OPEN FILE ]** | Analyse an existing transcript file (`.txt`, `.md`, `.srt`, `.vtt`) |
-| **[ HISTORY ]** | Browse, reuse, resume, restart or delete past transcripts |
-| **[ PAUSE ] / [ RESUME ]** | Pause during download, model load or transcription |
-| **[ CANCEL ]** | Stop the current job (transcription progress is kept) |
-| **[ SETTINGS ]** | Open the settings dialog (also: click the grey summary line) |
+| Grey summary line | Shows the Whisper, audio and LLM choices; click it to open Settings |
+| **[ PAUSE ] / [ RESUME ]** | Next to the status line. Pause during download, model load or transcription |
+| **[ CANCEL ]** | Next to the status line. Stop the current job (transcription progress is kept) |
 | **DASHBOARD / REPORT / TRANSCRIPT** | The three result views |
 | **[ COPY … ] / [ SAVE … ]** | Copy or save the current view; the label names it (DASHBOARD, REPORT or TRANSCRIPT) |
 
+While a job runs and another page is open, the title row shows its progress (for example `● 2/3 TRANSCRIBING 45%`), then `✓`, `■` (cancelled) or `!` (error) when it ends. Click it to return to the Analysis page.
+
 ## Settings
 
-Open **[ SETTINGS ]**. Everything is applied as soon as you press **[ SAVE ]**.
+Open **Tools > Settings** (`Ctrl+,`). Everything is applied as soon as you press **[ SAVE ]**.
 
 | Tab | Options |
 |---|---|
@@ -158,7 +171,7 @@ Local CPU transcription of a one-hour video can take a long time. The Colab engi
 
 ### Part 2: connect the app
 
-7. Start TickerQuill and press **[ SETTINGS ]** (top right) > **TRANSCRIPTION** tab.
+7. Start TickerQuill and open **Tools > Settings** > **TRANSCRIPTION** tab.
 8. Set **Run Whisper on** to **Colab**.
 9. Click the **Colab server URL** field and **paste** the line you copied. The token field fills in automatically when you save or test.
 10. Press **[ TEST CONNECTION ]**. A successful test shows:
@@ -184,7 +197,7 @@ Local CPU transcription of a one-hour video can take a long time. The Colab engi
 The URL and token are **new every Colab session**. When you start a new session (or the old one timed out):
 
 1. Run the notebook again (steps 1–6) and copy the new line.
-2. In **[ SETTINGS ] > TRANSCRIPTION** paste it into the URL field, **[ TEST CONNECTION ]**, **[ SAVE ]**.
+2. In **Tools > Settings > TRANSCRIPTION** paste it into the URL field, **[ TEST CONNECTION ]**, **[ SAVE ]**.
 
 ### Stop when you are done
 

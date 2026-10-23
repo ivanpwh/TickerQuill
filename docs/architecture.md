@@ -6,8 +6,9 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 
 | File | Responsibility |
 |---|---|
-| `app.py` | Tk application (`App`), dialogs (`SettingsDialog`, `HistoryDialog`, `ChoiceDialog`, `ModelPicker`), settings helpers, UI strings (`STR`), the LLM system prompt, cache/history helpers and the `Pipeline` |
+| `app.py` | Tk application (`App`) and its pages (the Analysis frame, `HistoryPage`), dialogs (`SettingsDialog`, `ChoiceDialog`, `ModelPicker`), settings helpers, UI strings (`STR`), the LLM system prompt, cache/history helpers and the `Pipeline` |
 | `report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
+| `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
 | `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
 | `theme.py` | Palettes, the live palette object `T`, `apply()` and `recolor()` |
 | `textclean.py` | Removes runs of repeated words/lines that Whisper hallucinates |
@@ -24,7 +25,7 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 | `transcript` | `(title, text, source)` | writes the TRANSCRIPT tab; `source` is `{"url": …}` or `{"file": <file name>}` and becomes `data["source"]` |
 | `report_raw` | `(raw LLM text, finish reason)` | `process_report` → `report.parse_report` → `report.compute` → dashboard |
 | `error` | message | status line, REPORT tab, dashboard message |
-| `done` | none | re-enables buttons |
+| `done` | none | re-enables buttons, reloads History, updates the menu and the job indicator |
 
 ```
 Pipeline.run
@@ -66,6 +67,14 @@ Transcripts opened with OPEN FILE are registered as `cache/file-<sha1 of the cle
 Finished cache JSON: `title, url, vid, lang, whisper_model, duration, created, transcript`.
 Checkpoint JSON: the same without `transcript`, plus `lines` (timestamped lines so far) and `done_until` (seconds). A checkpoint is written every 10 segments and whenever a job is cancelled or fails with some text. `list_history()` reads this folder; there is no separate database.
 
+## Pages and menu
+
+`App.pages` holds the page frames (`analysis`, `history`). `show_page(name)` packs one and hides the others, so each keeps its widgets and state; it also sets the page name in the title row, reloads History, and updates the job indicator. `busy()` (the RUN button is disabled) is the single "a job is running" flag.
+
+`menus.MenuBar` only calls methods on the `App` instance, so it does not import `app.py`. Each item is a row in one table: a label function, a command, the accelerator text, the key sequences bound on the main window, and an optional enabled condition. `refresh_labels()` runs on language changes; `refresh_state()` re-evaluates labels and enabled conditions after `start`, `finish`, tab/page switches and queue events. Copy/Save and Pause/Resume reuse the labels of their buttons. Key sequences that a Tk widget class already uses to edit text (`Ctrl+O` in `Text` inserts a line) are rebound on that class with the menu action and `"break"`.
+
+The job indicator (`update_indicator`) is empty on the Analysis page. Elsewhere it shows `● <status> <pct>%` while `busy()`, then `job_mark` (`✓`, `■` or `!`) set by `finish()` until the Analysis page is shown.
+
 ## Settings
 
 `setting(name, default)` reads `.env`, then the OS environment, then the default, on every call (so edits apply without restart). `load_settings()` / `save_settings(**changes)` read and merge-write `settings.json`. `write_env()` edits `.env` in place, keeping comments and unknown lines. `SettingsDialog.FIELDS` declares each field, its tab, widget type and storage (`env` or `json`); `SettingsDialog.apply()` pushes saved values into the running app. Precedence rules: [configuration](configuration.md#precedence).
@@ -75,7 +84,7 @@ Checkpoint JSON: the same without `transcript`, plus `lines` (timestamped lines 
 `theme.THEMES` maps a theme name to seven colour roles: `BG`, `FG`, `DIM`, `AMBER`, `RED`, `CYAN`, `GOOD`. Code reads colours as `T.BG`, `T.FG`, … when it creates a widget. Switching themes:
 
 1. `theme.apply(name)` updates `T` and returns the old palette.
-2. `theme.recolor(root, old, new)` walks every widget (including open dialogs) and replaces any colour option equal to an old role colour with the new role colour; text tags are included.
+2. `theme.recolor(root, old, new)` walks every widget (including open dialogs, but not `tk.Menu`, which keeps the system colours) and replaces any colour option equal to an old role colour with the new role colour; text tags are included.
 3. `App.set_theme` then redraws the dashboard, because its canvas items are not widgets.
 
 Rules for contributors: never hard-code a hex colour in UI code (derive with `theme.mix`); give each role in a theme a distinct hex (`GOOD` may equal `FG`); read `T.X` at call time, not in default arguments or module-level constants. `system` resolves to dark/light from the OS when the app starts.

@@ -1,6 +1,6 @@
 # Configuration
 
-Every option can be changed in **[ SETTINGS ]** inside the app. This page documents where each value is stored, its default and what it does. You only need to read it if you edit files by hand or run into precedence questions.
+Every option can be changed in **Tools > Settings** inside the app. This page documents where each value is stored, its default and what it does. You only need to read it if you edit files by hand or run into precedence questions.
 
 ## Where settings live
 

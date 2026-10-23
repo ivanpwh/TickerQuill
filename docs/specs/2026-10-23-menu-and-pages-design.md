@@ -1,6 +1,6 @@
 # Menu bar and pages: design
 
-Date: 2026-10-23 · Status: approved, implementation started without a separate spec review (at the user's request) · Runs before sub-project B (COLLECTION), which adds its page and menu item.
+Date: 2026-10-23 · Status: approved and implemented (spec review skipped at the user's request) · Runs before sub-project B (COLLECTION), which adds its page and menu item.
 
 ## Problems
 

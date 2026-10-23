@@ -7,8 +7,11 @@
 - **History** shows the selected item's full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 - Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
 - Finished analyses are saved with their transcript, including files opened with **[ OPEN FILE ]**. Clicking a finished transcript in **History** shows its dashboard, analysis and transcript without calling the LLM; **[ REANALYZE ]** creates the analysis again.
+- Menu bar: **File**, **View**, **Job**, **Tools**, **Help**, with shortcuts (`Ctrl+O`, `Ctrl+S`, `Ctrl+Shift+C`, `Ctrl+1`, `Ctrl+2`, `Ctrl+,`, `Esc`). Theme and language can be switched from **View**.
+- While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 
 ### Changed
+- **History** is now a page in the main window (**View > History**) instead of a separate window. The **[ SETTINGS ]** and **[ HISTORY ]** buttons are replaced by the menu; **[ PAUSE ]** and **[ CANCEL ]** moved next to the status line.
 - The start button is now **[ RUN ]** (Indonesian **[ PROSES ]**) and the report tab **REPORT** (**HASIL ANALISIS**), so the button and the tab no longer share a label.
 - The copy and save buttons name the tab they act on, for example **[ COPY TRANSCRIPT ]**.
 

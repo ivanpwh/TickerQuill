@@ -24,7 +24,7 @@ The URL must start with `http://` or `https://`. Playlist links use only the sin
 ## Transcription
 
 **It is very slow**
-Without an NVIDIA GPU, Whisper runs on the CPU. `large-v3` is slow there; choose `medium` or `small` in **[ SETTINGS ] > TRANSCRIPTION**, or use the Colab engine. The status line shows `(CPU)` or `(CUDA)` while transcribing.
+Without an NVIDIA GPU, Whisper runs on the CPU. `large-v3` is slow there; choose `medium` or `small` in **Tools > Settings > TRANSCRIPTION**, or use the Colab engine. The status line shows `(CPU)` or `(CUDA)` while transcribing.
 
 **CUDA / cuDNN / cuBLAS errors with an NVIDIA GPU**
 The GPU libraries required by CTranslate2 (the engine behind faster-whisper) are not installed or not found. Follow the CTranslate2 / faster-whisper GPU installation notes, or switch to the Colab engine. The app picks CUDA automatically when CTranslate2 reports a GPU and has no switch to force the CPU yet.
@@ -41,10 +41,10 @@ The app already collapses repeats of 4 or more. Heavy repetition usually means p
 ## Analysis (LLM)
 
 **"NINEROUTER_API_KEY is not set (app/.env)…"**
-Add the key in **[ SETTINGS ] > ANALYSIS (LLM)**. The transcript is still available in the TRANSCRIPT tab, and the next **[ RUN ]** reuses it.
+Add the key in **Tools > Settings > ANALYSIS (LLM)**. The transcript is still available in the TRANSCRIPT tab, and the next **[ RUN ]** reuses it.
 
 **"No LLM model is set…" or the warning "LLM not set up" when you press RUN**
-A fresh install has no default model because every endpoint offers different ones. Open **[ SETTINGS ] > ANALYSIS (LLM)**, press **[ PICK MODEL ]** (or type a model id), and **[ SAVE ]**. The same warning appears if the API key is empty.
+A fresh install has no default model because every endpoint offers different ones. Open **Tools > Settings > ANALYSIS (LLM)**, press **[ PICK MODEL ]** (or type a model id), and **[ SAVE ]**. The same warning appears if the API key is empty.
 
 **Connection refused / cannot load the model list**
 The endpoint is not running or the URL is wrong. For a local 9router, start it first and check the URL (default `http://localhost:20128/v1`). In the model picker you can type a model name by hand even when the list cannot load.
@@ -61,7 +61,7 @@ The speaker may not have discussed specific stocks, or the transcript is poor. T
 ## Colab engine
 
 **"The Colab server is not set up…"**
-Open **[ SETTINGS ] > TRANSCRIPTION** and paste the `URL TOKEN` line from the notebook into the URL field (the token fills in automatically), then **[ SAVE ]**.
+Open **Tools > Settings > TRANSCRIPTION** and paste the `URL TOKEN` line from the notebook into the URL field (the token fills in automatically), then **[ SAVE ]**.
 
 **TEST CONNECTION fails, or "Colab server problem: …"**
 - The notebook's last cell must still be running. Colab sessions end when idle or after a time limit.
@@ -84,7 +84,7 @@ More in [colab/README.md](../colab/README.md).
 `settings.json` takes precedence over `.env` for the LLM model, engine and Colab values. Change them in the Settings dialog (it updates both) or remove the key from `settings.json`. See [Configuration](configuration.md#precedence).
 
 **History is empty**
-History reads `cache/`. Entries appear after a transcription finishes or is cancelled with some text. It is unavailable while a job runs.
+History reads `cache/`. Entries appear after a transcription finishes or is cancelled with some text.
 
 **Disk space is growing**
 `work/` keeps downloaded audio and `transcripts/` keeps text copies. Delete files you no longer need; entries remain in History but a restart will download again.

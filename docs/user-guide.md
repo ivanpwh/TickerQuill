@@ -3,6 +3,7 @@
 How to use TickerQuill day to day, and how to read what it produces. For installation see the [README](../README.md).
 
 ## Contents
+0. [Menus and pages](#menus-and-pages)
 1. [First-time setup](#1-first-time-setup)
 2. [Analysing a video](#2-analysing-a-video)
 3. [When a video was seen before](#3-when-a-video-was-seen-before)
@@ -16,9 +17,25 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 
 ---
 
+## Menus and pages
+
+The main window has two pages: **Analysis** (paste a URL, run, read the results) and **History** (saved transcripts). Switch with **View > Analysis** / **View > History** or `Ctrl+1` / `Ctrl+2`. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
+
+| Menu | Items |
+|---|---|
+| **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
+| **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Dashboard / Report / Transcript · Theme · Language |
+| **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
+| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
+| **Help** | User guide · About TickerQuill |
+
+Items that cannot be used right now are greyed out: Run and Open file while a job runs, Pause and Cancel when nothing runs, Copy and Save when the current tab is empty or another page is open. Menu labels follow the app language. The menu bar itself uses the Windows colours; it does not follow the theme.
+
+While a job runs and the History page is open, the title row shows the progress, for example `● 2/3 TRANSCRIBING (CUDA) 45%`. When the job ends there it shows `✓` (done), `■` (cancelled) or `!` (error) with the final status. The app never switches pages on its own; click the indicator or press `Ctrl+1` to see the result.
+
 ## 1. First-time setup
 
-1. Start the app and press **[ SETTINGS ]**.
+1. Start the app and open **Tools > Settings** (`Ctrl+,`).
 2. **ANALYSIS (LLM)** tab: enter the endpoint URL, API key and model. **[ PICK MODEL ]** asks your endpoint for its model list; you can also type a model name directly.
 3. **TRANSCRIPTION** tab: choose where Whisper runs (**Local** or **Colab**), the Whisper model and the default audio language. See the [Colab guide](../colab/README.md) if you pick Colab.
 4. **GENERAL** tab: language and theme.
@@ -62,19 +79,19 @@ Reusing is much faster and is the default choice for repeat analyses, for exampl
 
 ## 4. Pause, cancel and resume
 
-- **[ PAUSE ]** is available while downloading, loading the model and transcribing. **[ RESUME ]** continues. Pausing a download stops it and continues from the partial file.
-- **[ CANCEL ]** stops the job. If any transcript text exists it is saved as a checkpoint (written every 10 segments and on cancel or error). Press **[ RUN ]** again and choose **[ RESUME ]**.
+- **[ PAUSE ]** (next to the status line, or **Job > Pause**) is available while downloading, loading the model and transcribing. **[ RESUME ]** continues. Pausing a download stops it and continues from the partial file.
+- **[ CANCEL ]** (or `Esc`) stops the job. If any transcript text exists it is saved as a checkpoint (written every 10 segments and on cancel or error). Press **[ RUN ]** again and choose **[ RESUME ]**.
 - With the Colab engine a very long pause can drop the connection; the checkpoint still lets you resume.
 
 ## 5. Using your own transcript
 
 Press **[ OPEN FILE ]** and pick a `.txt`, `.md`, `.srt` or `.vtt` file. The app skips download and Whisper, cleans repeated phrases and runs only the analysis. Files are read as plain UTF-8 text; subtitle formats are not parsed, so cue numbers and time ranges stay in the text. Lines in the form `[hh:mm:ss] text` (the format TickerQuill writes) give the best timestamps in the report.
 
-The transcript is also saved to **[ HISTORY ]** as a **FILE** entry (the same content never creates a second entry), so you can analyse it again later, for example with another LLM model, without keeping the original file.
+The transcript is also saved to **History** as a **FILE** entry (the same content never creates a second entry), so you can analyse it again later, for example with another LLM model, without keeping the original file.
 
 ## 6. History
 
-**[ HISTORY ]** lists everything in `cache/`, newest first: status (`DONE` or percent complete), title, audio language, Whisper model and date. Transcripts you opened with **[ OPEN FILE ]** are listed too, with `FILE` in the language column and `-` as the model.
+The **History** page (**View > History**, `Ctrl+2`) lists everything in `cache/`, newest first: status (`DONE` or percent complete), title, audio language, Whisper model and date. Transcripts you opened with **[ OPEN FILE ]** are listed too, with `FILE` in the language column and `-` as the model.
 
 | Button | Action |
 |---|---|
@@ -87,7 +104,7 @@ Selecting an item shows its full title and video link under the list. **[ OPEN L
 | **[ RESTART ]** | Transcribes the selected video again from scratch (for a `FILE` entry: same as USE, since there is nothing to transcribe) |
 | **[ DELETE ]** | Removes the entry from the cache. The `.txt` in `transcripts/` and the audio in `work/` are kept |
 
-History can be opened while a job is running, but choosing an item then only shows a message until the job ends.
+History can be browsed while a job is running; choosing an item then shows "A job is already running." in red and stays on the page. The list reloads whenever the page is opened and when a job ends.
 
 ## 7. Reading the results
 
@@ -140,6 +157,7 @@ Finished transcripts are also written automatically to `transcripts/<title>-<vid
 
 - **App language** switches the interface and the report labels between Indonesian and English. The dashboard is re-labelled immediately without calling the LLM again. Free-text parts written by the LLM (summary, reasons) stay in the language they were generated in; the language used for new analyses follows the app language.
 - **Theme**: Retro Green (default), Retro Amber, Modern Dark, Light, or Follow system (checked when the app starts). The change is instant and remembered.
+- Both can also be switched from **View > Theme** and **View > Language** without opening Settings.
 
 ![Light theme](images/dashboard-light.png)
 
