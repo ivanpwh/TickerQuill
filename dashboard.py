@@ -1,5 +1,7 @@
 """Tampilan dashboard retro (scrollable) dari blok yang dihasilkan report.blocks()."""
+import re
 import tkinter as tk
+import webbrowser
 
 from theme import FONT, FONT_B, FONT_BIG, T, mix
 
@@ -7,6 +9,16 @@ from theme import FONT, FONT_B, FONT_BIG, T, mix
 def stance_color(stance):
     """Warna lencana sikap menurut tema yang sedang aktif."""
     return {"BUY": T.GOOD, "HOLD": T.CYAN, "SELL": T.RED, "AVOID": mix(T.RED, T.BG, 0.3), "WATCH": T.AMBER}[stance]
+
+
+def open_url(url):
+    """Buka link di browser. Hanya http(s); kegagalan (misalnya tanpa browser bawaan) diabaikan."""
+    if not re.match(r"^https?://", url or ""):
+        return
+    try:
+        webbrowser.open(url)
+    except (webbrowser.Error, OSError):
+        pass
 
 
 class DashboardView(tk.Frame):
@@ -62,6 +74,13 @@ class DashboardView(tk.Frame):
             getattr(self, "b_" + kind)(body, v)
 
     # --- blok -------------------------------------------------------------------------------------
+    def b_source(self, p, v):
+        self.label(p, v["title"], fg=T.AMBER, font=FONT_B)
+        lbl = self.label(p, v["line"], fg=T.CYAN if v["url"] else T.DIM, pady=(0, 4))
+        if v["url"]:  # link video bisa diklik; berkas hanya ditampilkan
+            lbl.configure(font=(*FONT, "underline"), cursor="hand2")
+            lbl.bind("<Button-1>", lambda e: open_url(v["url"]))
+
     def b_title(self, p, text):
         tk.Frame(p, bg=T.DIM, height=1).pack(fill="x", pady=(16, 4))
         self.label(p, "> " + text, fg=T.AMBER, font=FONT_B)

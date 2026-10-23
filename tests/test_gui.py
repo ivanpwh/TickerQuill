@@ -88,3 +88,29 @@ def test_main_window_summary_shows_unset_model(root):
     assert root.tr("not_set") in root.summary_lbl.cget("text")
     root.set_model("some/model")
     assert "some/model" in root.summary_lbl.cget("text")
+
+
+def all_widgets(w):
+    for child in w.winfo_children():
+        yield child
+        yield from all_widgets(child)
+
+
+def test_source_link_is_shown_on_the_dashboard_and_in_the_report(root, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app, "open_url", opened.append)
+    monkeypatch.setattr("dashboard.open_url", opened.append)
+    url = "https://youtu.be/abcdefghijk"
+    root.q.put(("transcript", ("Video saham", "[00:00:01] BBCA", {"url": url})))
+    root.q.put(("report_raw", ('{"stocks": [{"ticker": "BBCA", "stance": "BUY"}]}', "stop")))
+    root.poll()
+    assert root.data["source"] == {"title": "Video saham", "url": url}
+
+    link = next(w for w in all_widgets(root.dash.inner) if isinstance(w, tk.Label) and url in w.cget("text"))
+    root.update()
+    link.event_generate("<Button-1>")
+    txt = root.panes["ANALISIS"][1]
+    start, end = txt.tag_ranges("link")[:2]
+    assert txt.get(start, end) == url
+    assert txt.get("1.0", "1.end") == "Video saham"
+    assert opened == [url]

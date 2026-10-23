@@ -144,5 +144,5 @@ def test_preloaded_history_entry_skips_download_and_whisper(files):
     events = []
     while not out.empty():
         events.append(out.get())
-    assert ("transcript", ("T", "some text")) in events
+    assert ("transcript", ("T", "some text", {"file": "T"})) in events
     assert events[-1][0] == "error" and "NINEROUTER_API_KEY" in events[-1][1]

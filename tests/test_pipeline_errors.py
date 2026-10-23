@@ -208,7 +208,7 @@ def test_llm_failure_after_retries_is_step_3_and_keeps_the_transcript(no_wait, m
     out = queue.Queue()
     app.Pipeline("", "tiny", "Indonesia", "EN", out, preloaded=("T", "some text"), model="m").run()
     events = drain(out)
-    assert ("transcript", ("T", "some text")) in events  # transkrip tetap dikirim sebelum analisis gagal
+    assert ("transcript", ("T", "some text", {"file": "T"})) in events  # transkrip tetap dikirim sebelum analisis gagal
     kind, msg = events[-1]
     assert kind == "error"
     assert msg.startswith("Step 3/3 failed: APIError: upstream connection lost")
@@ -354,7 +354,7 @@ def test_history_click_without_saved_analysis_does_not_call_the_llm(no_wait, mon
     out = queue.Queue()
     app.Pipeline(URL, "tiny", "Indonesia", "EN", out, mode="view", model="m").run()
     events = drain(out)
-    assert ("transcript", ("T", "[00:00:01] BBCA naik")) in events
+    assert ("transcript", ("T", "[00:00:01] BBCA naik", {"url": URL})) in events
     assert ("notice", app.STR["EN"]["no_saved"]) in events
     assert not any(kind == "report_raw" for kind, _ in events)
     assert events[-1] == ("done", None)
@@ -410,3 +410,18 @@ def test_file_entry_click_shows_saved_analysis_and_saves_new_ones(no_wait, monke
     out = queue.Queue()
     app.Pipeline("", "tiny", "Indonesia", "EN", out, mode="view", preloaded=text, entry=entry, model="m").run()
     assert ("report_raw", ("saved report", "stop")) in drain(out)
+
+
+def test_transcript_event_names_the_source_file(no_wait, monkeypatch, tmp_path):
+    entry = app.save_file_entry("notes", "[00:00:01] BBCA naik", tmp_path / "sub" / "notes.txt")
+    out = queue.Queue()
+    app.Pipeline("", "tiny", "Indonesia", "EN", out, mode="view", preloaded=("notes", "[00:00:01] BBCA naik"),
+                 entry=entry, model="m").run()
+    assert ("transcript", ("notes", "[00:00:01] BBCA naik", {"file": "notes.txt"})) in drain(out)
+
+    opened = tmp_path / "opened.txt"
+    opened.write_text("[00:00:01] BBCA naik", encoding="utf-8")
+    monkeypatch.setattr(app.Pipeline, "analyze", lambda self, title, text: None)
+    out = queue.Queue()
+    app.Pipeline("", "tiny", "Indonesia", "EN", out, transcript_path=str(opened), model="m").run()
+    assert ("transcript", ("opened", "[00:00:01] BBCA naik", {"file": "opened.txt"})) in drain(out)

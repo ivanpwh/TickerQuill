@@ -12,7 +12,7 @@ from tkinter import filedialog, messagebox
 
 import remote
 import report
-from dashboard import DashboardView
+from dashboard import DashboardView, open_url
 from textclean import clean_repeats
 import theme
 from theme import FONT, FONT_B, T
@@ -516,7 +516,7 @@ class Pipeline:
                 title, transcript = self.read_transcript_file()
             else:
                 _, title, transcript = self.get_transcript()
-            self.emit("transcript", (title, transcript))
+            self.emit("transcript", (title, transcript, self.source(title)))
             if self.saved_analysis is not None:  # analisis yang sudah tersimpan: tampilkan tanpa LLM
                 self.emit("report_raw", (self.saved_analysis, "stop"))
                 self.status("done", 100)
@@ -533,6 +533,17 @@ class Pipeline:
             self.emit("error", self.failure(e.step, e.detail, e.tries))
         except Exception as e:
             self.emit("error", self.failure(self.step, f"{type(e).__name__}: {e}"))
+
+    def source(self, title):
+        """Asal transkrip untuk header hasil: link video, atau nama berkas (tanpa link)."""
+        if self.transcript_path:
+            return {"file": Path(self.transcript_path).name}
+        if self.preloaded:
+            try:
+                return {"file": Path(read_meta(self.done_path)["source"]).name}
+            except (AttributeError, OSError, ValueError, KeyError, TypeError):  # tanpa entri riwayat atau tanpa 'source'
+                return {"file": title}
+        return {"url": self.url}
 
     def read_transcript_file(self):
         self.status("s_file", 50)
@@ -811,6 +822,7 @@ class App(tk.Tk):
         self.hint_shown = True
         self.data = None  # hasil report.compute() untuk dashboard
         self.transcript_text = ""
+        self.source = None  # {"title", "url"} atau {"title", "file"}: header hasil
         self.build()
         self.apply_lang()
         self.after(100, self.poll)
@@ -884,6 +896,8 @@ class App(tk.Tk):
         try:
             obj, truncated = report.parse_report(raw)
             self.data = report.compute(obj, self.transcript_text, self.model, truncated=truncated)
+            if self.source:
+                self.data["source"] = self.source
         except (ValueError, KeyError, TypeError, AttributeError):
             self.data = None
             self.dash.message(self.tr("parse_fail"))
@@ -995,6 +1009,9 @@ class App(tk.Tk):
             txt.tag_config("bold", font=FONT_B)
             txt.tag_config("dim", foreground=T.DIM)
             txt.tag_config("err", foreground=T.RED)
+            txt.tag_config("link", foreground=T.CYAN, underline=True)
+            txt.tag_bind("link", "<Enter>", lambda e, t=txt: t.config(cursor="hand2"))
+            txt.tag_bind("link", "<Leave>", lambda e, t=txt: t.config(cursor="xterm"))
             self.panes[name] = (frame, txt)
         self.dash = DashboardView(holder)
         self.show("DASHBOARD")
@@ -1030,6 +1047,9 @@ class App(tk.Tk):
     def render_markdown(self, text):
         txt = self.panes["ANALISIS"][1]
         txt.delete("1.0", "end")
+        for tag in txt.tag_names():
+            if tag.startswith("url-"):  # tag per link dari render sebelumnya
+                txt.tag_delete(tag)
         for line in text.splitlines():
             m = re.match(r"^(#{1,4})\s*(.*)", line)
             if m:
@@ -1039,8 +1059,14 @@ class App(tk.Tk):
             for part in re.split(r"(\*\*.+?\*\*)", line):
                 if part.startswith("**") and part.endswith("**") and len(part) > 4:
                     txt.insert("end", part[2:-2], "bold")
-                else:
-                    txt.insert("end", part)
+                    continue
+                for piece in re.split(r"(https?://\S+)", part):
+                    if piece.startswith(("http://", "https://")):  # link bisa diklik
+                        tag = f"url-{txt.index('end')}"
+                        txt.insert("end", piece, ("link", tag))
+                        txt.tag_bind(tag, "<Button-1>", lambda e, u=piece: open_url(u))
+                    elif piece:
+                        txt.insert("end", piece)
             txt.insert("end", "\n")
 
     def llm_ready(self):
@@ -1132,6 +1158,7 @@ class App(tk.Tk):
         self.last_status = None
         self.data = None
         self.transcript_text = ""
+        self.source = None
         self.clear("ANALISIS")
         self.clear("TRANSKRIP")
         self.dash.message(self.tr("dash_hint"))
@@ -1165,7 +1192,8 @@ class App(tk.Tk):
                     self.last_status = p
                     self.render_status()
                 elif kind == "transcript":
-                    title, self.transcript_text = p
+                    title, self.transcript_text, src = p
+                    self.source = {"title": title, **src}
                     self.write("TRANSKRIP", f"{title}\n\n{self.transcript_text}")
                 elif kind == "report_raw":
                     self.process_report(*p)
