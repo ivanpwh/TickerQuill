@@ -135,7 +135,7 @@ The 5–8 % and 5–10 % figures are general rules of thumb shown for orientatio
 
 ## Limitations
 
-- Every number comes from what was said in the video, not from market data. The app never checks real prices, company performance, or whether the speaker's earlier predictions came true.
+- Every number in the analysis comes from what was said in the video, not from market data. The only market data is in the optional price window (Yahoo Finance, delayed, unofficial), which shows the move since each video and whether its target or loss limit was reached; the app does not judge company performance or score speakers.
 - ASR errors on tickers and numbers are the main source of wrong output. Flags help but cannot catch everything.
 - The LLM can mislabel a stance or attach a level to the wrong stock. Treat the dashboard as an index into the video and verify at the listed timestamps.
 - Mention counts depend on the spelling variants the LLM lists; a stock spoken in a way not listed may be undercounted.

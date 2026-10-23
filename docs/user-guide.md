@@ -11,6 +11,7 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 5. [Using your own transcript](#5-using-your-own-transcript)
 6. [History](#6-history)
 6b. [Collection](#6b-collection)
+6c. [Stock price window](#6c-stock-price-window)
 7. [Reading the results](#7-reading-the-results)
 8. [Copy and save](#8-copy-and-save)
 9. [Settings, language and themes](#9-settings-language-and-themes)
@@ -131,6 +132,17 @@ The **Collection** page (**View > Collection**, `Ctrl+3`) gathers every analysis
 
 **AI summary.** **[ AI SUMMARY ]** sends only the extracted data shown on the page (no transcripts) to your LLM and asks for 4–8 points: what the videos agree on, where they differ, how views changed and what to re-check. The result is saved in `analyses/ai/`, so it is not requested again. When a newer analysis for that stock or date arrives, the old summary is shown with a note and **[ UPDATE AI SUMMARY ]**. The button is disabled until an LLM API key and model are set. Like everything else here, it summarises what was said; it is not investment advice.
 
+## 6c. Stock price window
+
+Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock in the Collection, to open its price window. Each symbol gets one window; several can be open at once.
+
+- **Source**: Yahoo Finance, fetched only while a price window is open. It is unofficial and IDX prices are **delayed by about 15 minutes**. The ticker gets the `.JK` suffix (IDX). If the ticker was misheard, correct it in **SYMBOL>** and press **[ GO ]**; an unknown symbol is reported as not found.
+- **Header**: last price, change from the previous close, day high/low, volume, the update time (WIB) and whether the IDX is open. While it is open (Mon–Fri 09:00–16:15 WIB) the window refreshes every 60 seconds; otherwise press **[ RELOAD ]**.
+- **Chart**: 1D, 5D, 1M, 3M or 1Y. The line is green when the price rose over the range and red when it fell. Dashed lines show the buy price (amber), target (green) and loss limit (red): from that stock's card, or the medians across videos when opened from the Collection. Levels far outside the chart's range are listed under it instead.
+- **Since the video**: for each video, the close on its date (the next trading day for weekends) and the latest price, the change in %, and whether the target or loss limit has been reached since then (counting the highs and lows after the video day and the latest price). This needs the video's upload date; dates marked `*` are analysis dates (fill in upload dates on the Collection page), and without any date the section says so.
+
+Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.
+
 ## 7. Reading the results
 
 ![Dashboard](images/dashboard-retro-green.png)
@@ -155,7 +167,7 @@ A red box at the top means the model's reply was cut off; the dashboard shows wh
 
 ### A stock card
 
-- **Ticker, name and stance badge**: BUY, HOLD, SELL, WATCH or AVOID, with a one-sentence explanation. WATCH means "on the watchlist, no clear buy suggestion yet".
+- **Ticker, name and stance badge**: click the ticker to open its [price window](#6c-stock-price-window). BUY, HOLD, SELL, WATCH or AVOID, with a one-sentence explanation. WATCH means "on the watchlist, no clear buy suggestion yet".
 - **Mentioned N× (P%)**: how often the stock appears in the transcript and its share of all stock mentions. A rough measure of how much of the video was about it.
 - **Plan completeness (0–100)**: 20 points each for a stated buy price, sell target, loss limit, a reason, and names/numbers that are not doubtful. A high score means the speaker gave a complete plan, not that the plan is good.
 - **Levels**: buy price, sell target, loss limit (stop loss), support, resistance, exactly as spoken.
@@ -193,6 +205,6 @@ All options: [Configuration](configuration.md).
 - **Pick the right audio language.** Auto-detect works, but forcing the language usually helps with tickers and numbers.
 - **Bigger Whisper models are more accurate** but slower. If a job is too slow locally, try `medium`/`small` or use the Colab engine.
 - **Treat "doubtful" flags seriously.** Whisper often mishears company names ("MEDCO" for MEDC) and numbers.
-- **Cross-check every price level** against the video and against current market data before acting.
+- **Cross-check every price level** against the video and against current market data before acting (the price window helps, but its data is delayed and unofficial).
 - **Try another LLM model** if the report is empty, cut off, or the stocks look wrong. Re-running reuses the cached transcript, so it is quick.
 - **Delete `work/` occasionally**; downloaded audio is kept for resuming and can grow large.

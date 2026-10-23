@@ -10,6 +10,8 @@ A map of the code for contributors. User-facing behaviour is in the [user guide]
 | `report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
 | `archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
 | `collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
+| `market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `since` (move and target/stop hits since a video date). No Tk |
+| `stockview.py` | `StockWindow`: price header, canvas chart with level lines, since-video table; fetches in a worker thread, refreshes every 60 s while the IDX is open |
 | `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
 | `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
 | `theme.py` | Palettes, the live palette object `T`, `apply()` and `recolor()` |
@@ -77,6 +79,10 @@ Checkpoint JSON: the same without `transcript`, plus `lines` (timestamped lines 
 `Pipeline.save_analysis` writes the analysis into the cache entry and, through `archive.build_record`, an archive record with the video metadata, the raw reply and a compact per-stock summary (stance, share, level texts, parsed prices, reason, confidence, doubtful). The Collection page loads records through `App.collection_records()`, which imports cache analyses once (marker file) so deleting a video from the Collection is permanent. Records are reduced to the latest per video before any calculation. The effective date is `video_date`, else the analysis date (marked). `App.fill_video_dates` runs yt-dlp metadata calls in a worker thread and updates both the archive and the cache.
 
 AI summaries call `App.llm_complete(system, user)` in a worker thread with only the extracted data as input. The cache key hashes the ids of the records used plus the UI language, so a new analysis makes the stored summary stale (still shown, with an update button) instead of silently reusing it.
+
+## Stock price window
+
+`App.open_stock(ticker, context)` keeps one `StockWindow` per symbol (`market.symbol_for`, IDX `.JK`). `context` = `{"levels": {entry, target, stop_loss}, "videos": [{date, title, stance, prices, fallback}]}`: the Dashboard passes the clicked card's levels and the current video (its `video_date` comes from the `transcript` event's source), the Collection passes the median levels and every video. A load fetches the 1-day quote, the selected range when it is not 1D, and (once, or on RELOAD) one year of daily bars for "since the video". Results come back through `self.result` and `poll()`; a failed refresh keeps the last good data and shows the error. Theme and language changes re-render open windows.
 
 ## Pages and menu
 

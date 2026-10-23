@@ -10,7 +10,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 
 ![Dashboard, retro green theme](docs/images/dashboard-retro-green.png)
 
-> TickerQuill summarises **what a speaker said**. It does not fetch market data, verify prices, or give investment advice. See [Disclaimer](#disclaimer).
+> TickerQuill summarises **what a speaker said**. The analysis never uses market data; prices are fetched only when you open a stock's price window (Yahoo Finance, delayed about 15 minutes). It does not give investment advice. See [Disclaimer](#disclaimer).
 
 ## Features
 
@@ -41,6 +41,11 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - Per stock across videos: consensus, disagreement flag, timeline, combined price zone with reward:risk from the medians, changes of view, reliability.
 - Per date: the stocks several videos discussed that day, side by side. Overall: most-discussed stocks and market tone per date.
 - Optional AI summary per stock or per date, made from the extracted data only and saved.
+
+**Stock price window**
+- Click a ticker (Dashboard card or Collection) for its price, change, day range and volume, and a 1D–1Y chart with the videos' buy, target and loss-limit levels drawn in.
+- **Since the video**: the move from each video's date to now, and whether its target or loss limit has been reached.
+- Data from Yahoo Finance (unofficial, IDX delayed about 15 minutes), fetched only while the window is open; refreshes every 60 s during IDX hours.
 
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
@@ -239,7 +244,7 @@ More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.m
 
 ## Limitations
 
-- **Everything comes from what was said.** Prices, targets and stances are the speaker's words, not market data. The app does not check real prices or whether past calls were right.
+- **Everything in the analysis comes from what was said.** Prices, targets and stances are the speaker's words, not market data. The price window compares them with delayed Yahoo Finance prices; it is not a trading tool and its data can be late or wrong.
 - **Speech recognition makes mistakes**, especially with tickers and numbers. Doubtful items are flagged, but always re-check in the video.
 - **LLM output can be incomplete.** If a reply is cut off, the dashboard shows what could be recovered and warns you; at most 12 stocks per video are extracted.
 - Single job at a time; no batch or playlist support.
@@ -257,6 +262,8 @@ report.py           parsing of the LLM reply, all calculations, tips, dashboard 
 archive.py          analysis archive and cross-video calculations (Collection)
 collection.py       Collection page
 menus.py            menu bar
+market.py           Yahoo Finance prices and price-since-video calculations
+stockview.py        stock price window
 dashboard.py        scrollable dashboard view (canvas)
 theme.py            colour themes and live re-colouring
 textclean.py        removes repeated-phrase hallucinations from transcripts

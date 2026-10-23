@@ -1,6 +1,6 @@
 # Stock price window: design
 
-Date: 2026-10-23 · Status: approved by the user's request to build it; details decided during implementation · Sub-project C of the 1.2.0 plan
+Date: 2026-10-23 · Status: implemented (built at the user's request; details decided during implementation) · Sub-project C of the 1.2.0 plan
 
 ## Goal
 
