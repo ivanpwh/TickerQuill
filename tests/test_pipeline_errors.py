@@ -17,6 +17,7 @@ def no_wait(monkeypatch, tmp_path):
     monkeypatch.setattr(app, "RETRY_WAITS", (0, 0))
     monkeypatch.setattr(app, "TXT_DIR", tmp_path / "transcripts")
     monkeypatch.setattr(app, "CACHE", tmp_path / "cache")
+    monkeypatch.setattr(app, "ARCHIVE", tmp_path / "analyses")
     (tmp_path / "cache").mkdir()
     return tmp_path
 
@@ -425,3 +426,48 @@ def test_transcript_event_names_the_source_file(no_wait, monkeypatch, tmp_path):
     out = queue.Queue()
     app.Pipeline("", "tiny", "Indonesia", "EN", out, transcript_path=str(opened), model="m").run()
     assert ("transcript", ("opened", "[00:00:01] BBCA naik", {"file": "opened.txt"})) in drain(out)
+
+
+def test_fresh_analysis_is_archived_but_viewing_a_saved_one_is_not(no_wait, monkeypatch):
+    import archive
+
+    write_transcript_entry({"video_date": "2026-10-21", "channel": "Kanal"})
+    monkeypatch.setattr(app, "setting", lambda name, default=None: "k" if name == "NINEROUTER_API_KEY" else default)
+    reply = '{"stocks": [{"ticker": "BBCA", "stance": "BUY", "levels": {"entry": "9.000"}}]}'
+    monkeypatch.setattr(app.Pipeline, "request_report", lambda self, c, m: (reply, "stop"))
+    app.Pipeline(URL, "tiny", "Indonesia", "EN", queue.Queue(), mode="reuse", model="m").run()
+    [rec] = archive.load_records(app.ARCHIVE)
+    assert (rec["vid"], rec["video_date"], rec["channel"], rec["llm_model"]) == (VID, "2026-10-21", "Kanal", "m")
+    assert rec["entry"] == f"{VID}.id.json" and rec["stocks"][0]["prices"]["entry"] == 9000
+
+    app.Pipeline(URL, "tiny", "Indonesia", "EN", queue.Queue(), mode="view", model="m").run()
+    assert len(archive.load_records(app.ARCHIVE)) == 1
+
+
+def test_unreadable_reply_is_not_archived(no_wait, monkeypatch):
+    import archive
+
+    write_transcript_entry()
+    monkeypatch.setattr(app, "setting", lambda name, default=None: "k" if name == "NINEROUTER_API_KEY" else default)
+    monkeypatch.setattr(app.Pipeline, "request_report", lambda self, c, m: ("sorry, no JSON", "stop"))
+    app.Pipeline(URL, "tiny", "Indonesia", "EN", queue.Queue(), mode="reuse", model="m").run()
+    assert archive.load_records(app.ARCHIVE) == []
+
+
+def test_upload_date_and_channel_are_kept_from_the_video_info(no_wait, monkeypatch, tmp_path):
+    work = tmp_path / "work"
+    work.mkdir()
+    monkeypatch.setattr(app, "WORK", work)
+    (work / f"{VID}.ogg").write_bytes(b"audio")
+
+    class Info(Broken):
+        def extract_info(self, url, download=False):
+            return {"id": VID, "title": "T", "upload_date": "20261021", "uploader": "Kanal"}
+
+    fake_yt_dlp(monkeypatch, Info)
+    monkeypatch.setattr(app.Pipeline, "local_segments",
+                        lambda self, audio, name, start: (iter([remote.Segment(0.0, 1.0, "BBCA naik")]), 1.0, "CPU"))
+    pipeline = app.Pipeline(URL, "tiny", "Indonesia", "EN", queue.Queue())
+    pipeline.get_transcript()
+    saved = app.read_meta(app.cache_paths(VID, "id")[0])
+    assert (saved["video_date"], saved["channel"]) == ("2026-10-21", "Kanal")

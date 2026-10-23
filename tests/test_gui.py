@@ -17,6 +17,7 @@ def root(tmp_path_factory):
     mp.setattr(app, "ENV_FILE", tmp / ".env")
     mp.setattr(app, "SETTINGS_FILE", tmp / "settings.json")
     mp.setattr(app, "CACHE", tmp / "cache")
+    mp.setattr(app, "ARCHIVE", tmp / "analyses")
     (tmp / "cache").mkdir()
     for key in ("NINEROUTER_API_KEY", "APP_LANG", "WHISPER_ENGINE", "COLAB_WHISPER_URL", "COLAB_WHISPER_TOKEN"):
         mp.delenv(key, raising=False)

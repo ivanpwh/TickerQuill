@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
+import archive
 import remote
 import report
 from dashboard import DashboardView, open_url
@@ -22,6 +23,7 @@ APP_NAME = "TickerQuill"
 APP_VERSION = "1.1.0"
 BASE = Path(__file__).resolve().parent
 CACHE = BASE / "cache"
+ARCHIVE = BASE / "analyses"  # satu JSON per analisis untuk halaman KOLEKSI (dibuat saat pertama dipakai)
 WORK = BASE / "work"
 CACHE.mkdir(exist_ok=True)
 WORK.mkdir(exist_ok=True)
@@ -440,6 +442,7 @@ class Pipeline:
         self.partial_path = None  # checkpoint transkripsi, untuk pesan error langkah 1 dan 2
         self.done_path = entry  # entri riwayat (transkrip selesai atau berkas); analisis yang berhasil disimpan di sini
         self.saved_analysis = None  # mode 'view': analisis tersimpan yang ditampilkan tanpa memanggil LLM
+        self.video_meta = {}  # tanggal upload dan channel dari yt-dlp, bila info video diambil
 
     def emit(self, kind, payload=None):
         self.q.put((kind, payload))
@@ -603,6 +606,8 @@ class Pipeline:
             with yt_dlp.YoutubeDL(opts) as ydl:
                 info = ydl.extract_info(self.url, download=False)
             vid, title = info["id"], info.get("title", info["id"])
+            self.video_meta = {"video_date": archive.upload_date(info),
+                               "channel": info.get("channel") or info.get("uploader") or ""}
             hit = reuse()
             if hit:
                 return hit
@@ -645,16 +650,21 @@ class Pipeline:
         except (OSError, ValueError):
             return None
 
-    def save_analysis(self, raw, finish):
-        """Simpan analisis yang selesai di entri transkrip, supaya riwayat bisa menampilkannya tanpa LLM."""
+    def save_analysis(self, raw, finish, transcript=""):
+        """Simpan analisis yang selesai di entri transkrip (riwayat tanpa LLM) dan sebagai rekaman arsip (KOLEKSI)."""
         if not self.done_path or not self.done_path.exists() or not raw.strip() or str(finish).startswith("error"):
             return
         try:
             data = read_meta(self.done_path)
-            data.update(analysis=raw, analysis_model=self.model)
+            data.update(analysis=raw, analysis_model=self.model, **{k: v for k, v in self.video_meta.items() if v})
             write_json_atomic(self.done_path, data)
         except (OSError, ValueError):
-            pass  # gagal menyimpan salinan tidak boleh menggagalkan hasil yang sudah tampil
+            return  # gagal menyimpan salinan tidak boleh menggagalkan hasil yang sudah tampil
+        try:
+            archive.save_record(ARCHIVE, archive.build_record(raw, transcript, data, self.done_path, self.model,
+                                                              datetime.now()))
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            pass  # jawaban yang tidak bisa dibaca tidak masuk KOLEKSI; tampilan tetap menanganinya
 
     def load_checkpoint(self, partial_path):
         """(baris, titik lanjut, model) dari checkpoint; kosong bila tidak ada, rusak, atau mode 'fresh'."""
@@ -739,7 +749,7 @@ class Pipeline:
                 partial_path):
         meta = {"title": title, "url": self.url, "vid": vid, "lang": self.audio_label,
                 "whisper_model": whisper_name, "duration": duration,
-                "created": datetime.now().strftime("%Y-%m-%d %H:%M")}
+                "created": datetime.now().strftime("%Y-%m-%d %H:%M"), **self.video_meta}
         last_end, count = start, 0
         try:
             for seg in segments:
@@ -786,7 +796,7 @@ class Pipeline:
                 if not llm_transient(e) or attempt == TRIES:
                     raise StepError(3, f"{type(e).__name__}: {e}", tries=attempt) from e
                 self.retry_wait("s_retry_3", attempt)
-        self.save_analysis(raw, finish)
+        self.save_analysis(raw, finish, transcript)
         self.emit("report_raw", (raw, finish))
         self.status("done", 100)
 

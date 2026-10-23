@@ -7,6 +7,7 @@ settings.json
 # --- Generated data: downloaded audio, transcripts, history cache ---
 work/
 cache/
+analyses/
 transcripts/
 *.mp3
 *.m4a
