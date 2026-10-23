@@ -136,3 +136,39 @@ def test_run_button_and_export_labels_name_what_they_do(root):
         root.ui_var.set(before)
         root.apply_lang()
         root.show("DASHBOARD")
+
+
+def test_history_detail_line_shows_and_copies_the_link(root, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app, "open_url", opened.append)
+    url = "https://youtu.be/abcdefghijk"
+    done, _ = app.cache_paths("abcdefghijk", "id")
+    app.write_json_atomic(done, {"title": "Video saham", "url": url, "vid": "abcdefghijk", "lang": "Indonesia",
+                                 "whisper_model": "tiny", "duration": 10, "created": "2026-10-21 12:03",
+                                 "transcript": "[00:00:01] BBCA"})
+    app.save_file_entry("my notes", "[00:00:01] TLKM", "C:/notes/my notes.txt")
+    dialog = app.HistoryDialog(root)
+    try:
+        assert dialog.d_title.cget("text") == "" and dialog.open_link_btn.cget("state") == "disabled"
+        assert dialog.copy_link_btn.cget("state") == "disabled"
+        rows = {it["meta"]["title"]: i for i, it in enumerate(dialog.items)}
+
+        dialog.list.selection_set(rows["Video saham"])
+        dialog.update_detail()
+        assert dialog.d_title.cget("text") == "Video saham" and dialog.d_link.cget("text") == url
+        assert dialog.open_link_btn.cget("state") == "normal"
+        dialog.open_link()
+        dialog.copy_link()
+        assert opened == [url] and root.clipboard_get() == url
+
+        dialog.list.selection_clear(0, "end")
+        dialog.list.selection_set(rows["my notes"])
+        dialog.update_detail()
+        assert dialog.d_link.cget("text").endswith("C:/notes/my notes.txt")
+        assert dialog.open_link_btn.cget("state") == "disabled"
+        dialog.copy_link()
+        assert root.clipboard_get() == "C:/notes/my notes.txt"
+    finally:
+        dialog.destroy()
+        for item in app.list_history():
+            item["path"].unlink()

@@ -163,7 +163,7 @@ STR = {
         "hint_tr_none": "Tekan [ PROSES ] untuk mencoba lagi.",
         "hint_an": "Transkrip sudah tersimpan. Tekan [ PROSES ], lalu pilih [ PAKAI ULANG ] untuk menganalisis lagi tanpa transkripsi ulang.",
         "hint_dl_part": "Transkrip sebagian masih tersimpan: buka dari RIWAYAT untuk melanjutkan setelah koneksi pulih.",
-        "hist_reanalyze": "[ ANALISIS ULANG ]",
+        "hist_reanalyze": "[ ANALISIS ULANG ]", "hist_open_link": "[ BUKA LINK ]", "hist_copy_link": "[ SALIN LINK ]",
         "no_saved": "Transkrip tersedia, tetapi belum ada analisis tersimpan. Tekan [ ANALISIS ULANG ] di RIWAYAT untuk membuatnya.",
         "set_btn": "[ PENGATURAN ]", "set_title": "Pengaturan",
         "set_help": "Langsung berlaku setelah SIMPAN. Variabel .env ditulis ke berkas .env (hanya kolom yang diubah); "
@@ -238,7 +238,7 @@ STR = {
         "hint_tr_none": "Press [ RUN ] to try again.",
         "hint_an": "The transcript is saved. Press [ RUN ], then choose [ REUSE ] to analyse again without transcribing.",
         "hint_dl_part": "The partial transcript is still saved: open it from HISTORY to resume once the connection is back.",
-        "hist_reanalyze": "[ REANALYZE ]",
+        "hist_reanalyze": "[ REANALYZE ]", "hist_open_link": "[ OPEN LINK ]", "hist_copy_link": "[ COPY LINK ]",
         "no_saved": "The transcript is available, but no analysis is saved yet. Press [ REANALYZE ] in HISTORY to create it.",
         "set_btn": "[ SETTINGS ]", "set_title": "Settings",
         "set_help": "Applied right after SAVE. .env variables are written to the .env file (changed fields only); "
@@ -1282,7 +1282,7 @@ class HistoryDialog(tk.Toplevel):
         self.app, self.items = app, []
         self.title(app.tr("hist_title"))
         self.configure(bg=T.BG)
-        self.geometry("820x460")
+        self.geometry("820x520")
         self.transient(app)
         self.info = tk.Label(self, text="", font=FONT, bg=T.BG, fg=T.AMBER, anchor="w")
         self.info.pack(fill="x", padx=12, pady=(12, 4))
@@ -1295,6 +1295,20 @@ class HistoryDialog(tk.Toplevel):
         sb.pack(side="right", fill="y")
         self.list.pack(side="left", fill="both", expand=True, padx=4, pady=4)
         self.list.bind("<Double-Button-1>", lambda e: self.go("auto"))
+        self.list.bind("<<ListboxSelect>>", lambda e: self.update_detail())
+        detail = tk.Frame(self, bg=T.BG)  # judul lengkap + link video (atau path berkas) dari item terpilih
+        detail.pack(fill="x", padx=12, pady=(0, 8))
+        self.d_title = tk.Label(detail, text="", font=FONT_B, bg=T.BG, fg=T.AMBER, anchor="w", justify="left",
+                                wraplength=780)
+        self.d_title.pack(fill="x")
+        row = tk.Frame(detail, bg=T.BG)
+        row.pack(fill="x", pady=(2, 0))
+        self.copy_link_btn = app.button(row, app.tr("hist_copy_link"), self.copy_link)
+        self.copy_link_btn.pack(side="right")
+        self.open_link_btn = app.button(row, app.tr("hist_open_link"), self.open_link)
+        self.open_link_btn.pack(side="right", padx=6)
+        self.d_link = tk.Label(row, text="", font=FONT, bg=T.BG, fg=T.CYAN, anchor="w")
+        self.d_link.pack(side="left", fill="x", expand=True)
         bottom = tk.Frame(self, bg=T.BG)
         bottom.pack(fill="x", padx=12, pady=(0, 12))
         app.button(bottom, app.tr("hist_go"), lambda: self.go("auto")).pack(side="left")
@@ -1314,6 +1328,39 @@ class HistoryDialog(tk.Toplevel):
             self.list.insert("end", f"{status:>8}  {m['title'][:46]:<46}  {label:<9} {m['whisper_model']:<9} {m['created']}")
         self.info.config(text=self.app.tr("hist_info").format(n=len(self.items)) if self.items
                          else self.app.tr("hist_empty"))
+        self.update_detail()
+
+    def link_of(self, it):
+        """Yang disalin SALIN LINK: link video, atau path berkas untuk entri berkas."""
+        return (it["meta"].get("source") or "") if it["is_file"] else it["url"]
+
+    def update_detail(self):
+        it = self.selected()
+        if not it:
+            self.d_title.config(text="")
+            self.d_link.config(text="")
+            self.open_link_btn.config(state="disabled")
+            self.copy_link_btn.config(state="disabled")
+            return
+        link = self.link_of(it)
+        self.d_title.config(text=it["meta"]["title"])
+        if it["is_file"]:
+            self.d_link.config(text=f"{report.t(self.app.ui, 'src_file')}: {link or '-'}", fg=T.DIM)
+        else:
+            self.d_link.config(text=link, fg=T.CYAN)
+        self.open_link_btn.config(state="disabled" if it["is_file"] or not link else "normal")
+        self.copy_link_btn.config(state="normal" if link else "disabled")
+
+    def open_link(self):
+        it = self.selected()
+        if it and not it["is_file"]:
+            open_url(it["url"])
+
+    def copy_link(self):
+        it = self.selected()
+        if it and self.link_of(it):
+            self.clipboard_clear()
+            self.clipboard_append(self.link_of(it))
 
     def selected(self):
         sel = self.list.curselection()
