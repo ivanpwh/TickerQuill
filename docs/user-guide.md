@@ -132,6 +132,8 @@ The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **View > Market O
 | **Reliability** | How many videos marked the stock as doubtful, and the average speaker confidence |
 | **Reason per video** | Each video's reason, by date |
 
+![Market Overview: one stock across five videos](images/market-overview-stock-retro-green.png)
+
 **AI summary.** **[ AI SUMMARY ]** sends only the extracted data shown on the page (no transcripts) to your LLM and asks for 4–8 points: what the videos agree on, where they differ, how views changed and what to re-check. The result is saved in `analyses/ai/`, so it is not requested again. When a newer analysis for that stock or date arrives, the old summary is shown with a note and **[ UPDATE AI SUMMARY ]**. The button is disabled until an LLM API key and model are set. Like everything else here, it summarises what was said; it is not investment advice.
 
 ## 6c. Stock price window
@@ -150,6 +152,8 @@ Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock 
   - It refreshes every 60 seconds during IDX hours. Opening the chart again for the same stock replaces the window; closing the app closes it.
   - It needs `pywebview` and the Edge WebView2 Runtime (see the [troubleshooting](troubleshooting.md#settings-and-files) page if it does not open).
 - **[ TRADINGVIEW ]** opens the same stock on TradingView.com (`IDX:<TICKER>`) in your browser, with its full chart tools. How current its data is depends on your TradingView account. The same button is on each stock in Market Overview.
+
+![Stock price window](images/price-window-retro-green.png)
 
 Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.
 
