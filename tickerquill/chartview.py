@@ -9,7 +9,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import market
+from . import market, paths
 from .system import IS_WIN
 
 ASSETS = Path(__file__).resolve().parent / "assets"
@@ -140,7 +140,10 @@ def main(argv):
         webview.create_window(t(ui, "title", s=ctx["symbol"]), html=page_html(), js_api=Api(ctx), width=1040,
                               height=680, min_size=(640, 420), background_color=ctx["palette"]["BG"])
         # Windows: paksa Edge WebView2 (mesin IE lama tidak cukup). macOS: WebKit bawaan. Linux: Qt atau GTK.
-        webview.start(gui="edgechromium" if IS_WIN else None)
+        # Ikon jendela hanya bisa diatur pywebview di GTK/Qt (Linux); Windows/macOS memakai ikon interpreter.
+        icon = paths.ICONS / "tickerquill-256.png"
+        webview.start(gui="edgechromium" if IS_WIN else None,
+                      icon=str(icon) if sys.platform.startswith("linux") and icon.exists() else None)
     except Exception as e:  # WebView2 tidak ada, pythonnet gagal, dsb.
         show_error(t(ui, "no_webview", e=f"{type(e).__name__}: {e}"))
         return 1

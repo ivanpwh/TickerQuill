@@ -39,6 +39,19 @@ def open_path(path):
     return True
 
 
+def set_app_id(app_id="ivanpwh.TickerQuill"):
+    """Windows: identitas aplikasi sendiri, supaya taskbar memakai ikon TickerQuill, bukan ikon Python.
+    Harus dipanggil sebelum jendela pertama dibuat. Di OS lain tidak melakukan apa-apa."""
+    if not IS_WIN:
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+    except (AttributeError, OSError):
+        pass
+
+
 def gui_python():
     """Interpreter untuk proses GUI anak: pythonw.exe di Windows (tanpa jendela konsol), selain itu python biasa."""
     exe = Path(sys.executable)

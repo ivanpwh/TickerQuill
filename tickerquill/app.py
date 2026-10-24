@@ -20,7 +20,7 @@ from .menus import MenuBar
 from .stockview import StockWindow
 from .textclean import clean_repeats
 from .theme import FONT, FONT_B, T, font
-from .system import gui_python, no_console_flags, open_path
+from .system import gui_python, no_console_flags, open_path, set_app_id
 from .widgets import RetroButton
 
 APP_NAME = "TickerQuill"
@@ -852,7 +852,9 @@ class Pipeline:
 class App(tk.Tk):
     def __init__(self):
         theme.apply(load_settings().get("theme") or theme.DEFAULT)  # sebelum widget apa pun dibuat
+        set_app_id()  # Windows: taskbar memakai ikon aplikasi ini (harus sebelum jendela dibuat)
         super().__init__(className="TickerQuill")  # Tk menjadikannya kelas "Tickerquill" = StartupWMClass shortcut Linux
+        self.set_icon()
         self.title(f"{APP_NAME} v{APP_VERSION}")
         self.configure(bg=T.BG)
         self.geometry("980x720")
@@ -880,6 +882,16 @@ class App(tk.Tk):
         self.start_page()
         self.after(100, self.poll)
         self.after(500, self.tick_cursor)
+
+    def set_icon(self):
+        """Ikon jendela (judul, taskbar/Dock, Alt+Tab); default=True: jendela harga dan dialog ikut memakainya."""
+        files = [paths.ICONS / f"tickerquill-{s}.png" for s in (16, 32, 48, 64, 128, 256)]
+        try:
+            self.icons = [tk.PhotoImage(file=str(f)) for f in files if f.exists()]  # referensi disimpan: jangan di-GC
+            if self.icons:
+                self.iconphoto(True, *self.icons)
+        except tk.TclError:
+            self.icons = []  # ikon rusak/tidak terbaca: jendela tetap jalan dengan ikon bawaan
 
     def tr(self, key):
         return STR[self.ui][key]

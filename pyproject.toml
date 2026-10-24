@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "pillow"]  # pillow: tools/make_icon.py
 
 [project.scripts]
 tickerquill = "tickerquill.__main__:main"

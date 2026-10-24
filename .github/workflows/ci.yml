@@ -34,7 +34,9 @@ jobs:
         run: |
           pip install --no-deps .
           tickerquill --version
+          cd "$RUNNER_TEMP"  # outside the repo: checks the installed copy, including its package data
           python -m tickerquill --where
+          python -c "import pathlib, tickerquill; a = pathlib.Path(tickerquill.__file__).parent / 'assets'; assert (a / 'icon' / 'tickerquill.ico').exists() and (a / 'chart.html').exists(), a"
       - name: Colab notebook is in sync with whisper_server.py
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
         run: |

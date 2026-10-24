@@ -642,3 +642,8 @@ def test_tools_menu_creates_the_app_shortcut(root, monkeypatch, tmp_path):
     monkeypatch.setattr(app.messagebox, "showerror", lambda title, text, **kw: errors.append(text))
     menu.invoke(i)
     assert errors and "PermissionError: denied" in errors[0]
+
+
+def test_window_uses_the_app_icon(root):
+    assert [img.width() for img in root.icons] == [16, 32, 48, 64, 128, 256]  # passed to wm iconphoto -default
+

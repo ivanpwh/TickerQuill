@@ -117,3 +117,15 @@ def test_windows_shortcut_points_to_pythonw_dash_m(monkeypatch, tmp_path):
     assert Path(target).name.lower() in ("pythonw.exe", "python.exe") and args == "-m tickerquill"
     assert Path(workdir) == shortcuts.working_dir()
     assert shortcuts.remove() == made
+
+
+def test_icon_files_exist_in_every_format():
+    from PIL import Image
+
+    for size in (16, 32, 48, 64, 128, 256, 512, 1024):
+        with Image.open(paths.ICONS / f"tickerquill-{size}.png") as img:
+            assert img.size == (size, size)
+    with Image.open(paths.ICONS / "tickerquill.ico") as ico:
+        assert {(16, 16), (32, 32), (48, 48), (256, 256)} <= set(ico.info["sizes"])
+    assert (paths.ICONS / "tickerquill.icns").stat().st_size > 0
+
