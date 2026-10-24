@@ -1,7 +1,7 @@
 import pytest
 
 pytest.importorskip("tkinter")
-import theme  # noqa: E402
+from tickerquill import theme  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

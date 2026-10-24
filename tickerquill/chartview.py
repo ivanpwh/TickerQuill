@@ -1,6 +1,6 @@
 """Grafik candlestick bergaya TradingView (Lightweight Charts) di jendela pywebview, sebagai proses terpisah.
 
-Dijalankan oleh App.open_chart: `pythonw chartview.py <context.json>`. Tk dan pywebview sama-sama butuh main thread,
+Dijalankan oleh App.open_chart: `python -m tickerquill.chartview <context.json>` (pythonw di Windows). Tk dan pywebview sama-sama butuh main thread,
 jadi grafik tidak bisa berjalan di proses aplikasi. Data dari market.py (Yahoo Finance, tertunda ±15 menit); level dan
 penanda video berasal dari konteks yang ditulis aplikasi. Modul ini bisa diimpor tanpa pywebview (untuk tes).
 """
@@ -9,7 +9,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-import market
+from . import market, paths
+from .system import IS_WIN
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 LWC_JS = ASSETS / "lightweight-charts" / "lightweight-charts.standalone.production.js"
@@ -28,8 +29,12 @@ _T = {
     "network": ("Gagal mengambil harga: {e}", "Could not fetch the price: {e}"),
     "bad_data": ("Data dari Yahoo Finance tidak terbaca: {e}", "Yahoo Finance returned unreadable data: {e}"),
     "lv_entry": ("beli", "buy"), "lv_target": ("target", "target"), "lv_stop_loss": ("batas rugi", "stop"),
-    "no_webview": ("Grafik candle butuh Microsoft Edge WebView2 Runtime. Pasang dari situs Microsoft, lalu coba lagi.\n\n{e}",
-                   "The candle chart needs the Microsoft Edge WebView2 Runtime. Install it from Microsoft's site and try again.\n\n{e}"),
+    "no_webview": ("Jendela grafik candle tidak bisa dibuka. Windows: pasang Microsoft Edge WebView2 Runtime. "
+                   "Linux: pasang pywebview dengan dukungan Qt (pip install \"pywebview[qt]\") atau GTK. Lihat bagian "
+                   "troubleshooting di dokumentasi.\n\n{e}",
+                   "The candle chart window could not open. Windows: install the Microsoft Edge WebView2 Runtime. "
+                   "Linux: install pywebview with Qt (pip install \"pywebview[qt]\") or GTK support. See the "
+                   "troubleshooting page.\n\n{e}"),
 }
 
 
@@ -113,12 +118,16 @@ def page_html():
 
 
 def show_error(text):
-    """Proses ini berjalan tanpa konsol (pythonw), jadi kegagalan ditampilkan sebagai kotak pesan Windows."""
+    """Proses ini berjalan tanpa konsol (pythonw di Windows), jadi kegagalan ditampilkan sebagai kotak pesan Tk."""
     try:
-        import ctypes
+        import tkinter as tk
+        from tkinter import messagebox
 
-        ctypes.windll.user32.MessageBoxW(None, text, "TickerQuill", 0x10)
-    except (AttributeError, OSError):
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror("TickerQuill", text, parent=root)
+        root.destroy()
+    except Exception:  # tanpa layar/Tk: cukup tulis ke stderr
         sys.stderr.write(text + "\n")
 
 
@@ -130,7 +139,11 @@ def main(argv):
 
         webview.create_window(t(ui, "title", s=ctx["symbol"]), html=page_html(), js_api=Api(ctx), width=1040,
                               height=680, min_size=(640, 420), background_color=ctx["palette"]["BG"])
-        webview.start(gui="edgechromium")  # Lightweight Charts butuh Chromium; mesin IE lama tidak cukup
+        # Windows: paksa Edge WebView2 (mesin IE lama tidak cukup). macOS: WebKit bawaan. Linux: Qt atau GTK.
+        # Ikon jendela hanya bisa diatur pywebview di GTK/Qt (Linux); Windows/macOS memakai ikon interpreter.
+        icon = paths.ICONS / "tickerquill-256.png"
+        webview.start(gui="edgechromium" if IS_WIN else None,
+                      icon=str(icon) if sys.platform.startswith("linux") and icon.exists() else None)
     except Exception as e:  # WebView2 tidak ada, pythonnet gagal, dsb.
         show_error(t(ui, "no_webview", e=f"{type(e).__name__}: {e}"))
         return 1

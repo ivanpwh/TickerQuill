@@ -9,11 +9,11 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox
 
-import archive
-import market
-import report
-from dashboard import DashboardView, open_url, stance_color
-from theme import FONT, FONT_B, T
+from . import archive
+from . import market
+from . import report
+from .dashboard import DashboardView, open_url, stance_color
+from .theme import FONT, FONT_B, T
 
 _T = {
     "info": ("{v} video · {s} emiten · {m} dibahas di lebih dari 1 video", "{v} videos · {s} stocks · {m} discussed in more than 1 video"),
@@ -174,9 +174,9 @@ class CollectionPage(tk.Frame):
         self.ticker = None
         self.day_keys, self.ticker_rows = [], []
         self.ai_running = None  # (kind, key) selama LLM bekerja
-        self.ai_result = None
+        self.ai_job = {}  # kotak hasil thread ringkasan AI: thread tidak memegang halaman ini (objek Tk)
         self.ai_error = {}
-        self.fill_result = None
+        self.fill_job = None  # kotak hasil thread pengisi tanggal; None = tidak berjalan
 
         top = tk.Frame(self, bg=T.BG)
         top.pack(fill="x", padx=14, pady=(0, 6))
@@ -488,27 +488,29 @@ class CollectionPage(tk.Frame):
     def run_ai(self, kind, key, path, payload):
         if self.ai_running:
             return
-        self.ai_running, self.ai_result = (kind, key), None
+        self.ai_running = (kind, key)
         self.ai_error.pop((kind, key), None)
         model = self.app.model
         system = AI_SYSTEM + t(self.ui, "lang_rule")
+        box, complete = {}, self.app.llm_complete
+        self.ai_job = box
 
         def work():
             try:
-                self.ai_result = ("ok", self.app.llm_complete(system, payload))
+                box["result"] = ("ok", complete(system, payload))
             except Exception as e:  # jaringan, kunci, model: tampilkan, jangan hentikan aplikasi
-                self.ai_result = ("err", f"{type(e).__name__}: {e}")
+                box["result"] = ("err", f"{type(e).__name__}: {e}")
 
         threading.Thread(target=work, daemon=True).start()
         self.render()
         self.after(150, self.poll_ai, kind, key, path, model)
 
     def poll_ai(self, kind, key, path, model):
-        if self.ai_result is None:
+        if "result" not in self.ai_job:
             self.after(150, self.poll_ai, kind, key, path, model)
             return
-        status, value = self.ai_result
-        self.ai_result, self.ai_running = None, None
+        status, value = self.ai_job.pop("result")
+        self.ai_running = None
         if status == "ok" and value.strip():
             archive.write_json(path, {"kind": kind, "key": key, "text": value.strip(), "model": model,
                                       "created": datetime.now().strftime("%Y-%m-%d %H:%M")})
@@ -539,27 +541,28 @@ class CollectionPage(tk.Frame):
 
     def fill_dates(self):
         missing = archive.missing_dates(self.records)
-        if not missing or self.fill_result is not None:
+        if not missing or self.fill_job is not None:
             return
         self.fill_btn.config(state="disabled")
         self.info.config(text=t(self.ui, "fill_running", n=len(missing)), fg=T.AMBER)
-        self.fill_result = ()
+        box, fill = {}, self.app.fill_video_dates
+        self.fill_job = box
 
         def work():
             try:
-                self.fill_result = ("ok", self.app.fill_video_dates(missing))
+                box["result"] = ("ok", fill(missing))
             except Exception as e:  # yt-dlp tidak terpasang, dsb.
-                self.fill_result = ("err", f"{type(e).__name__}: {e}")
+                box["result"] = ("err", f"{type(e).__name__}: {e}")
 
         threading.Thread(target=work, daemon=True).start()
         self.after(200, self.poll_fill)
 
     def poll_fill(self):
-        if self.fill_result == ():
+        if "result" not in self.fill_job:
             self.after(200, self.poll_fill)
             return
-        status, value = self.fill_result
-        self.fill_result = None
+        status, value = self.fill_job["result"]
+        self.fill_job = None
         self.fill_btn.config(state="normal")
         self.reload()
         if status == "ok":

@@ -2,4 +2,6 @@
 *.bat text eol=crlf
 *.ipynb text eol=lf
 *.png binary
-assets/lightweight-charts/** -text
+tickerquill/assets/lightweight-charts/** -text
+*.command text eol=lf
+*.sh text eol=lf

@@ -1,4 +1,4 @@
-from textclean import clean_repeats, collapse_runs
+from tickerquill.textclean import clean_repeats, collapse_runs
 
 
 def test_repeated_words_are_collapsed_to_two():

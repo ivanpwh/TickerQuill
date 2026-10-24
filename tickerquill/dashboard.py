@@ -1,24 +1,26 @@
 """Tampilan dashboard retro (scrollable) dari blok yang dihasilkan report.blocks()."""
-import re
 import tkinter as tk
-import webbrowser
 
-from theme import FONT, FONT_B, FONT_BIG, T, mix
+from .system import IS_MAC, open_url  # noqa: F401  (open_url dipakai b_source; tes menggantinya lewat modul ini)
+from .theme import FONT, FONT_B, FONT_BIG, T, mix
+
+WHEEL_EVENTS = ("<MouseWheel>", "<Button-4>", "<Button-5>")  # Windows/macOS, lalu X11 (Linux) naik/turun
+
+
+def wheel_steps(e):
+    """Langkah gulir dari event roda mouse: Linux memakai tombol 4/5, Windows kelipatan 120, macOS delta kecil."""
+    if getattr(e, "num", None) == 4:
+        return -1
+    if getattr(e, "num", None) == 5:
+        return 1
+    if IS_MAC:
+        return -e.delta
+    return -(e.delta // 120) or (-1 if e.delta > 0 else 1 if e.delta < 0 else 0)
 
 
 def stance_color(stance):
     """Warna lencana sikap menurut tema yang sedang aktif."""
     return {"BUY": T.GOOD, "HOLD": T.CYAN, "SELL": T.RED, "AVOID": mix(T.RED, T.BG, 0.3), "WATCH": T.AMBER}[stance]
-
-
-def open_url(url):
-    """Buka link di browser. Hanya http(s); kegagalan (misalnya tanpa browser bawaan) diabaikan."""
-    if not re.match(r"^https?://", url or ""):
-        return
-    try:
-        webbrowser.open(url)
-    except (webbrowser.Error, OSError):
-        pass
 
 
 class DashboardView(tk.Frame):
@@ -36,11 +38,11 @@ class DashboardView(tk.Frame):
         self.on_ticker = None  # opsional: klik ticker di kartu saham (jendela harga)
         self.inner.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
         self.canvas.bind("<Configure>", self.on_resize)
-        self.canvas.bind("<Enter>", lambda e: self.canvas.bind_all("<MouseWheel>", self.on_wheel))
-        self.canvas.bind("<Leave>", lambda e: self.canvas.unbind_all("<MouseWheel>"))
+        self.canvas.bind("<Enter>", lambda e: [self.canvas.bind_all(ev, self.on_wheel) for ev in WHEEL_EVENTS])
+        self.canvas.bind("<Leave>", lambda e: [self.canvas.unbind_all(ev) for ev in WHEEL_EVENTS])
 
     def on_wheel(self, e):
-        self.canvas.yview_scroll(-1 * (e.delta // 120), "units")
+        self.canvas.yview_scroll(wheel_steps(e), "units")
 
     def on_resize(self, e):
         self.canvas.itemconfigure(self.win, width=e.width)

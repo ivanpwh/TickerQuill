@@ -1,17 +1,29 @@
 # Troubleshooting
 
-Messages are quoted in English; the Indonesian interface shows the same messages translated. If the app window closes without a message, start it from a terminal (`.venv\Scripts\python.exe app.py`) to see the error.
+Messages are quoted in English; the Indonesian interface shows the same messages translated. If the app window closes without a message, start it from a terminal with the virtual environment active (`tickerquill`) to see the error.
 
 ## Setup and startup
 
-**`ModuleNotFoundError` (faster_whisper, yt_dlp, openai, …)**
-The virtual environment is missing or not active. Run `pip install -r requirements.txt` inside `.venv`, and start the app with `.venv\Scripts\python.exe app.py` or `run.bat`.
+**`ModuleNotFoundError` (faster_whisper, yt_dlp, openai, tickerquill, …)** or **`tickerquill: command not found`**
+The virtual environment is missing or not active, or the package is not installed in it. Activate `.venv` (`.venv\Scripts\activate` on Windows, `source .venv/bin/activate` on macOS/Linux) and run `pip install -r requirements.txt`.
 
 **`No module named 'tkinter'`**
-Your Python was installed without Tk. On Windows reinstall Python with *tcl/tk and IDLE* ticked. On Linux install your distribution's `python3-tk` package.
+Your Python was installed without Tk. Windows: reinstall Python with *tcl/tk and IDLE* ticked. macOS: use the python.org installer, or `brew install python-tk`. Linux: install your distribution's `python3-tk` package (and `python3-venv` on Debian/Ubuntu).
 
-**`run.bat` does nothing**
-It launches `pythonw.exe` (no console), so errors are invisible. Run `python app.py` from a terminal instead.
+**Double-clicking `TickerQuill.bat` says Python was not found**
+Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/) and tick *Add python.exe to PATH* (the Microsoft Store placeholder that appears when you type `python` does not count), then double-click it again. If you use [uv](https://docs.astral.sh/uv/), the launcher uses it instead.
+
+**`TickerQuill.bat` set up once but the app does not open**
+Run `.venv\Scripts\tickerquill.exe` in a terminal to see the error. To redo the setup, delete the `.venv` folder and double-click `TickerQuill.bat` again. On macOS/Linux, run `./TickerQuill.command` or `./tickerquill.sh` in a terminal; after a ZIP download they may need `chmod +x` first.
+
+**The TickerQuill shortcut does nothing**
+The shortcut starts Python without a console, so errors are invisible. Run `tickerquill` from a terminal to see them. If you moved or recreated the virtual environment, make the shortcut again (`tickerquill --shortcut` or **Tools > Create app shortcut**); it points to the Python that created it.
+
+**Settings or history are missing after upgrading**
+Run `tickerquill --where` to see which data folder is in use. A fresh clone without data uses the user data folder; copy your old data with `tickerquill --migrate "path/to/old/TickerQuill"`, or point the app at it with `TICKERQUILL_HOME`. See [Configuration](configuration.md#data-folder).
+
+**macOS: "TickerQuill.app is damaged" or nothing happens when opening it**
+The app bundle made by `--shortcut` is a small launcher script and is not signed. If macOS blocks it, right-click it and choose **Open** once, or start the app with `tickerquill` from a terminal.
 
 ## Download
 
@@ -87,10 +99,10 @@ More in [colab/README.md](../colab/README.md).
 History reads `cache/`. Entries appear after a transcription finishes or is cancelled with some text.
 
 **[ CANDLE CHART ] says pywebview is missing**
-Install the requirements again (`pip install -r requirements.txt`, or `pip install pywebview`) in the same environment that runs the app, then restart it.
+Install the requirements again (`pip install -r requirements.txt`) in the same environment that runs the app, then restart it.
 
-**The candle chart window shows an error about WebView2, or nothing appears**
-The chart runs in Microsoft Edge WebView2. It is part of Windows 11; on Windows 10 install the free "WebView2 Runtime" from Microsoft. The price window (with its own simple chart) keeps working without it.
+**The candle chart window shows an error, or nothing appears**
+Windows: the chart runs in Microsoft Edge WebView2, part of Windows 11; on Windows 10 install the free "WebView2 Runtime" from Microsoft. Linux: the Qt web view comes with the app (`pywebview[qt]`); if it fails to start, check that your system has the OpenGL/XCB libraries Qt needs (for example `libxcb-cursor0` on Debian/Ubuntu), or use GTK instead (`sudo apt install python3-gi gir1.2-webkit2-4.1`). macOS needs nothing extra. The price window (with its own simple chart) keeps working without it.
 
 **Disk space is growing**
 `work/` keeps downloaded audio and `transcripts/` keeps text copies. Delete files you no longer need; entries remain in History but a restart will download again.

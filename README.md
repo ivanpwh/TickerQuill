@@ -1,4 +1,4 @@
-# TickerQuill
+# <img src="tickerquill/assets/icon/tickerquill-128.png" alt="" width="48" align="top"> TickerQuill
 
 [![CI](https://github.com/ivanpwh/TickerQuill/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanpwh/TickerQuill/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -37,10 +37,12 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
 **Market Overview** (combined dashboard)
-- The start page once you have analyses (**Market Overview** on the menu bar, `Ctrl+3`), with every analysis, grouped by the video's upload date (latest analysis per video).
+- The start page once you have analyses (**View > Market Overview**, `Ctrl+3`), with every analysis, grouped by the video's upload date (latest analysis per video).
 - Per stock across videos: consensus, disagreement flag, timeline, combined price zone with reward:risk from the medians, changes of view, reliability.
 - Per date: the stocks several videos discussed that day, side by side. Overall: most-discussed stocks and market tone per date.
 - Optional AI summary per stock or per date, made from the extracted data only and saved.
+
+![Market Overview](docs/images/market-overview-retro-green.png)
 
 **Stock price window**
 - Click a ticker (Dashboard card or Market Overview) for its price, change, day range and volume, and a 1D–1Y chart with the videos' buy, target and loss-limit levels drawn in.
@@ -48,6 +50,8 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - Data from Yahoo Finance (unofficial, IDX delayed about 15 minutes), fetched only while the window is open; refreshes every 60 s during IDX hours.
 - **[ TRADINGVIEW ]** opens the stock on TradingView.com (`IDX:<TICKER>`) for its full charting tools.
 - **[ CANDLE CHART ]** opens a TradingView-style candlestick window (TradingView Lightweight Charts™) with volume, the videos' levels as price lines and each video's stance marked on its date.
+
+![Stock price window](docs/images/price-window-retro-green.png)
 
 **Settings and themes**
 - A tabbed **Settings** dialog for language, theme, Whisper engine/model/audio language, Colab server and LLM endpoint/key/model; changes apply immediately.
@@ -79,33 +83,79 @@ Details: [Architecture](docs/architecture.md) · [Methodology](docs/methodology.
 
 ## Requirements
 
-- **Windows** (developed and tested on Windows 11). macOS/Linux: see [Other platforms](#other-platforms).
-- **Python 3.10 or newer** with Tk (included in the standard Windows installer). Only Python 3.11 has been tested.
+- **Windows 10/11, macOS or Linux.** Developed and used on Windows 11; the automated tests, including the GUI tests, run on Windows, macOS and Linux in CI. See [Platform notes](#platform-notes).
+- **Python 3.10 or newer** with Tk. Windows: the python.org installer (keep *tcl/tk and IDLE* ticked). macOS: the python.org installer, or Homebrew `python` plus `python-tk`. Linux: your distribution's `python3-tk` (`python3-venv` too on Debian/Ubuntu).
 - An **OpenAI-compatible LLM endpoint** and API key for the analysis step. The app was developed against a local 9router proxy (`http://localhost:20128/v1`); any endpoint that supports chat completions with streaming should work, but only 9router has been used so far. Transcription works without it.
 - Disk space for the Whisper model (`large-v3` is about 3 GB) and downloaded audio.
-- Optional, for the candle chart window: `pywebview` (in `requirements.txt`) and the Microsoft Edge WebView2 Runtime (built into Windows 11; a free download for Windows 10). The rest of the app works without them.
-- Optional: an NVIDIA GPU with CUDA for fast local transcription, or a Google account for the Colab engine (free-tier GPU availability varies).
+- For the candle chart window: Windows needs the Microsoft Edge WebView2 Runtime (built into Windows 11); macOS uses its own WebKit; on Linux the Qt web view is installed with the app. The rest of the app works without it.
+- Optional: an NVIDIA GPU with CUDA (Windows/Linux) for fast local transcription, or a Google account for the Colab engine (free-tier GPU availability varies).
 
-## Installation (Windows)
+## Installation
+
+### The easy way: double-click
+
+1. Get the code: **Code > Download ZIP** on GitHub (then unzip it), or `git clone https://github.com/ivanpwh/TickerQuill.git`.
+2. Open the folder and double-click the launcher for your system:
+
+| System | Double-click | The first time | After that |
+|---|---|---|---|
+| **Windows** | **`TickerQuill.bat`** | A window shows the setup (a few minutes): it creates `.venv`, installs everything and adds **TickerQuill** to the Start Menu and Desktop | Opens the app straight away, without a console window |
+| **macOS** | **`TickerQuill.command`** | Terminal shows the setup and adds `TickerQuill.app` to `~/Applications` | Opens the app; the Terminal window can be closed |
+| **Linux** | **`tickerquill.sh`** (choose *Run*, or `./tickerquill.sh` in a terminal) | Shows the setup and adds TickerQuill to the app menu | Opens the app |
+
+From then on you can use the launcher or the shortcut, whichever is easier. The launchers need Python 3.10 or newer (on Windows from [python.org](https://www.python.org/downloads/), with *Add python.exe to PATH* ticked); if only [uv](https://docs.astral.sh/uv/) is installed they use that. On macOS, if Finder says the file cannot be opened, right-click it and choose **Open** once (a downloaded ZIP may also need `chmod +x TickerQuill.command`).
+
+### Manual installation
+
+**Windows** (PowerShell):
 
 ```powershell
 git clone https://github.com/ivanpwh/TickerQuill.git
 cd TickerQuill
 python -m venv .venv
 .venv\Scripts\activate
+pip install -r requirements.txt      # installs TickerQuill itself (pip install -e .) and its dependencies
+tickerquill --shortcut               # Start Menu + Desktop shortcut with the app icon
+```
+
+**macOS / Linux**:
+
+```bash
+git clone https://github.com/ivanpwh/TickerQuill.git
+cd TickerQuill
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-copy .env.example .env      # then add your API key (or do it later in Settings)
+tickerquill --shortcut               # macOS: ~/Applications/TickerQuill.app · Linux: entry in the app menu
 ```
 
-Start the app:
+The shortcut can also be made later from the app: **Tools > Create app shortcut**. Then add your API key in **Tools > Settings > ANALYSIS (LLM)**, or copy `.env.example` to `.env` in the [data folder](#data-folder) and edit it.
 
-```powershell
-.venv\Scripts\python.exe app.py      # with a console, useful for error messages
-run.bat                              # no console window
-```
+### Starting the app
 
-The first transcription downloads the selected Whisper model, which can take a few minutes.
+| How | When |
+|---|---|
+| **`TickerQuill.bat`** / **`TickerQuill.command`** / **`tickerquill.sh`** in the folder | Double-click; sets the app up the first time |
+| The **TickerQuill shortcut** (Start Menu, Desktop, Applications, app menu) | Every day; no terminal |
+| `tickerquill` | From a terminal with the virtual environment active; errors are printed there |
+| `tickerquill-gui` | Same, without a console window on Windows (`.venv\Scripts\tickerquill-gui.exe` can be pinned) |
+| `python -m tickerquill` | Without installing the package, from the repository folder |
+
+`tickerquill --help` lists the options: `--version`, `--where` (print the data folder), `--data FOLDER`, `--shortcut`, `--remove-shortcut`, `--migrate OLD_FOLDER`. The first transcription downloads the selected Whisper model, which can take a few minutes.
+
+On Windows the `.exe` files in `.venv\Scripts\` are small launchers for the Python in `.venv`: they need that environment and do not work when copied to another computer.
+
+### Data folder
+
+Settings, the API key, the transcript cache, the analysis archive and downloaded audio live in one folder; `tickerquill --where` prints it.
+
+1. `TICKERQUILL_HOME` (or `tickerquill --data FOLDER`) when set.
+2. The repository folder, when it already holds data (`.env`, `settings.json`, `cache/`, …). **Installations from before 1.2 keep using their data where it is.**
+3. Otherwise the user data folder: `%APPDATA%\TickerQuill` (Windows), `~/Library/Application Support/TickerQuill` (macOS), `~/.local/share/tickerquill` (Linux).
+
+To move an older installation's data into the current data folder: `tickerquill --migrate "path\to\old\TickerQuill"` (settings, cache, archive and transcripts; downloaded audio is left behind). Existing files are never overwritten.
+
+**Upgrading from 1.1:** `run.bat` is replaced by **`TickerQuill.bat`**: double-click it. If your `.venv` is from 1.1 it may still lack the new package; then delete the `.venv` folder once and double-click `TickerQuill.bat` again, and it sets everything up. Your settings and history stay in the repository folder.
 
 ## Quick start
 
@@ -119,16 +169,17 @@ Full walkthrough: [User guide](docs/user-guide.md).
 
 ## Main window
 
-The window has three pages, **Analysis**, **History** and **Market Overview**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); **Market Overview** is also a one-click item on the menu bar and the start page once you have analyses. Settings open in a separate dialog.
+The window has three pages, **Analysis**, **History** and **Market Overview**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); Market Overview is the start page once you have analyses. Settings open in a separate dialog.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
 | **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
-| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
-| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
+| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection · Create app shortcut… |
 | **Help** | User guide · About TickerQuill |
+
+On macOS the shortcuts use **Cmd** instead of Ctrl, the menu bar is at the top of the screen, and Settings and Quit are also in the app menu.
 
 Analysis page:
 
@@ -235,6 +286,8 @@ More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.m
 
 ## Files the app creates
 
+All of these are in the [data folder](#data-folder) (`tickerquill --where`).
+
 | Path | Contents |
 |---|---|
 | `work/` | Downloaded audio (kept so a resumed job does not download again; delete it to free space) |
@@ -252,46 +305,67 @@ More: [Colab guide](colab/README.md) · [Troubleshooting](docs/troubleshooting.m
 - **Speech recognition makes mistakes**, especially with tickers and numbers. Doubtful items are flagged, but always re-check in the video.
 - **LLM output can be incomplete.** If a reply is cut off, the dashboard shows what could be recovered and warns you; at most 12 stocks per video are extracted.
 - Single job at a time; no batch or playlist support.
-- Not packaged as an installer; Windows is the only tested platform.
+- Not packaged as a standalone installer: it runs from a Python virtual environment. Windows is used day to day; macOS and Linux are covered by the automated tests (see [Platform notes](#platform-notes)).
 
-## Other platforms
+## Platform notes
 
-macOS and Linux have **not been tested**. The code is plain Python/Tk, so it may run (`python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt && python app.py`), but expect rough edges: `run.bat` is Windows-only, the UI uses the Consolas font, Tk buttons ignore custom colours on macOS, and mouse-wheel scrolling in the dashboard assumes Windows deltas. Without CUDA, local Whisper uses the CPU, which is slow for `large-v3`; consider `small`/`medium` or the Colab engine. Proper macOS support is planned.
+| | Windows | macOS | Linux |
+|---|---|---|---|
+| Start | Shortcut, `tickerquill`, `tickerquill-gui` | `TickerQuill.app`, `tickerquill` | App-menu entry, `tickerquill` |
+| Shortcuts | Ctrl | Cmd | Ctrl |
+| Font | Consolas | Menlo | the system `monospace` (DejaVu/Liberation/Noto Sans Mono) |
+| Local Whisper | CPU, or NVIDIA GPU with CUDA | CPU (Apple Silicon works; `small`/`medium` are faster than `large-v3`) | CPU, or NVIDIA GPU with CUDA |
+| Colab engine | yes | yes | yes |
+| Candle chart | Edge WebView2 | WebKit (built in) | Qt WebEngine (installed with the app) or GTK WebKit |
+| "Follow system" theme | yes | yes | GNOME colour scheme; other desktops use the dark default |
+
+The Windows build is the one used day to day. macOS and Linux run the full test suite in CI (GUI tests on Linux under a virtual display), but have had less hands-on use; please [open an issue](https://github.com/ivanpwh/TickerQuill/issues) if something looks or behaves wrong there.
 
 ## Project layout
 
 ```
-app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history
-report.py           parsing of the LLM reply, all calculations, tips, dashboard blocks
-archive.py          analysis archive and cross-video calculations (Market Overview)
-collection.py       Market Overview page
-menus.py            menu bar
-market.py           Yahoo Finance prices and price-since-video calculations
-stockview.py        stock price window
-chartview.py        candle chart window (separate pywebview process)
-assets/             chart page and the bundled TradingView Lightweight Charts™ (Apache 2.0)
-dashboard.py        scrollable dashboard view (canvas)
-theme.py            colour themes and live re-colouring
-textclean.py        removes repeated-phrase hallucinations from transcripts
-remote.py           client for the Colab Whisper server
-colab/              Colab server, notebook and its build script
-docs/               user guide, configuration, methodology, architecture, troubleshooting
-tests/              pytest suite (calculations, parsing, settings, themes)
-.github/workflows/  CI (tests on Windows and Linux)
-requirements.txt    Python dependencies (requirements-dev.txt adds pytest)
-.env.example        template for .env
-run.bat             Windows launcher (no console)
+TickerQuill.bat       Windows launcher: double-click (sets up .venv the first time)
+TickerQuill.command   macOS launcher (same)
+tickerquill.sh        Linux launcher (same)
+tickerquill/          the app (a Python package; `python -m tickerquill`)
+  __main__.py         command line: tickerquill / tickerquill-gui
+  app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history
+  report.py           parsing of the LLM reply, all calculations, tips, dashboard blocks
+  archive.py          analysis archive and cross-video calculations (Market Overview)
+  collection.py       Market Overview page
+  dashboard.py        scrollable dashboard view (canvas)
+  stockview.py        stock price window
+  chartview.py        candle chart window (separate pywebview process)
+  market.py           Yahoo Finance prices and price-since-video calculations
+  menus.py            menu bar
+  widgets.py          the retro button used everywhere
+  theme.py            colour themes, fonts and live re-colouring
+  system.py           OS integration: open links/files, Ctrl/Cmd, windowless Python
+  paths.py            code/asset locations and the data folder
+  shortcuts.py        Start Menu/Desktop, TickerQuill.app and .desktop shortcuts
+  textclean.py        removes repeated-phrase hallucinations from transcripts
+  remote.py           client for the Colab Whisper server
+  assets/             chart page, bundled TradingView Lightweight Charts™ (Apache 2.0), app icon
+colab/                Colab server, notebook and its build script
+docs/                 user guide, configuration, methodology, architecture, troubleshooting, design specs
+tests/                pytest suite (calculations, parsing, archive, prices, GUI, packaging)
+tools/make_icon.py    draws the app icon in every size and format
+.github/workflows/    CI (tests on Windows, macOS and Linux; package install check)
+pyproject.toml        package metadata, dependencies and the tickerquill commands
+requirements.txt      `-e .` (installs the package; requirements-dev.txt adds pytest)
+.env.example          template for .env
 ```
 
 ## Development
 
-```powershell
-pip install -r requirements-dev.txt
+```bash
+pip install -e ".[dev]"               # or: pip install -r requirements-dev.txt
 python -m pytest                      # GUI tests skip themselves when no display or Tk is available
 python colab/build_notebook.py        # regenerate colab/Whisper_Server.ipynb after editing whisper_server.py
+python tools/make_icon.py             # regenerate the app icon (needs Pillow)
 ```
 
-CI (`.github/workflows/ci.yml`) runs the tests on Windows and Linux and checks that the notebook matches `whisper_server.py`. The tests cover the calculations and parsing in `report.py`, text clean-up, settings and history helpers, and the theme engine; the download, Whisper and LLM steps are not covered by automated tests. Before opening a pull request please run the tests and, for UI changes, try the app with at least one dark and one light theme. See [Architecture](docs/architecture.md#extension-points) for how to add settings, themes and languages.
+CI (`.github/workflows/ci.yml`) runs the tests on Windows, macOS and Linux with Python 3.11 and 3.12 (on Linux under `xvfb`, so the GUI tests run too), installs the package and runs `tickerquill --version`, and checks that the notebook matches `whisper_server.py`. The download, Whisper and LLM steps are not covered by automated tests. Before opening a pull request please run the tests and, for UI changes, try the app with at least one dark and one light theme. See [Architecture](docs/architecture.md#extension-points) for how to add settings, themes and languages.
 
 ## Documentation
 

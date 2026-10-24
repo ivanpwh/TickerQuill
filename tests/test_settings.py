@@ -4,8 +4,8 @@ import json
 import pytest
 
 pytest.importorskip("tkinter")
-import app  # noqa: E402
-import remote  # noqa: E402
+from tickerquill import app  # noqa: E402
+from tickerquill import remote  # noqa: E402
 
 
 @pytest.fixture

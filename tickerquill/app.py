@@ -6,34 +6,32 @@ import os
 import queue
 import re
 import subprocess
-import sys
 import tempfile
 import threading
 import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
+from tkinter import font as tkfont
 
-import archive
-import market
-import remote
-import report
-from collection import CollectionPage
-from dashboard import DashboardView, open_url, stance_color
-from menus import MenuBar
-from stockview import StockWindow
-from textclean import clean_repeats
-import theme
-from theme import FONT, FONT_B, T
+from . import __version__, archive, market, paths, remote, report, shortcuts, theme
+from .collection import CollectionPage
+from .dashboard import DashboardView, open_url, stance_color
+from .menus import MenuBar
+from .stockview import StockWindow
+from .textclean import clean_repeats
+from .theme import FONT, FONT_B, T, font
+from .system import gui_python, no_console_flags, open_path, set_app_id
+from .widgets import RetroButton
 
 APP_NAME = "TickerQuill"
-APP_VERSION = "1.1.0"
-BASE = Path(__file__).resolve().parent
+APP_VERSION = __version__
+BASE = paths.data_dir()  # .env, settings.json, cache/, analyses/, transcripts/, work/ (lihat paths.py)
 CACHE = BASE / "cache"
 ARCHIVE = BASE / "analyses"  # satu JSON per analisis untuk halaman KOLEKSI (dibuat saat pertama dipakai)
 WORK = BASE / "work"
-CACHE.mkdir(exist_ok=True)
-WORK.mkdir(exist_ok=True)
+CACHE.mkdir(parents=True, exist_ok=True)
+WORK.mkdir(parents=True, exist_ok=True)
 
 ENV_FILE = BASE / ".env"
 GUIDE_URL = "https://github.com/ivanpwh/TickerQuill/blob/main/docs/user-guide.md"
@@ -179,7 +177,9 @@ STR = {
         "set_title": "Pengaturan",
         "m_file": "File", "m_view": "Lihat", "m_job": "Proses", "m_tools": "Alat", "m_help": "Bantuan",
         "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
-        "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
+        "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill", "mi_shortcut": "Buat shortcut aplikasi",
+        "shortcut_done": "Shortcut TickerQuill dibuat:\n{list}\n\nAplikasi kini bisa dibuka dari sana tanpa terminal.",
+        "shortcut_err": "Gagal membuat shortcut: {e}",
         "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
         "chart_title": "Grafik candle",
         "chart_missing": "Grafik candle butuh paket pywebview. Pasang dengan: pip install -r requirements.txt (atau pip install pywebview), lalu buka aplikasi lagi.",
@@ -261,7 +261,9 @@ STR = {
         "set_title": "Settings",
         "m_file": "File", "m_view": "View", "m_job": "Job", "m_tools": "Tools", "m_help": "Help",
         "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
-        "mi_guide": "User guide", "mi_about": "About TickerQuill",
+        "mi_guide": "User guide", "mi_about": "About TickerQuill", "mi_shortcut": "Create app shortcut",
+        "shortcut_done": "TickerQuill shortcut created:\n{list}\n\nYou can now open the app from there without a terminal.",
+        "shortcut_err": "Could not create the shortcut: {e}",
         "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
         "chart_title": "Candle chart",
         "chart_missing": "The candle chart needs the pywebview package. Install it with: pip install -r requirements.txt (or pip install pywebview), then restart the app.",
@@ -851,7 +853,9 @@ class Pipeline:
 class App(tk.Tk):
     def __init__(self):
         theme.apply(load_settings().get("theme") or theme.DEFAULT)  # sebelum widget apa pun dibuat
-        super().__init__()
+        set_app_id()  # Windows: taskbar memakai ikon aplikasi ini (harus sebelum jendela dibuat)
+        super().__init__(className="TickerQuill")  # Tk menjadikannya kelas "Tickerquill" = StartupWMClass shortcut Linux
+        self.set_icon()
         self.title(f"{APP_NAME} v{APP_VERSION}")
         self.configure(bg=T.BG)
         self.geometry("980x720")
@@ -879,6 +883,16 @@ class App(tk.Tk):
         self.start_page()
         self.after(100, self.poll)
         self.after(500, self.tick_cursor)
+
+    def set_icon(self):
+        """Ikon jendela (judul, taskbar/Dock, Alt+Tab); default=True: jendela harga dan dialog ikut memakainya."""
+        files = [paths.ICONS / f"tickerquill-{s}.png" for s in (16, 32, 48, 64, 128, 256)]
+        try:
+            self.icons = [tk.PhotoImage(file=str(f)) for f in files if f.exists()]  # referensi disimpan: jangan di-GC
+            if self.icons:
+                self.iconphoto(True, *self.icons)
+        except tk.TclError:
+            self.icons = []  # ikon rusak/tidak terbaca: jendela tetap jalan dengan ikon bawaan
 
     def tr(self, key):
         return STR[self.ui][key]
@@ -968,13 +982,7 @@ class App(tk.Tk):
         self.show("DASHBOARD")
 
     def button(self, parent, text, cmd):
-        b = tk.Button(parent, text=text, command=cmd, font=FONT_B, bg=T.BG, fg=T.FG, relief="flat",
-                      highlightthickness=1, highlightbackground=T.FG, activebackground=T.FG,
-                      activeforeground=T.BG, disabledforeground=T.DIM, cursor="hand2", padx=10, pady=3, bd=0)
-        b.bind("<Enter>", lambda e: b["state"] == "normal" and b.config(bg=T.FG, fg=T.BG))
-        b.bind("<Leave>", lambda e: b.config(bg=T.BG, fg=T.AMBER if b.selected else T.FG))  # T dibaca saat event
-        b.selected = False
-        return b
+        return RetroButton(parent, text, cmd)  # tk.Button mengabaikan warna di macOS
 
     @staticmethod
     def mark_tabs(buttons, active):
@@ -986,9 +994,9 @@ class App(tk.Tk):
     def build(self):
         head = tk.Frame(self, bg=T.BG)
         head.pack(fill="x", padx=14, pady=(12, 0))
-        self.title_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.AMBER, anchor="w")
+        self.title_lbl = tk.Label(head, text="", font=font(16, "bold"), bg=T.BG, fg=T.AMBER, anchor="w")
         self.title_lbl.pack(side="left")
-        self.page_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.FG, anchor="w")
+        self.page_lbl = tk.Label(head, text="", font=font(16, "bold"), bg=T.BG, fg=T.FG, anchor="w")
         self.page_lbl.pack(side="left", padx=(6, 0))
         # status proses saat halaman lain terbuka; klik untuk kembali ke ANALISIS
         self.job_lbl = tk.Label(head, text="", font=FONT_B, bg=T.BG, fg=T.CYAN, anchor="e", cursor="hand2")
@@ -997,7 +1005,7 @@ class App(tk.Tk):
         self.subtitle_lbl = tk.Label(self, text="", font=FONT, bg=T.BG, fg=T.DIM, anchor="w")
         self.subtitle_lbl.pack(fill="x", padx=14)
         tk.Frame(self, bg=T.FG, height=1).pack(fill="x", padx=14, pady=8)
-        self.disclaimer_lbl = tk.Label(self, text="", font=("Consolas", 9), bg=T.BG, fg=T.DIM, anchor="w")
+        self.disclaimer_lbl = tk.Label(self, text="", font=font(9), bg=T.BG, fg=T.DIM, anchor="w")
         self.disclaimer_lbl.pack(side="bottom", fill="x", padx=14, pady=(0, 8))
         self.theme_var = tk.StringVar(value=theme.current)
 
@@ -1018,7 +1026,7 @@ class App(tk.Tk):
         self.go_btn.pack(side="left")
         self.open_btn = self.button(row, "", self.open_file)
         self.open_btn.pack(side="left", padx=(6, 0))
-        self.cache_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.CYAN, anchor="w")
+        self.cache_lbl = tk.Label(page, text="", font=font(10), bg=T.BG, fg=T.CYAN, anchor="w")
         self.cache_lbl.pack(fill="x", padx=14, pady=(4, 0))
 
         whisper = load_settings().get("whisper_model")
@@ -1033,7 +1041,7 @@ class App(tk.Tk):
         self.url_var.trace_add("write", self.update_cache_hint)
         self.audio_var.trace_add("write", self.update_cache_hint)
         # pengaturan Whisper/bahasa/model ada di Alat > Pengaturan; di sini cukup ringkasan yang bisa diklik
-        self.summary_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
+        self.summary_lbl = tk.Label(page, text="", font=font(10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
         self.summary_lbl.pack(fill="x", padx=14, pady=(6, 0))
         self.summary_lbl.bind("<Button-1>", lambda e: self.open_settings())
         for var in (self.model_var, self.audio_var, self.engine_var):
@@ -1075,7 +1083,7 @@ class App(tk.Tk):
             sb.config(command=txt.yview)
             sb.pack(side="right", fill="y")
             txt.pack(side="left", fill="both", expand=True)
-            txt.tag_config("h1", foreground=T.AMBER, font=("Consolas", 13, "bold"))
+            txt.tag_config("h1", foreground=T.AMBER, font=font(13, "bold"))
             txt.tag_config("h2", foreground=T.AMBER, font=FONT_B)
             txt.tag_config("bold", font=FONT_B)
             txt.tag_config("dim", foreground=T.DIM)
@@ -1243,6 +1251,17 @@ class App(tk.Tk):
     def pick_model(self):
         ModelPicker(self)
 
+    def make_shortcut(self):
+        """Alat > Buat shortcut: Start Menu + Desktop (Windows), ~/Applications (macOS), menu aplikasi (Linux)."""
+        try:
+            made = shortcuts.create()
+        except Exception as e:  # PowerShell diblokir, folder tidak bisa ditulis, dsb.
+            messagebox.showerror(self.tr("mi_shortcut"), self.tr("shortcut_err").format(e=f"{type(e).__name__}: {e}"),
+                                 parent=self)
+            return
+        messagebox.showinfo(self.tr("mi_shortcut"), self.tr("shortcut_done").format(
+            list="\n".join(str(p) for p in made)), parent=self)
+
     def open_entry(self, it, mode):
         """Buka entri riwayat di halaman ANALISIS. False bila proses lain masih berjalan."""
         if self.busy():
@@ -1294,10 +1313,9 @@ class App(tk.Tk):
                "levels": (context or {}).get("levels") or {}, "videos": (context or {}).get("videos") or []}
         path = Path(tempfile.gettempdir()) / f"tickerquill-chart-{symbol}.json"
         path.write_text(json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
-        exe = Path(sys.executable)
-        windowless = exe.with_name("pythonw.exe")  # tanpa jendela konsol di Windows
-        proc = subprocess.Popen([str(windowless if windowless.exists() else exe), str(BASE / "chartview.py"), str(path)],
-                                cwd=BASE, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        proc = subprocess.Popen([str(gui_python()), "-m", "tickerquill.chartview", str(path)],
+                                cwd=paths.SOURCE if paths.is_source_checkout() else None,  # dari source: paket bisa diimpor
+                                creationflags=no_console_flags())
         self.chart_procs[symbol] = proc
         return proc
 
@@ -1380,10 +1398,8 @@ class App(tk.Tk):
         self.open_settings(page="trans").test()
 
     def open_guide(self):
-        try:
-            os.startfile(BASE / "docs" / "user-guide.md")  # salinan lokal sesuai versi aplikasi ini
-        except (AttributeError, OSError):  # bukan Windows, berkas tidak ada, atau tanpa aplikasi pembuka .md
-            open_url(GUIDE_URL)
+        if not open_path(paths.SOURCE / "docs" / "user-guide.md"):  # salinan lokal (source checkout) sesuai versi ini
+            open_url(GUIDE_URL)  # berkas tidak ada atau tanpa aplikasi pembuka .md
 
     def show_about(self):
         messagebox.showinfo(self.tr("mi_about"), self.tr("about").format(
@@ -1705,7 +1721,7 @@ class SettingsDialog(tk.Toplevel):
 
     def __init__(self, app, page="general", notice=""):
         super().__init__(app)
-        self.app, self.result, self.page = app, None, page
+        self.app, self.job, self.page = app, {}, page
         colab_url, colab_token = colab_conf()
         self.initial = {"APP_LANG": app.ui, "theme": theme.current, "WHISPER_ENGINE": app.engine_var.get(),
                         "whisper_model": app.model_var.get(), "AUDIO_LANG": app.audio_var.get(),
@@ -1737,7 +1753,7 @@ class SettingsDialog(tk.Toplevel):
             self.build_row(self.frames[page_key], name, label_key, kind, store)
         self.build_trans_extras(self.frames["trans"])
         self.build_llm_extras(self.frames["llm"])
-        tk.Label(self.frames["general"], text=app.tr("set_help"), font=("Consolas", 10), bg=T.BG, fg=T.DIM,
+        tk.Label(self.frames["general"], text=app.tr("set_help"), font=font(10), bg=T.BG, fg=T.DIM,
                  justify="left", anchor="w", wraplength=620).pack(fill="x", padx=12, pady=(12, 8))
 
         self.info = tk.Label(self, text=notice, font=FONT, bg=T.BG, fg=T.FG, justify="left", anchor="w", wraplength=640)
@@ -1761,15 +1777,26 @@ class SettingsDialog(tk.Toplevel):
         self.geometry(f"700x{self.winfo_reqheight()}+{app.winfo_rootx() + 60}+{app.winfo_rooty() + 30}")
         self.poll()
 
+    def label_box(self):
+        """Ukuran kolom label: label terpanjang + nama variabel di bawahnya, diukur dengan font yang dipakai
+        (ukuran tetap memotong label di macOS dan layar DPI tinggi, yang fontnya lebih besar)."""
+        if not hasattr(self, "_label_box"):
+            main, small = tkfont.Font(font=FONT), tkfont.Font(font=font(9))
+            widest = max(max(main.measure(self.app.tr(key)) for _, _, key, _, _ in self.FIELDS),
+                         max(small.measure(n) for _, n, _, _, _ in self.FIELDS))
+            self._label_box = (widest + 16, main.metrics("linespace") + small.metrics("linespace") + 6)
+        return self._label_box
+
     def build_row(self, parent, name, label_key, kind, store):
         app = self.app
         row = tk.Frame(parent, bg=T.BG)
         row.pack(fill="x", padx=12, pady=5)
-        names = tk.Frame(row, bg=T.BG, width=200, height=40)
+        width, height = self.label_box()
+        names = tk.Frame(row, bg=T.BG, width=width, height=height)
         names.pack(side="left", anchor="n")
         names.pack_propagate(False)
         tk.Label(names, text=app.tr(label_key), font=FONT, bg=T.BG, fg=T.FG, anchor="w").pack(fill="x")
-        tk.Label(names, text=name if store == "env" else "settings.json", font=("Consolas", 9), bg=T.BG, fg=T.DIM,
+        tk.Label(names, text=name if store == "env" else "settings.json", font=font(9), bg=T.BG, fg=T.DIM,
                  anchor="w").pack(fill="x")
         if kind == "choice":
             labels = [label for _, label in self.choices[name]]
@@ -1788,7 +1815,7 @@ class SettingsDialog(tk.Toplevel):
             entry.toggle_btn = toggle
 
     def build_trans_extras(self, parent):
-        tk.Label(parent, text=self.app.tr("colab_help"), font=("Consolas", 10), bg=T.BG, fg=T.DIM, justify="left",
+        tk.Label(parent, text=self.app.tr("colab_help"), font=font(10), bg=T.BG, fg=T.DIM, justify="left",
                  anchor="w", wraplength=620).pack(fill="x", padx=12, pady=(4, 6))
         self.app.button(parent, self.app.tr("colab_test"), self.test).pack(anchor="w", padx=12, pady=(0, 8))
 
@@ -1835,20 +1862,20 @@ class SettingsDialog(tk.Toplevel):
             self.info.config(text=self.app.tr("colab_empty"), fg=T.RED)
             return
         self.info.config(text=self.app.tr("colab_testing"), fg=T.AMBER)
-        self.result = None
+        box = self.job = {}  # thread menulis ke kotak, bukan ke dialog (dialog bisa ditutup lebih dulu)
 
         def work():
             try:
-                self.result = ("ok", remote.health(url, token))
+                box["result"] = ("ok", remote.health(url, token))
             except remote.RemoteError as e:
-                self.result = ("err", str(e))
+                box["result"] = ("err", str(e))
 
         threading.Thread(target=work, daemon=True).start()
 
     def poll(self):
-        if self.result:
-            kind, value = self.result
-            self.result = None
+        result = self.job.pop("result", None)
+        if result:
+            kind, value = result
             if kind == "ok":
                 self.info.config(text=self.app.tr("colab_ok").format(**value), fg=T.FG)
             else:
@@ -1906,7 +1933,7 @@ class ModelPicker(tk.Toplevel):
 
     def __init__(self, app, done=None):
         super().__init__(app)
-        self.app, self.models, self.result, self.done = app, [], None, done
+        self.app, self.models, self.job, self.done = app, [], {}, done
         self.title(app.tr("model_title"))
         self.configure(bg=T.BG)
         self.geometry("620x460")
@@ -1947,20 +1974,20 @@ class ModelPicker(tk.Toplevel):
         import threading
 
         self.info.config(text=self.app.tr("loading"), fg=T.AMBER)
-        self.result = None
+        box = self.job = {}  # thread menulis ke kotak, bukan ke dialog (dialog bisa ditutup lebih dulu)
 
         def work():
             try:
-                self.result = ("ok", fetch_models())
+                box["result"] = ("ok", fetch_models())
             except Exception as e:
-                self.result = ("err", f"{type(e).__name__}: {e}")
+                box["result"] = ("err", f"{type(e).__name__}: {e}")
 
         threading.Thread(target=work, daemon=True).start()
 
     def poll(self):
-        if self.result:
-            kind, value = self.result
-            self.result = None
+        result = self.job.pop("result", None)
+        if result:
+            kind, value = result
             if kind == "ok":
                 self.models = value
                 self.info.config(text=self.app.tr("count").format(n=len(value)), fg=T.DIM)

@@ -21,16 +21,17 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 
 ## Menus and pages
 
-The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Market Overview** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`; **Market Overview** is also an item directly on the menu bar. Once you have saved analyses, the app opens on Market Overview; before that it opens on Analysis. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
+The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Market Overview** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`. Once you have saved analyses, the app opens on Market Overview; before that it opens on Analysis. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
 | **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
-| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
-| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
+| **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection · Create app shortcut… |
 | **Help** | User guide · About TickerQuill |
+
+On macOS every `Ctrl` shortcut is `Cmd` instead, and the menu bar is at the top of the screen. **Tools > Create app shortcut** makes the same shortcut as `tickerquill --shortcut` (Start Menu and Desktop on Windows, `~/Applications/TickerQuill.app` on macOS, the app menu on Linux).
 
 Items that cannot be used right now are greyed out: Run and Open file while a job runs, Pause and Cancel when nothing runs, Copy and Save when the current tab is empty or another page is open. Menu labels follow the app language. The menu bar itself uses the Windows colours; it does not follow the theme.
 
@@ -38,7 +39,7 @@ While a job runs and the History page is open, the title row shows the progress,
 
 ## 1. First-time setup
 
-1. Start the app and open **Tools > Settings** (`Ctrl+,`).
+1. Start the app: double-click **`TickerQuill.bat`** in the TickerQuill folder (macOS: `TickerQuill.command`, Linux: `tickerquill.sh`), or use the **TickerQuill** shortcut it creates the first time. Then open **Tools > Settings** (`Ctrl+,`, `Cmd+,` on macOS).
 2. **ANALYSIS (LLM)** tab: enter the endpoint URL, API key and model. **[ PICK MODEL ]** asks your endpoint for its model list; you can also type a model name directly.
 3. **TRANSCRIPTION** tab: choose where Whisper runs (**Local** or **Colab**), the Whisper model and the default audio language. See the [Colab guide](../colab/README.md) if you pick Colab.
 4. **GENERAL** tab: language and theme.
@@ -109,7 +110,7 @@ History can be browsed while a job is running; choosing an item then shows "A jo
 
 ## 6b. Market Overview
 
-The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **Market Overview** on the menu bar, or `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
+The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **View > Market Overview**, or `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
 
 **Dates.** Videos are grouped by their **upload date**. New analyses record it automatically. Analyses made before this version (and transcript files) have no upload date yet: they use the analysis date and are marked `*`. **[ FILL IN VIDEO DATES ]** fetches the missing upload dates and channel names with yt-dlp (metadata only, no download); videos that cannot be reached are counted as failed and can be tried again later.
 
@@ -131,6 +132,8 @@ The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **Market Overview
 | **Reliability** | How many videos marked the stock as doubtful, and the average speaker confidence |
 | **Reason per video** | Each video's reason, by date |
 
+![Market Overview: one stock across five videos](images/market-overview-stock-retro-green.png)
+
 **AI summary.** **[ AI SUMMARY ]** sends only the extracted data shown on the page (no transcripts) to your LLM and asks for 4–8 points: what the videos agree on, where they differ, how views changed and what to re-check. The result is saved in `analyses/ai/`, so it is not requested again. When a newer analysis for that stock or date arrives, the old summary is shown with a note and **[ UPDATE AI SUMMARY ]**. The button is disabled until an LLM API key and model are set. Like everything else here, it summarises what was said; it is not investment advice.
 
 ## 6c. Stock price window
@@ -149,6 +152,8 @@ Click a **ticker on a Dashboard stock card**, or **[ STOCK PRICE ]** on a stock 
   - It refreshes every 60 seconds during IDX hours. Opening the chart again for the same stock replaces the window; closing the app closes it.
   - It needs `pywebview` and the Edge WebView2 Runtime (see the [troubleshooting](troubleshooting.md#settings-and-files) page if it does not open).
 - **[ TRADINGVIEW ]** opens the same stock on TradingView.com (`IDX:<TICKER>`) in your browser, with its full chart tools. How current its data is depends on your TradingView account. The same button is on each stock in Market Overview.
+
+![Stock price window](images/price-window-retro-green.png)
 
 Prices are shown for comparison with what the speaker said. They are delayed, can be wrong, and are not investment advice.
 

@@ -2,13 +2,25 @@
 
 Every option can be changed in **Tools > Settings** inside the app. This page documents where each value is stored, its default and what it does. You only need to read it if you edit files by hand or run into precedence questions.
 
+## Data folder
+
+`.env`, `settings.json` and the app's data (`cache/`, `analyses/`, `transcripts/`, `work/`) are in one folder. `tickerquill --where` prints it. It is chosen when the app starts:
+
+| Order | Folder | When |
+|---|---|---|
+| 1 | `TICKERQUILL_HOME`, or `tickerquill --data FOLDER` | When set |
+| 2 | The repository folder | When it already holds data (`.env`, `settings.json`, `cache/`, `analyses/` or `transcripts/`): installations from before 1.2 keep their data |
+| 3 | `%APPDATA%\TickerQuill` · `~/Library/Application Support/TickerQuill` · `$XDG_DATA_HOME/tickerquill` (default `~/.local/share/tickerquill`) | Otherwise (Windows · macOS · Linux) |
+
+`tickerquill --migrate OLD_FOLDER` copies `.env`, `settings.json`, `cache/`, `analyses/` and `transcripts/` from another folder into the current data folder without overwriting anything. `work/` (downloaded audio) is not copied; it is downloaded again when needed.
+
 ## Where settings live
 
 | File | Holds | Notes |
 |---|---|---|
-| `.env` | Endpoint, API key, language defaults, engine and Colab values | `KEY=value` lines. Start from [`.env.example`](../.env.example) |
+| `.env` | Endpoint, API key, language defaults, engine and Colab values | `KEY=value` lines, in the data folder. Start from [`.env.example`](../.env.example) |
 | `settings.json` | Theme, Whisper model, and choices made in the app (engine, Colab connection, LLM model) | Written by the app; safe to delete (defaults return) |
-| OS environment | Any `.env` variable | Used when `.env` does not define it |
+| OS environment | Any `.env` variable, plus `TICKERQUILL_HOME` (data folder) | Used when `.env` does not define it |
 
 Both files contain secrets (API key, Colab token). Keep them out of version control; the provided `.gitignore` already excludes them.
 

@@ -1,23 +1,28 @@
 # Architecture
 
-A map of the code for contributors. User-facing behaviour is in the [user guide](user-guide.md); formulas are in the [methodology](methodology.md).
+A map of the code for contributors. The app is the `tickerquill` package (`python -m tickerquill`); paths below are relative to the repository. User-facing behaviour is in the [user guide](user-guide.md); formulas are in the [methodology](methodology.md).
 
 ## Modules
 
 | File | Responsibility |
 |---|---|
-| `app.py` | Tk application (`App`) and its pages (the Analysis frame, `HistoryPage`), dialogs (`SettingsDialog`, `ChoiceDialog`, `ModelPicker`), settings helpers, UI strings (`STR`), the LLM system prompt, cache/history helpers and the `Pipeline` |
-| `report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
-| `archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
-| `collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
-| `market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `tradingview_url` (`IDX:<TICKER>` chart link), `since` (move and target/stop hits since a video date). No Tk |
-| `chartview.py` | Candle chart process: `pywebview` window (Edge WebView2) showing `assets/chart.html` with the bundled Lightweight Charts; `Api.init`/`Api.bars` are called from JavaScript; `video_markers` places stance markers. Importable without pywebview |
-| `stockview.py` | `StockWindow`: price header, canvas chart with level lines, since-video table; fetches in a worker thread, refreshes every 60 s while the IDX is open |
-| `menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
-| `dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
-| `theme.py` | Palettes, the live palette object `T`, `apply()` and `recolor()` |
-| `textclean.py` | Removes runs of repeated words/lines that Whisper hallucinates |
-| `remote.py` | Client for the Colab Whisper server: audio compression, health check, streaming upload and results |
+| `tickerquill/__main__.py` | Command line (`tickerquill`, `tickerquill-gui`, `python -m tickerquill`): `--version`, `--where`, `--data`, `--migrate`, `--shortcut`, `--remove-shortcut`; imports the app only to start it, after `--data` is applied |
+| `tickerquill/paths.py` | `PACKAGE`, `ASSETS`, `ICONS`, `SOURCE` (repository when running from a checkout) and `data_dir()`; `migrate()` copies data from an older folder |
+| `tickerquill/system.py` | OS integration: `open_url`, `open_path` (startfile / open / xdg-open), `MOD`/`MOD_LABEL` (Control/Ctrl or Command/Cmd), `gui_python()` (pythonw on Windows), `no_console_flags()`, `set_app_id()` (Windows taskbar identity) |
+| `tickerquill/shortcuts.py` | App shortcuts: `.lnk` in Start Menu and Desktop through PowerShell (Windows), `~/Applications/TickerQuill.app` (macOS), `tickerquill.desktop` + icon (Linux); all run `python -m tickerquill` |
+| `tickerquill/widgets.py` | `RetroButton`, a Label-based button with the `tk.Button` API (`invoke`, `state`), because `tk.Button` ignores colours on macOS |
+| `tickerquill/app.py` | Tk application (`App`) and its pages (the Analysis frame, `HistoryPage`), dialogs (`SettingsDialog`, `ChoiceDialog`, `ModelPicker`), settings helpers, UI strings (`STR`), the LLM system prompt, cache/history helpers and the `Pipeline` |
+| `tickerquill/report.py` | Parsing and repairing the LLM reply, all calculations (`compute`), tips (`advice`), UI-neutral dashboard blocks (`blocks`), plain-text/Markdown export |
+| `tickerquill/archive.py` | Analysis archive (`analyses/`): build/save/load records, latest per video, one-time import from the cache, video-date fill-in, AI cache paths, and every cross-video calculation (consensus, conflict, price zone, changes, reliability, trending, tone per date). No Tk |
+| `tickerquill/collection.py` | `CollectionPage` and `CollectionView` (a `DashboardView` with table, bars, actions and link blocks); its own `(ID, EN)` strings. Talks to the app only through `App` methods |
+| `tickerquill/market.py` | Yahoo Finance chart endpoint through `urllib`: `fetch_chart` (errors mapped to `MarketError` kinds `not_found`, `network`, `bad_data`), `parse_chart`, `market_open` (IDX session), `tradingview_url` (`IDX:<TICKER>` chart link), `since` (move and target/stop hits since a video date). No Tk |
+| `tickerquill/chartview.py` | Candle chart process: `pywebview` window (Edge WebView2) showing `assets/chart.html` with the bundled Lightweight Charts; `Api.init`/`Api.bars` are called from JavaScript; `video_markers` places stance markers. Importable without pywebview |
+| `tickerquill/stockview.py` | `StockWindow`: price header, canvas chart with level lines, since-video table; fetches in a worker thread, refreshes every 60 s while the IDX is open |
+| `tickerquill/menus.py` | `MenuBar`: the native menu bar built from one table (label, command, accelerator, key bindings, enabled condition) |
+| `tickerquill/dashboard.py` | `DashboardView`: scrollable canvas that renders the blocks (cards, gauge, bars) |
+| `tickerquill/theme.py` | Palettes, the live palette object `T`, `apply()` and `recolor()` |
+| `tickerquill/textclean.py` | Removes runs of repeated words/lines that Whisper hallucinates |
+| `tickerquill/remote.py` | Client for the Colab Whisper server: audio compression, health check, streaming upload and results |
 | `colab/whisper_server.py` | FastAPI server run inside Colab; `Whisper_Server.ipynb` is generated from it by `build_notebook.py` |
 
 ## Pipeline
@@ -57,6 +62,8 @@ An OpenAI-compatible streaming chat completion: system prompt (extraction rules 
 
 ## Data on disk
 
+All paths are inside the data folder (`paths.data_dir()`, see [configuration](configuration.md#data-folder)): `TICKERQUILL_HOME`, else the repository when it already holds data, else the OS user data folder. `app.py` reads it once at import time, which is why `__main__` applies `--data` before importing the app.
+
 ```
 cache/<video id>.<lang>.json            finished transcript
 cache/<video id>.<lang>.partial.json    checkpoint
@@ -88,6 +95,12 @@ AI summaries call `App.llm_complete(system, user)` in a worker thread with only 
 ### Candle chart (separate process)
 
 `App.open_chart(ticker, context)` writes the context (symbol, UI language, theme palette, stance colours and labels, levels, videos) to `%TEMP%/tickerquill-chart-<symbol>.json` and starts `pythonw chartview.py <file>`. A separate process is needed because Tk and pywebview each run their own GUI loop on the main thread. One process per symbol: opening it again terminates the old one; `App.destroy` terminates all of them. In the chart page, JavaScript calls `pywebview.api.bars(range)`; Python fetches through `market.py` and returns `ohlc_bars` (daily bars as `YYYY-MM-DD`, intraday as epoch seconds shifted to WIB because Lightweight Charts shows UTC), markers, a header and whether the IDX is open (the page then reloads after 60 s). Lightweight Charts v5.2.1 is inlined into the page from `assets/lightweight-charts/` (Apache 2.0; LICENSE and NOTICE kept there, attribution logo left on). If `pywebview` is not installed, `open_chart` shows how to install it; WebView2 failures are shown by the chart process in a Windows message box.
+
+## Platforms, launch and icon
+
+Platform differences are kept in `system.py`, `theme.font()` (Consolas / Menlo / fontconfig `monospace`, two points larger on macOS where Tk renders at 72 dpi), `dashboard.wheel_steps()` (Windows deltas of 120, small macOS deltas, X11 buttons 4/5), `menus.py` (Ctrl or Cmd, and the macOS app menu's Preferences/Quit through `tk::mac::ShowPreferences` / `tk::mac::Quit`) and `chartview.py` (Edge WebView2 on Windows, the default web view elsewhere). `App` is created with `className="TickerQuill"`, which Tk turns into the window class `Tickerquill`; the Linux `.desktop` entry uses it as `StartupWMClass`.
+
+The icon is drawn by `tools/make_icon.py` into `tickerquill/assets/icon/` (PNG 16–1024, `.ico`, `.icns`). `App.set_icon()` passes six PNG sizes to `wm iconphoto -default`, so dialogs and price windows inherit it; on Windows `set_app_id()` runs before the first window so the taskbar shows it instead of Python's. Shortcuts use the `.ico` (Windows), `.icns` (macOS) or the 256 px PNG (Linux). pywebview can only set its window icon on GTK/Qt, so the candle chart window shows the interpreter's icon on Windows and macOS.
 
 ## Pages and menu
 
@@ -137,4 +150,4 @@ Design notes: audio is compressed client-side to Opus mono 16 kHz (about 14 MB p
 
 ## Known gaps
 
-Automated tests cover the pure logic (`report.py`, `archive.py`, `textclean.py`, settings/history helpers, themes) and the main GUI flows; the download, Whisper, LLM and Colab steps are verified manually. Single-job pipeline; Windows-only launcher and untested on macOS/Linux; fonts are fixed to a monospace family in every theme.
+Automated tests cover the pure logic (`report.py`, `archive.py`, `textclean.py`, settings/history helpers, themes) and the main GUI flows; the download, Whisper, LLM and Colab steps are verified manually. Single-job pipeline; macOS and Linux are covered by CI (including the GUI tests) but have had less hands-on use than Windows; one monospace font per platform in every theme; the Windows `.exe` launchers and shortcuts need the virtual environment they were made with.

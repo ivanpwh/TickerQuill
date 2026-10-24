@@ -1,13 +1,18 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - 2026-10-24
 
 ### Added
+- **Runs on Windows, macOS and Linux.** Platform-specific fonts, mouse-wheel scrolling, Cmd shortcuts and the app menu on macOS, coloured buttons on macOS, opening files with each system's opener, and the candle chart on each system's web view. CI now tests on macOS too and runs the GUI tests on Linux.
+- **`tickerquill` command** (`pip install -r requirements.txt` installs the package): `tickerquill`, `tickerquill-gui` (no console on Windows) and `python -m tickerquill`, with `--version`, `--where`, `--data`, `--migrate`, `--shortcut` and `--remove-shortcut`.
+- **App shortcuts with the icon**, from `tickerquill --shortcut` or **Tools > Create app shortcut**: Start Menu and Desktop on Windows, `~/Applications/TickerQuill.app` on macOS, the app menu on Linux.
+- **App icon**: an ink drop with a candlestick cut out of it, in the window, the Windows taskbar and the shortcuts.
+- **Data folder**: `TICKERQUILL_HOME`, else the repository when it already holds data (existing installs keep theirs), else the OS user data folder; `tickerquill --migrate` copies an older folder's data.
 - The dashboard and the report start with the video title and a clickable link (or the file name for transcript files), and the link is included in copied and saved text.
 - **History** shows the selected item's full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 - Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
 - Finished analyses are saved with their transcript, including files opened with **[ OPEN FILE ]**. Clicking a finished transcript in **History** shows its dashboard, analysis and transcript without calling the LLM; **[ REANALYZE ]** creates the analysis again.
-- **Market Overview** page (Indonesian **Ringkasan Pasar**; on the menu bar and `Ctrl+3`, and the start page once analyses exist): every analysis grouped by the video's upload date, the most-discussed stocks, market tone per date, a per-date comparison of stocks discussed in several videos, and a per-stock view with consensus, disagreement, timeline, combined price zone, changes of view and reliability. An optional AI summary per stock or date is made from the extracted data and saved. Earlier analyses are imported once; **[ FILL IN VIDEO DATES ]** adds missing upload dates.
+- **Market Overview** page (Indonesian **Ringkasan Pasar**; **View > Market Overview**, `Ctrl+3`, and the start page once analyses exist): every analysis grouped by the video's upload date, the most-discussed stocks, market tone per date, a per-date comparison of stocks discussed in several videos, and a per-stock view with consensus, disagreement, timeline, combined price zone, changes of view and reliability. An optional AI summary per stock or date is made from the extracted data and saved. Earlier analyses are imported once; **[ FILL IN VIDEO DATES ]** adds missing upload dates.
 - New analyses also store the video's upload date and channel.
 - **Stock price window**: click a ticker on a Dashboard card, or **[ STOCK PRICE ]** in Market Overview, for the delayed Yahoo Finance price, a 1D–1Y chart with the videos' buy/target/loss-limit levels, and the move since each video with target and loss-limit hits. Refreshes every 60 s during IDX hours; prices are fetched only while the window is open. Chart ranges use TradingView's labels (1D, 5D, 1M, 3M, 1Y) in both languages.
 - **[ TRADINGVIEW ]** in the price window and on each stock in Market Overview opens the stock on TradingView.com.
@@ -16,6 +21,8 @@
 - While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 
 ### Changed
+- The code is now the `tickerquill` package (`tickerquill/`), with `pyproject.toml`.
+- `run.bat` is replaced by **`TickerQuill.bat`** (double-click; the first time it also creates `.venv`, installs everything and makes the shortcut). `TickerQuill.command` (macOS) and `tickerquill.sh` (Linux) do the same.
 - **History** is now a page in the main window (**View > History**) instead of a separate window. The **[ SETTINGS ]** and **[ HISTORY ]** buttons are replaced by the menu; **[ PAUSE ]** and **[ CANCEL ]** moved next to the status line.
 - The start button is now **[ RUN ]** (Indonesian **[ PROSES ]**) and the report tab **REPORT** (**HASIL ANALISIS**), so the button and the tab no longer share a label.
 - The copy and save buttons name the tab they act on, for example **[ COPY TRANSCRIPT ]**.

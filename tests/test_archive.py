@@ -4,7 +4,7 @@ from datetime import datetime
 
 import pytest
 
-import archive
+from tickerquill import archive
 
 
 def raw(*stocks, summary="ringkasan", sentiment="BULLISH"):

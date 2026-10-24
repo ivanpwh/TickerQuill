@@ -8,8 +8,8 @@ import pytest
 pytest.importorskip("tkinter")
 import httpx2 as httpx  # noqa: E402
 import openai  # noqa: E402
-import app  # noqa: E402
-import remote  # noqa: E402
+from tickerquill import app  # noqa: E402
+from tickerquill import remote  # noqa: E402
 
 
 @pytest.fixture
@@ -429,7 +429,7 @@ def test_transcript_event_names_the_source_file(no_wait, monkeypatch, tmp_path):
 
 
 def test_fresh_analysis_is_archived_but_viewing_a_saved_one_is_not(no_wait, monkeypatch):
-    import archive
+    from tickerquill import archive
 
     write_transcript_entry({"video_date": "2026-10-21", "channel": "Kanal"})
     monkeypatch.setattr(app, "setting", lambda name, default=None: "k" if name == "NINEROUTER_API_KEY" else default)
@@ -445,7 +445,7 @@ def test_fresh_analysis_is_archived_but_viewing_a_saved_one_is_not(no_wait, monk
 
 
 def test_unreadable_reply_is_not_archived(no_wait, monkeypatch):
-    import archive
+    from tickerquill import archive
 
     write_transcript_entry()
     monkeypatch.setattr(app, "setting", lambda name, default=None: "k" if name == "NINEROUTER_API_KEY" else default)

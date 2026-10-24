@@ -3,13 +3,14 @@
 Data dari market.py (Yahoo Finance, tertunda ±15 menit), diambil di thread dan diperbarui tiap 60 detik selama bursa
 buka. Konteks (level yang digambar, daftar video) diberikan oleh pembuka: kartu Dashboard atau halaman RINGKASAN PASAR.
 """
+import gc
 import threading
 import tkinter as tk
 
-import market
-import report
-from dashboard import open_url
-from theme import FONT, FONT_B, FONT_BIG, T, mix
+from . import market
+from . import report
+from .dashboard import open_url
+from .theme import FONT, FONT_B, FONT_BIG, T, font, mix
 
 REFRESH_MS = 60_000
 LEVEL_ROLES = {"entry": "AMBER", "target": "GOOD", "stop_loss": "RED"}
@@ -58,7 +59,7 @@ class StockWindow(tk.Toplevel):
         self.range = "1D"
         self.quote, self.points, self.daily = None, [], None
         self.error = None
-        self.result = None  # hasil thread: ("ok", data) | ("err", MarketError)
+        self.job = {}  # kotak hasil thread: {"result": ("ok", data) | ("err", MarketError)}
         self.loading = False
         self.auto_id = None
         self.configure(bg=T.BG)
@@ -104,7 +105,7 @@ class StockWindow(tk.Toplevel):
         self.since_title = self.line(FONT_B, T.AMBER, pady=(8, 2))
         self.since = tk.Frame(self, bg=T.BG)
         self.since.pack(fill="x", padx=12)
-        self.disclaimer_lbl = self.line(("Consolas", 9), T.DIM, pady=(8, 8))
+        self.disclaimer_lbl = self.line(font(9), T.DIM, pady=(8, 8))
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.apply_lang()
         self.load(full=True)
@@ -170,19 +171,22 @@ class StockWindow(tk.Toplevel):
             self.auto_id = None
         if self.loading:
             return
-        self.loading, self.result = True, None
+        self.loading = True
         self.msg_lbl.config(text=t(self.ui, "loading", s=self.symbol), fg=T.DIM)
         symbol, rng = self.symbol, self.range
         need_daily = bool(self.context.get("videos")) and (full or self.daily is None)
+        # thread hanya menulis ke kotak ini: kalau ia memegang jendela dan jendela ditutup lebih dulu, objek Tk
+        # akan dibersihkan dari thread lain (Tcl melarangnya)
+        box = self.job = {}
 
         def work():
             try:
                 quote = market.parse_chart(market.fetch_chart(symbol, "1d", "5m"))
                 chart = quote if rng == "1D" else market.parse_chart(market.fetch_chart(symbol, *market.RANGES[rng]))
                 daily = market.parse_chart(market.fetch_chart(symbol, "1y", "1d"))["points"] if need_daily else None
-                self.result = ("ok", (symbol, quote, chart["points"], daily))
+                box["result"] = ("ok", (symbol, quote, chart["points"], daily))
             except market.MarketError as e:
-                self.result = ("err", e)
+                box["result"] = ("err", e)
 
         threading.Thread(target=work, daemon=True).start()
         self.after(150, self.poll)
@@ -190,11 +194,11 @@ class StockWindow(tk.Toplevel):
     def poll(self):
         if not self.winfo_exists():
             return
-        if self.result is None:
+        if "result" not in self.job:
             self.after(150, self.poll)
             return
-        status, value = self.result
-        self.result, self.loading = None, False
+        status, value = self.job.pop("result")
+        self.loading = False
         if status == "ok":
             symbol, quote, points, daily = value
             if symbol == self.symbol:  # simbol bisa diganti selama memuat
@@ -211,6 +215,9 @@ class StockWindow(tk.Toplevel):
         if self.auto_id:
             self.after_cancel(self.auto_id)
         self.destroy()
+        # Bereskan objek Tk jendela ini sekarang, di main thread. Kalau dibiarkan, garbage collector bisa
+        # membersihkannya di thread pengambil harga yang sedang berjalan, dan Tk menolak dipanggil dari sana.
+        gc.collect()
 
     # --- tampilan --------------------------------------------------------------------------------------------------
     def render(self):
@@ -271,7 +278,7 @@ class StockWindow(tk.Toplevel):
         for k in range(5):
             v = lo2 + k * (hi2 - lo2) / 4
             c.create_line(left, y(v), right, y(v), fill=mix(T.BG, T.DIM, 0.45))
-            c.create_text(right + 6, y(v), text=self.num(round(v)), anchor="w", fill=T.DIM, font=("Consolas", 9))
+            c.create_text(right + 6, y(v), text=self.num(round(v)), anchor="w", fill=T.DIM, font=font(9))
         color = T.GOOD if closes[-1] >= closes[0] else T.RED
         if len(pts) > 1:
             c.create_line(*[n for i, p in enumerate(pts) for n in (x(i), y(p[1]))], fill=color, width=2)
@@ -280,12 +287,12 @@ class StockWindow(tk.Toplevel):
             fg = getattr(T, LEVEL_ROLES[key])
             c.create_line(left, y(val), right, y(val), fill=fg, dash=(5, 3))
             c.create_text(left + 4, y(val) - 2, text=f"{t(ui, 'lv_' + key)} {self.num(val)}", anchor="sw", fill=fg,
-                          font=("Consolas", 9, "bold"))
+                          font=font(9, "bold"))
         fmt = "%H:%M" if self.range in ("1D", "5D") else "%d/%m"
         if self.range == "5D":
             fmt = "%d/%m %H:%M"
-        c.create_text(left, h - 4, text=pts[0][0].strftime(fmt), anchor="sw", fill=T.DIM, font=("Consolas", 9))
-        c.create_text(right, h - 4, text=pts[-1][0].strftime(fmt), anchor="se", fill=T.DIM, font=("Consolas", 9))
+        c.create_text(left, h - 4, text=pts[0][0].strftime(fmt), anchor="sw", fill=T.DIM, font=font(9))
+        c.create_text(right, h - 4, text=pts[-1][0].strftime(fmt), anchor="se", fill=T.DIM, font=font(9))
         self.legend_lbl.config(text=t(ui, "off_chart", list=", ".join(f"{t(ui, 'lv_' + k)} {self.num(v)}" for k, v in off))
                                if off else "")
 
