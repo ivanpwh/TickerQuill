@@ -515,15 +515,15 @@ def test_dashboard_ticker_opens_the_price_window_with_its_levels(root, monkeypat
     assert ctx["videos"][0]["date"] == "2026-10-21" and ctx["videos"][0]["stance"] == "BUY"
 
 
-def test_market_overview_is_on_the_menu_bar_and_is_the_start_page(collection, root):
+def test_market_overview_is_in_the_view_menu_and_is_the_start_page(collection, root):
     import archive
 
     bar = root.menubar.bar
     labels = [bar.entrycget(i, "label") for i in range(bar.index("end") + 1)]
-    i = labels.index(root.tr("m_overview"))
-    assert bar.type(i) == "command"  # one click, no submenu
+    assert labels == [root.tr(k) for k in ("m_file", "m_view", "m_job", "m_tools", "m_help")]  # no extra top item
     root.show_page("analysis")
-    bar.invoke(i)
+    menu, i = menu_entry(root, "m_view", root.tr("m_overview"))
+    menu.invoke(i)
     assert root.page == "collection" and root.page_lbl.cget("text").endswith(root.tr("page_collection"))
     root.show_page("analysis")
     root.start_page()

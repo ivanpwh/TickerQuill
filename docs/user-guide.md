@@ -21,14 +21,13 @@ How to use TickerQuill day to day, and how to read what it produces. For install
 
 ## Menus and pages
 
-The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Market Overview** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`; **Market Overview** is also an item directly on the menu bar. Once you have saved analyses, the app opens on Market Overview; before that it opens on Analysis. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
+The main window has three pages: **Analysis** (paste a URL, run, read the results), **History** (saved transcripts) and **Market Overview** (all analyses compared). Switch with the **View** menu or `Ctrl+1` / `Ctrl+2` / `Ctrl+3`. Once you have saved analyses, the app opens on Market Overview; before that it opens on Analysis. Each page keeps its state while you look at the other one. Settings, the model picker and confirmations open as dialogs.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
 | **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
-| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
 
@@ -109,7 +108,7 @@ History can be browsed while a job is running; choosing an item then shows "A jo
 
 ## 6b. Market Overview
 
-The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **Market Overview** on the menu bar, or `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
+The **Market Overview** page (Indonesian: **Ringkasan Pasar**; **View > Market Overview**, or `Ctrl+3`) gathers every analysis you have made and compares what different videos said about the same stock. It uses the latest analysis of each video; older analyses of the same video stay in `analyses/` but are not counted twice.
 
 **Dates.** Videos are grouped by their **upload date**. New analyses record it automatically. Analyses made before this version (and transcript files) have no upload date yet: they use the analysis date and are marked `*`. **[ FILL IN VIDEO DATES ]** fetches the missing upload dates and channel names with yt-dlp (metadata only, no download); videos that cannot be reached are counted as failed and can be tried again later.
 

@@ -56,9 +56,6 @@ class MenuBar:
                  (), lambda: a.pause_btn.cget("state") == "normal")
         self.add(m, lambda: plain(tr("cancel")), a.stop, "Esc", ("<Escape>",), a.busy)
 
-        # langsung di menu bar: satu klik membuka halaman RINGKASAN PASAR (Ctrl+3 di-bind lewat menu Lihat)
-        self.add(self.bar, lambda: tr("m_overview"), lambda: a.show_page("collection"))
-
         m = self.cascade(self.bar, "m_tools")
         self.add(m, lambda: tr("set_title") + "…", a.open_settings, "Ctrl+,", ("<Control-comma>",))
         self.add(m, lambda: plain(tr("set_pick")) + "…", a.pick_model)

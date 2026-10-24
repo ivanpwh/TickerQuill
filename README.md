@@ -37,7 +37,7 @@ Turn a YouTube stock-market video into a structured, investor-friendly summary: 
 - The selected item shows its full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 
 **Market Overview** (combined dashboard)
-- The start page once you have analyses (**Market Overview** on the menu bar, `Ctrl+3`), with every analysis, grouped by the video's upload date (latest analysis per video).
+- The start page once you have analyses (**View > Market Overview**, `Ctrl+3`), with every analysis, grouped by the video's upload date (latest analysis per video).
 - Per stock across videos: consensus, disagreement flag, timeline, combined price zone with reward:risk from the medians, changes of view, reliability.
 - Per date: the stocks several videos discussed that day, side by side. Overall: most-discussed stocks and market tone per date.
 - Optional AI summary per stock or per date, made from the extracted data only and saved.
@@ -119,14 +119,13 @@ Full walkthrough: [User guide](docs/user-guide.md).
 
 ## Main window
 
-The window has three pages, **Analysis**, **History** and **Market Overview**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); **Market Overview** is also a one-click item on the menu bar and the start page once you have analyses. Settings open in a separate dialog.
+The window has three pages, **Analysis**, **History** and **Market Overview**, switched from the **View** menu (`Ctrl+1`, `Ctrl+2`, `Ctrl+3`); Market Overview is the start page once you have analyses. Settings open in a separate dialog.
 
 | Menu | Items |
 |---|---|
 | **File** | Open file… `Ctrl+O` · Copy {tab} `Ctrl+Shift+C` · Save {tab}… `Ctrl+S` · Exit |
 | **View** | Analysis `Ctrl+1` · History `Ctrl+2` · Market Overview `Ctrl+3` · Dashboard / Report / Transcript · Theme · Language |
 | **Job** | Run `Enter` · Pause / Resume · Cancel `Esc` |
-| **Market Overview** | Opens the Market Overview page (a menu-bar item, no submenu) |
 | **Tools** | Settings… `Ctrl+,` · Pick model… · Test Colab connection |
 | **Help** | User guide · About TickerQuill |
 
