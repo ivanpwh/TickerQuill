@@ -39,7 +39,7 @@ While a job runs and the History page is open, the title row shows the progress,
 
 ## 1. First-time setup
 
-1. Start the app from its shortcut (made by `tickerquill --shortcut` during [installation](../README.md#installation)) or with `tickerquill`, and open **Tools > Settings** (`Ctrl+,`, `Cmd+,` on macOS).
+1. Start the app: double-click **`TickerQuill.bat`** in the TickerQuill folder (macOS: `TickerQuill.command`, Linux: `tickerquill.sh`), or use the **TickerQuill** shortcut it creates the first time. Then open **Tools > Settings** (`Ctrl+,`, `Cmd+,` on macOS).
 2. **ANALYSIS (LLM)** tab: enter the endpoint URL, API key and model. **[ PICK MODEL ]** asks your endpoint for its model list; you can also type a model name directly.
 3. **TRANSCRIPTION** tab: choose where Whisper runs (**Local** or **Colab**), the Whisper model and the default audio language. See the [Colab guide](../colab/README.md) if you pick Colab.
 4. **GENERAL** tab: language and theme.

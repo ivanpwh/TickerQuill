@@ -92,6 +92,21 @@ Details: [Architecture](docs/architecture.md) · [Methodology](docs/methodology.
 
 ## Installation
 
+### The easy way: double-click
+
+1. Get the code: **Code > Download ZIP** on GitHub (then unzip it), or `git clone https://github.com/ivanpwh/TickerQuill.git`.
+2. Open the folder and double-click the launcher for your system:
+
+| System | Double-click | The first time | After that |
+|---|---|---|---|
+| **Windows** | **`TickerQuill.bat`** | A window shows the setup (a few minutes): it creates `.venv`, installs everything and adds **TickerQuill** to the Start Menu and Desktop | Opens the app straight away, without a console window |
+| **macOS** | **`TickerQuill.command`** | Terminal shows the setup and adds `TickerQuill.app` to `~/Applications` | Opens the app; the Terminal window can be closed |
+| **Linux** | **`tickerquill.sh`** (choose *Run*, or `./tickerquill.sh` in a terminal) | Shows the setup and adds TickerQuill to the app menu | Opens the app |
+
+From then on you can use the launcher or the shortcut, whichever is easier. The launchers need Python 3.10 or newer (on Windows from [python.org](https://www.python.org/downloads/), with *Add python.exe to PATH* ticked); if only [uv](https://docs.astral.sh/uv/) is installed they use that. On macOS, if Finder says the file cannot be opened, right-click it and choose **Open** once (a downloaded ZIP may also need `chmod +x TickerQuill.command`).
+
+### Manual installation
+
 **Windows** (PowerShell):
 
 ```powershell
@@ -120,6 +135,7 @@ The shortcut can also be made later from the app: **Tools > Create app shortcut*
 
 | How | When |
 |---|---|
+| **`TickerQuill.bat`** / **`TickerQuill.command`** / **`tickerquill.sh`** in the folder | Double-click; sets the app up the first time |
 | The **TickerQuill shortcut** (Start Menu, Desktop, Applications, app menu) | Every day; no terminal |
 | `tickerquill` | From a terminal with the virtual environment active; errors are printed there |
 | `tickerquill-gui` | Same, without a console window on Windows (`.venv\Scripts\tickerquill-gui.exe` can be pinned) |
@@ -139,7 +155,7 @@ Settings, the API key, the transcript cache, the analysis archive and downloaded
 
 To move an older installation's data into the current data folder: `tickerquill --migrate "path\to\old\TickerQuill"` (settings, cache, archive and transcripts; downloaded audio is left behind). Existing files are never overwritten.
 
-**Upgrading from 1.1:** `run.bat` is gone. Run `pip install -r requirements.txt` once in the repository (this installs the package in editable mode), then `tickerquill --shortcut`. Your data stays in the repository folder.
+**Upgrading from 1.1:** `run.bat` is replaced by **`TickerQuill.bat`**: double-click it. If your `.venv` is from 1.1 it may still lack the new package; then delete the `.venv` folder once and double-click `TickerQuill.bat` again, and it sets everything up. Your settings and history stay in the repository folder.
 
 ## Quick start
 
@@ -308,6 +324,9 @@ The Windows build is the one used day to day. macOS and Linux run the full test 
 ## Project layout
 
 ```
+TickerQuill.bat       Windows launcher: double-click (sets up .venv the first time)
+TickerQuill.command   macOS launcher (same)
+tickerquill.sh        Linux launcher (same)
 tickerquill/          the app (a Python package; `python -m tickerquill`)
   __main__.py         command line: tickerquill / tickerquill-gui
   app.py              UI (Tk), settings, pipeline (download → Whisper → LLM), history

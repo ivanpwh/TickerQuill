@@ -132,3 +132,20 @@ def test_icon_files_exist_in_every_format():
     assert {(16, 16), (32, 32), (48, 48), (256, 256)} <= sizes
     assert (paths.ICONS / "tickerquill.icns").read_bytes()[:4] == b"icns"
 
+
+
+def test_double_click_launchers_set_up_then_start_the_app():
+    bat = (paths.SOURCE / "TickerQuill.bat").read_text(encoding="utf-8")
+    assert 'tickerquill-gui.exe" goto run' in bat  # set up only once
+    assert "-m pip install -r requirements.txt" in bat and "uv pip install" in bat and "-m tickerquill --shortcut" in bat
+    assert r'start "" ".venv\Scripts\pythonw.exe" -m tickerquill' in bat  # no console window afterwards
+    assert "sys.version_info < (3, 10)" in bat  # the Microsoft Store placeholder "python" is not accepted
+    for name in ("TickerQuill.command", "tickerquill.sh"):
+        script = (paths.SOURCE / name).read_bytes()
+        assert script.startswith(b"#!/bin/") and b"\r\n" not in script  # LF: CRLF would break the shebang
+        assert b"-m tickerquill --shortcut" in script  # first run makes the shortcut
+        assert b"exec .venv/bin/python -m tickerquill" in script or b"nohup .venv/bin/python -m tickerquill" in script
+    out = subprocess.run(["git", "ls-files", "-s", "TickerQuill.command", "tickerquill.sh"], capture_output=True,
+                         text=True, cwd=paths.SOURCE)
+    if out.returncode == 0 and out.stdout:
+        assert all(line.startswith("100755") for line in out.stdout.splitlines())  # executable after clone

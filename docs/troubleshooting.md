@@ -10,6 +10,12 @@ The virtual environment is missing or not active, or the package is not installe
 **`No module named 'tkinter'`**
 Your Python was installed without Tk. Windows: reinstall Python with *tcl/tk and IDLE* ticked. macOS: use the python.org installer, or `brew install python-tk`. Linux: install your distribution's `python3-tk` package (and `python3-venv` on Debian/Ubuntu).
 
+**Double-clicking `TickerQuill.bat` says Python was not found**
+Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/) and tick *Add python.exe to PATH* (the Microsoft Store placeholder that appears when you type `python` does not count), then double-click it again. If you use [uv](https://docs.astral.sh/uv/), the launcher uses it instead.
+
+**`TickerQuill.bat` set up once but the app does not open**
+Run `.venv\Scripts\tickerquill.exe` in a terminal to see the error. To redo the setup, delete the `.venv` folder and double-click `TickerQuill.bat` again. On macOS/Linux, run `./TickerQuill.command` or `./tickerquill.sh` in a terminal; after a ZIP download they may need `chmod +x` first.
+
 **The TickerQuill shortcut does nothing**
 The shortcut starts Python without a console, so errors are invisible. Run `tickerquill` from a terminal to see them. If you moved or recreated the virtual environment, make the shortcut again (`tickerquill --shortcut` or **Tools > Create app shortcut**); it points to the Python that created it.
 

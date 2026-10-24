@@ -21,7 +21,8 @@
 - While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 
 ### Changed
-- The code is now the `tickerquill` package (`tickerquill/`), with `pyproject.toml`; `run.bat` is removed (use the shortcut or `tickerquill`).
+- The code is now the `tickerquill` package (`tickerquill/`), with `pyproject.toml`.
+- `run.bat` is replaced by **`TickerQuill.bat`** (double-click; the first time it also creates `.venv`, installs everything and makes the shortcut). `TickerQuill.command` (macOS) and `tickerquill.sh` (Linux) do the same.
 - **History** is now a page in the main window (**View > History**) instead of a separate window. The **[ SETTINGS ]** and **[ HISTORY ]** buttons are replaced by the menu; **[ PAUSE ]** and **[ CANCEL ]** moved next to the status line.
 - The start button is now **[ RUN ]** (Indonesian **[ PROSES ]**) and the report tab **REPORT** (**HASIL ANALISIS**), so the button and the tab no longer share a label.
 - The copy and save buttons name the tab they act on, for example **[ COPY TRANSCRIPT ]**.
