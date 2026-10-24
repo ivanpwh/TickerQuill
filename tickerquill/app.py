@@ -1720,7 +1720,7 @@ class SettingsDialog(tk.Toplevel):
 
     def __init__(self, app, page="general", notice=""):
         super().__init__(app)
-        self.app, self.result, self.page = app, None, page
+        self.app, self.job, self.page = app, {}, page
         colab_url, colab_token = colab_conf()
         self.initial = {"APP_LANG": app.ui, "theme": theme.current, "WHISPER_ENGINE": app.engine_var.get(),
                         "whisper_model": app.model_var.get(), "AUDIO_LANG": app.audio_var.get(),
@@ -1850,20 +1850,20 @@ class SettingsDialog(tk.Toplevel):
             self.info.config(text=self.app.tr("colab_empty"), fg=T.RED)
             return
         self.info.config(text=self.app.tr("colab_testing"), fg=T.AMBER)
-        self.result = None
+        box = self.job = {}  # thread menulis ke kotak, bukan ke dialog (dialog bisa ditutup lebih dulu)
 
         def work():
             try:
-                self.result = ("ok", remote.health(url, token))
+                box["result"] = ("ok", remote.health(url, token))
             except remote.RemoteError as e:
-                self.result = ("err", str(e))
+                box["result"] = ("err", str(e))
 
         threading.Thread(target=work, daemon=True).start()
 
     def poll(self):
-        if self.result:
-            kind, value = self.result
-            self.result = None
+        result = self.job.pop("result", None)
+        if result:
+            kind, value = result
             if kind == "ok":
                 self.info.config(text=self.app.tr("colab_ok").format(**value), fg=T.FG)
             else:
@@ -1921,7 +1921,7 @@ class ModelPicker(tk.Toplevel):
 
     def __init__(self, app, done=None):
         super().__init__(app)
-        self.app, self.models, self.result, self.done = app, [], None, done
+        self.app, self.models, self.job, self.done = app, [], {}, done
         self.title(app.tr("model_title"))
         self.configure(bg=T.BG)
         self.geometry("620x460")
@@ -1962,20 +1962,20 @@ class ModelPicker(tk.Toplevel):
         import threading
 
         self.info.config(text=self.app.tr("loading"), fg=T.AMBER)
-        self.result = None
+        box = self.job = {}  # thread menulis ke kotak, bukan ke dialog (dialog bisa ditutup lebih dulu)
 
         def work():
             try:
-                self.result = ("ok", fetch_models())
+                box["result"] = ("ok", fetch_models())
             except Exception as e:
-                self.result = ("err", f"{type(e).__name__}: {e}")
+                box["result"] = ("err", f"{type(e).__name__}: {e}")
 
         threading.Thread(target=work, daemon=True).start()
 
     def poll(self):
-        if self.result:
-            kind, value = self.result
-            self.result = None
+        result = self.job.pop("result", None)
+        if result:
+            kind, value = result
             if kind == "ok":
                 self.models = value
                 self.info.config(text=self.app.tr("count").format(n=len(value)), fg=T.DIM)

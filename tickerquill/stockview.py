@@ -58,7 +58,7 @@ class StockWindow(tk.Toplevel):
         self.range = "1D"
         self.quote, self.points, self.daily = None, [], None
         self.error = None
-        self.result = None  # hasil thread: ("ok", data) | ("err", MarketError)
+        self.job = {}  # kotak hasil thread: {"result": ("ok", data) | ("err", MarketError)}
         self.loading = False
         self.auto_id = None
         self.configure(bg=T.BG)
@@ -170,19 +170,22 @@ class StockWindow(tk.Toplevel):
             self.auto_id = None
         if self.loading:
             return
-        self.loading, self.result = True, None
+        self.loading = True
         self.msg_lbl.config(text=t(self.ui, "loading", s=self.symbol), fg=T.DIM)
         symbol, rng = self.symbol, self.range
         need_daily = bool(self.context.get("videos")) and (full or self.daily is None)
+        # thread hanya menulis ke kotak ini: kalau ia memegang jendela dan jendela ditutup lebih dulu, objek Tk
+        # akan dibersihkan dari thread lain (Tcl melarangnya)
+        box = self.job = {}
 
         def work():
             try:
                 quote = market.parse_chart(market.fetch_chart(symbol, "1d", "5m"))
                 chart = quote if rng == "1D" else market.parse_chart(market.fetch_chart(symbol, *market.RANGES[rng]))
                 daily = market.parse_chart(market.fetch_chart(symbol, "1y", "1d"))["points"] if need_daily else None
-                self.result = ("ok", (symbol, quote, chart["points"], daily))
+                box["result"] = ("ok", (symbol, quote, chart["points"], daily))
             except market.MarketError as e:
-                self.result = ("err", e)
+                box["result"] = ("err", e)
 
         threading.Thread(target=work, daemon=True).start()
         self.after(150, self.poll)
@@ -190,11 +193,11 @@ class StockWindow(tk.Toplevel):
     def poll(self):
         if not self.winfo_exists():
             return
-        if self.result is None:
+        if "result" not in self.job:
             self.after(150, self.poll)
             return
-        status, value = self.result
-        self.result, self.loading = None, False
+        status, value = self.job.pop("result")
+        self.loading = False
         if status == "ok":
             symbol, quote, points, daily = value
             if symbol == self.symbol:  # simbol bisa diganti selama memuat
