@@ -12,6 +12,7 @@ import tkinter as tk
 from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
+from tkinter import font as tkfont
 
 from . import __version__, archive, market, paths, remote, report, shortcuts, theme
 from .collection import CollectionPage
@@ -1776,11 +1777,22 @@ class SettingsDialog(tk.Toplevel):
         self.geometry(f"700x{self.winfo_reqheight()}+{app.winfo_rootx() + 60}+{app.winfo_rooty() + 30}")
         self.poll()
 
+    def label_box(self):
+        """Ukuran kolom label: label terpanjang + nama variabel di bawahnya, diukur dengan font yang dipakai
+        (ukuran tetap memotong label di macOS dan layar DPI tinggi, yang fontnya lebih besar)."""
+        if not hasattr(self, "_label_box"):
+            main, small = tkfont.Font(font=FONT), tkfont.Font(font=font(9))
+            widest = max(max(main.measure(self.app.tr(key)) for _, _, key, _, _ in self.FIELDS),
+                         max(small.measure(n) for _, n, _, _, _ in self.FIELDS))
+            self._label_box = (widest + 16, main.metrics("linespace") + small.metrics("linespace") + 6)
+        return self._label_box
+
     def build_row(self, parent, name, label_key, kind, store):
         app = self.app
         row = tk.Frame(parent, bg=T.BG)
         row.pack(fill="x", padx=12, pady=5)
-        names = tk.Frame(row, bg=T.BG, width=200, height=40)
+        width, height = self.label_box()
+        names = tk.Frame(row, bg=T.BG, width=width, height=height)
         names.pack(side="left", anchor="n")
         names.pack_propagate(False)
         tk.Label(names, text=app.tr(label_key), font=FONT, bg=T.BG, fg=T.FG, anchor="w").pack(fill="x")
