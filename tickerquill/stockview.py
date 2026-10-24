@@ -3,6 +3,7 @@
 Data dari market.py (Yahoo Finance, tertunda ±15 menit), diambil di thread dan diperbarui tiap 60 detik selama bursa
 buka. Konteks (level yang digambar, daftar video) diberikan oleh pembuka: kartu Dashboard atau halaman RINGKASAN PASAR.
 """
+import gc
 import threading
 import tkinter as tk
 
@@ -214,6 +215,9 @@ class StockWindow(tk.Toplevel):
         if self.auto_id:
             self.after_cancel(self.auto_id)
         self.destroy()
+        # Bereskan objek Tk jendela ini sekarang, di main thread. Kalau dibiarkan, garbage collector bisa
+        # membersihkannya di thread pengambil harga yang sedang berjalan, dan Tk menolak dipanggil dari sana.
+        gc.collect()
 
     # --- tampilan --------------------------------------------------------------------------------------------------
     def render(self):

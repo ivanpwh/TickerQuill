@@ -120,12 +120,15 @@ def test_windows_shortcut_points_to_pythonw_dash_m(monkeypatch, tmp_path):
 
 
 def test_icon_files_exist_in_every_format():
-    from PIL import Image
+    """Read the headers directly: the app and CI do not need Pillow (only tools/make_icon.py does)."""
+    import struct
 
     for size in (16, 32, 48, 64, 128, 256, 512, 1024):
-        with Image.open(paths.ICONS / f"tickerquill-{size}.png") as img:
-            assert img.size == (size, size)
-    with Image.open(paths.ICONS / "tickerquill.ico") as ico:
-        assert {(16, 16), (32, 32), (48, 48), (256, 256)} <= set(ico.info["sizes"])
-    assert (paths.ICONS / "tickerquill.icns").stat().st_size > 0
+        head = (paths.ICONS / f"tickerquill-{size}.png").read_bytes()[:24]
+        assert head[:8] == bytes.fromhex("89504e470d0a1a0a") and struct.unpack(">II", head[16:24]) == (size, size)
+    ico = (paths.ICONS / "tickerquill.ico").read_bytes()
+    count = struct.unpack("<HHH", ico[:6])[2]
+    sizes = {(ico[6 + 16 * i] or 256, ico[7 + 16 * i] or 256) for i in range(count)}  # 0 means 256 in ICO
+    assert {(16, 16), (32, 32), (48, 48), (256, 256)} <= sizes
+    assert (paths.ICONS / "tickerquill.icns").read_bytes()[:4] == b"icns"
 
