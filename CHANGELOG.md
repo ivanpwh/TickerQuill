@@ -1,8 +1,13 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - 2026-10-24
 
 ### Added
+- **Runs on Windows, macOS and Linux.** Platform-specific fonts, mouse-wheel scrolling, Cmd shortcuts and the app menu on macOS, coloured buttons on macOS, opening files with each system's opener, and the candle chart on each system's web view. CI now tests on macOS too and runs the GUI tests on Linux.
+- **`tickerquill` command** (`pip install -r requirements.txt` installs the package): `tickerquill`, `tickerquill-gui` (no console on Windows) and `python -m tickerquill`, with `--version`, `--where`, `--data`, `--migrate`, `--shortcut` and `--remove-shortcut`.
+- **App shortcuts with the icon**, from `tickerquill --shortcut` or **Tools > Create app shortcut**: Start Menu and Desktop on Windows, `~/Applications/TickerQuill.app` on macOS, the app menu on Linux.
+- **App icon**: an ink drop with a candlestick cut out of it, in the window, the Windows taskbar and the shortcuts.
+- **Data folder**: `TICKERQUILL_HOME`, else the repository when it already holds data (existing installs keep theirs), else the OS user data folder; `tickerquill --migrate` copies an older folder's data.
 - The dashboard and the report start with the video title and a clickable link (or the file name for transcript files), and the link is included in copied and saved text.
 - **History** shows the selected item's full title and video link, with **[ OPEN LINK ]** and **[ COPY LINK ]**.
 - Errors in step 2 (transcription) and step 3 (analysis) name the failed step, how many automatic tries were made, and what to press next. Temporary connection problems to the Colab server or the LLM are retried up to 3 times; a transcription continues from its last checkpoint.
@@ -16,6 +21,7 @@
 - While a job runs on another page, the title row shows its progress, then whether it finished, was cancelled or failed.
 
 ### Changed
+- The code is now the `tickerquill` package (`tickerquill/`), with `pyproject.toml`; `run.bat` is removed (use the shortcut or `tickerquill`).
 - **History** is now a page in the main window (**View > History**) instead of a separate window. The **[ SETTINGS ]** and **[ HISTORY ]** buttons are replaced by the menu; **[ PAUSE ]** and **[ CANCEL ]** moved next to the status line.
 - The start button is now **[ RUN ]** (Indonesian **[ PROSES ]**) and the report tab **REPORT** (**HASIL ANALISIS**), so the button and the tab no longer share a label.
 - The copy and save buttons name the tab they act on, for example **[ COPY TRANSCRIPT ]**.
