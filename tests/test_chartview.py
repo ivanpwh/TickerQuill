@@ -3,8 +3,8 @@ from datetime import datetime
 
 import pytest
 
-import chartview
-import market
+from tickerquill import chartview
+from tickerquill import market
 
 COLORS = {"BUY": "#00ff00", "WATCH": "#ffb000", "SELL": "#ff0000"}
 LABELS = {"BUY": "BELI", "WATCH": "PANTAU", "SELL": "JUAL"}

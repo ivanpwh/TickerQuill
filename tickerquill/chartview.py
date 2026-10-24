@@ -1,6 +1,6 @@
 """Grafik candlestick bergaya TradingView (Lightweight Charts) di jendela pywebview, sebagai proses terpisah.
 
-Dijalankan oleh App.open_chart: `pythonw chartview.py <context.json>`. Tk dan pywebview sama-sama butuh main thread,
+Dijalankan oleh App.open_chart: `python -m tickerquill.chartview <context.json>` (pythonw di Windows). Tk dan pywebview sama-sama butuh main thread,
 jadi grafik tidak bisa berjalan di proses aplikasi. Data dari market.py (Yahoo Finance, tertunda ±15 menit); level dan
 penanda video berasal dari konteks yang ditulis aplikasi. Modul ini bisa diimpor tanpa pywebview (untuk tes).
 """
@@ -9,8 +9,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-import market
-from system import IS_WIN
+from . import market
+from .system import IS_WIN
 
 ASSETS = Path(__file__).resolve().parent / "assets"
 LWC_JS = ASSETS / "lightweight-charts" / "lightweight-charts.standalone.production.js"

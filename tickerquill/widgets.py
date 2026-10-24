@@ -1,7 +1,7 @@
 """Widget bersama. RetroButton: tombol berbasis Label, karena tk.Button di macOS mengabaikan warna latar/teks."""
 import tkinter as tk
 
-from theme import FONT_B, T
+from .theme import FONT_B, T
 
 
 class RetroButton(tk.Label):

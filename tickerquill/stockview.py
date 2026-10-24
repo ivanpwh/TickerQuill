@@ -6,10 +6,10 @@ buka. Konteks (level yang digambar, daftar video) diberikan oleh pembuka: kartu 
 import threading
 import tkinter as tk
 
-import market
-import report
-from dashboard import open_url
-from theme import FONT, FONT_B, FONT_BIG, T, font, mix
+from . import market
+from . import report
+from .dashboard import open_url
+from .theme import FONT, FONT_B, FONT_BIG, T, font, mix
 
 REFRESH_MS = 60_000
 LEVEL_ROLES = {"entry": "AMBER", "target": "GOOD", "stop_loss": "RED"}

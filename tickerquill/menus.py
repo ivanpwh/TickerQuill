@@ -1,8 +1,8 @@
 """Menu bar bawaan Windows (tk.Menu). Satu tabel memuat label, perintah, teks shortcut, binding tombol, dan syarat aktif."""
 import tkinter as tk
 
-import theme
-from system import IS_MAC, MOD, MOD_LABEL
+from . import theme
+from .system import IS_MAC, MOD, MOD_LABEL
 
 LANG_LABELS = {"ID": "Bahasa Indonesia (ID)", "EN": "English (EN)"}
 # Binding kelas Tk yang mengubah isi widget untuk shortcut menu: diganti agar shortcut tidak berefek ganda
@@ -62,6 +62,8 @@ class MenuBar:
         self.add(m, lambda: tr("set_title") + "…", a.open_settings, f"{MOD_LABEL}+,", (f"<{MOD}-comma>",))
         self.add(m, lambda: plain(tr("set_pick")) + "…", a.pick_model)
         self.add(m, lambda: tr("mi_colab"), a.test_colab)
+        m.add_separator()
+        self.add(m, lambda: tr("mi_shortcut") + "…", a.make_shortcut)
 
         m = self.cascade(self.bar, "m_help")
         self.add(m, lambda: tr("mi_guide"), a.open_guide)

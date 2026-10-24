@@ -29,6 +29,12 @@ jobs:
           else
             python -m pytest -q -rs
           fi
+      - name: Package installs and the commands start
+        shell: bash
+        run: |
+          pip install --no-deps .
+          tickerquill --version
+          python -m tickerquill --where
       - name: Colab notebook is in sync with whisper_server.py
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
         run: |

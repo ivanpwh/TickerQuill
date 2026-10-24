@@ -1,8 +1,8 @@
 """Tampilan dashboard retro (scrollable) dari blok yang dihasilkan report.blocks()."""
 import tkinter as tk
 
-from system import IS_MAC, open_url  # noqa: F401  (open_url dipakai b_source; tes menggantinya lewat modul ini)
-from theme import FONT, FONT_B, FONT_BIG, T, font, mix
+from .system import IS_MAC, open_url  # noqa: F401  (open_url dipakai b_source; tes menggantinya lewat modul ini)
+from .theme import FONT, FONT_B, FONT_BIG, T, mix
 
 WHEEL_EVENTS = ("<MouseWheel>", "<Button-4>", "<Button-5>")  # Windows/macOS, lalu X11 (Linux) naik/turun
 

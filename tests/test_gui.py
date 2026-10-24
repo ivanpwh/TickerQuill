@@ -6,10 +6,10 @@ import tkinter as tk
 import pytest
 
 pytest.importorskip("tkinter")
-import app  # noqa: E402
-import theme  # noqa: E402
-from system import MOD  # noqa: E402
-from widgets import RetroButton  # noqa: E402
+from tickerquill import app  # noqa: E402
+from tickerquill import theme  # noqa: E402
+from tickerquill.system import MOD  # noqa: E402
+from tickerquill.widgets import RetroButton  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -102,7 +102,7 @@ def all_widgets(w):
 def test_source_link_is_shown_on_the_dashboard_and_in_the_report(root, monkeypatch):
     opened = []
     monkeypatch.setattr(app, "open_url", opened.append)
-    monkeypatch.setattr("dashboard.open_url", opened.append)
+    monkeypatch.setattr("tickerquill.dashboard.open_url", opened.append)
     url = "https://youtu.be/abcdefghijk"
     root.q.put(("transcript", ("Video saham", "[00:00:01] BBCA", {"url": url})))
     root.q.put(("report_raw", ('{"stocks": [{"ticker": "BBCA", "stance": "BUY"}]}', "stop")))
@@ -315,7 +315,7 @@ def collection(root):
     import shutil
     from datetime import datetime
 
-    import archive
+    from tickerquill import archive
 
     def add(vid, date, *stocks, at="2026-10-23 10:00"):
         reply = json.dumps({"summary": "s", "stocks": [{"ticker": tk_, "stance": st, "levels": lv} for tk_, st, lv in stocks]})
@@ -354,13 +354,13 @@ def test_collection_lists_dates_and_stocks_with_disagreement(collection):
 
 
 def root_tr(page, key):
-    import collection as col
+    from tickerquill import collection as col
 
     return col.t(page.ui, key)
 
 
 def test_collection_stock_detail_shows_consensus_zone_and_changes(collection):
-    import collection as col
+    from tickerquill import collection as col
 
     page = collection
     page.select_ticker("TLKM")
@@ -376,7 +376,7 @@ def test_collection_stock_detail_shows_consensus_zone_and_changes(collection):
 def test_collection_ai_summary_is_requested_once_and_cached(collection, root, monkeypatch):
     import time
 
-    import collection as col
+    from tickerquill import collection as col
 
     calls = []
     monkeypatch.setattr(root, "llm_ready", lambda: True)
@@ -400,7 +400,7 @@ def test_collection_ai_summary_is_requested_once_and_cached(collection, root, mo
 
 
 def test_collection_open_record_without_history_entry_says_so(collection):
-    import collection as col
+    from tickerquill import collection as col
 
     page = collection
     page.open_record(page.records[0])
@@ -410,7 +410,7 @@ def test_collection_open_record_without_history_entry_says_so(collection):
 def test_collection_imports_saved_analyses_from_history_once(root):
     import shutil
 
-    import archive
+    from tickerquill import archive
 
     done, _ = app.cache_paths("abcdefghijk", "id")
     app.write_json_atomic(done, {"title": "Lama", "url": "https://youtu.be/abcdefghijk", "vid": "abcdefghijk",
@@ -432,7 +432,7 @@ def fake_market(monkeypatch):
     """Yahoo stand-in: TLKM.JK at 2.240 (prev 2.200); daily history 20-23/10; anything else is not found."""
     from datetime import datetime as dt
 
-    import market
+    from tickerquill import market
 
     def chart(stamps, closes, highs, lows, price=2240.0):
         return {"chart": {"result": [{"meta": {"symbol": "TLKM.JK", "shortName": "Telkom Indonesia", "currency": "IDR",
@@ -491,7 +491,7 @@ def test_stock_window_shows_price_chart_levels_and_move_since_video(root, fake_m
 
 
 def test_stock_window_explains_an_unknown_ticker(root, fake_market):
-    import stockview
+    from tickerquill import stockview
 
     w = root.open_stock("ZZZQ", {})
     try:
@@ -518,7 +518,7 @@ def test_dashboard_ticker_opens_the_price_window_with_its_levels(root, monkeypat
 
 
 def test_market_overview_is_in_the_view_menu_and_is_the_start_page(collection, root):
-    import archive
+    from tickerquill import archive
 
     bar = root.menubar.bar
     labels = [bar.entrycget(i, "label") for i in range(bar.index("end") + 1)]
@@ -537,7 +537,7 @@ def test_market_overview_is_in_the_view_menu_and_is_the_start_page(collection, r
 
 
 def test_price_window_uses_international_ranges_and_opens_tradingview(root, fake_market, monkeypatch):
-    import stockview
+    from tickerquill import stockview
 
     opened = []
     monkeypatch.setattr(stockview, "open_url", opened.append)
@@ -553,7 +553,7 @@ def test_price_window_uses_international_ranges_and_opens_tradingview(root, fake
 
 
 def test_overview_stock_detail_links_to_tradingview(collection, monkeypatch):
-    import collection as col
+    from tickerquill import collection as col
 
     opened = []
     monkeypatch.setattr(col, "open_url", opened.append)
@@ -587,10 +587,10 @@ def test_candle_chart_runs_in_its_own_process_with_the_window_context(root, monk
     ctx = {"levels": {"entry": 2080.0}, "videos": [{"date": "2026-10-20", "stance": "BUY", "title": "v", "prices": {}}]}
     first = root.open_chart("tlkm", ctx)
     args, kw = launched[0]
-    assert args[1].endswith("chartview.py") and kw["cwd"] == app.BASE
+    assert args[1:3] == ["-m", "tickerquill.chartview"] and kw["cwd"] in (app.paths.SOURCE, None)
     saved = json.loads((tmp_path / "tickerquill-chart-TLKM.JK.json").read_text(encoding="utf-8"))
     assert saved["symbol"] == "TLKM.JK" and saved["levels"] == {"entry": 2080.0} and saved["videos"] == ctx["videos"]
-    import report
+    from tickerquill import report
 
     assert saved["palette"]["BG"] == theme.T.BG and saved["stance_labels"]["BUY"] == report.t(root.ui, "stance_BUY")
     second = root.open_chart("TLKM", ctx)
@@ -623,3 +623,22 @@ def test_retro_button_behaves_like_a_button(root):
     b.event_generate("<Leave>")
     assert str(b.cget("bg")).lower() == theme.T.BG.lower()
     b.destroy()
+
+
+def test_tools_menu_creates_the_app_shortcut(root, monkeypatch, tmp_path):
+    assert root.winfo_class() == app.shortcuts.WM_CLASS  # Linux matches the window to its shortcut by this
+    shown = []
+    monkeypatch.setattr(app.shortcuts, "create", lambda: [tmp_path / "TickerQuill.lnk"])
+    monkeypatch.setattr(app.messagebox, "showinfo", lambda title, text, **kw: shown.append(text))
+    menu, i = menu_entry(root, "m_tools", root.tr("mi_shortcut"))
+    menu.invoke(i)
+    assert len(shown) == 1 and str(tmp_path / "TickerQuill.lnk") in shown[0]
+
+    def blocked():
+        raise PermissionError("denied")
+
+    errors = []
+    monkeypatch.setattr(app.shortcuts, "create", blocked)
+    monkeypatch.setattr(app.messagebox, "showerror", lambda title, text, **kw: errors.append(text))
+    menu.invoke(i)
+    assert errors and "PermissionError: denied" in errors[0]

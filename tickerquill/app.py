@@ -6,7 +6,6 @@ import os
 import queue
 import re
 import subprocess
-import sys
 import tempfile
 import threading
 import tkinter as tk
@@ -14,28 +13,24 @@ from datetime import datetime
 from pathlib import Path
 from tkinter import filedialog, messagebox
 
-import archive
-import market
-import remote
-import report
-from collection import CollectionPage
-from dashboard import DashboardView, open_url, stance_color
-from menus import MenuBar
-from stockview import StockWindow
-from textclean import clean_repeats
-import theme
-from theme import FONT, FONT_B, T, font
-from system import IS_MAC, gui_python, no_console_flags, open_path
-from widgets import RetroButton
+from . import __version__, archive, market, paths, remote, report, shortcuts, theme
+from .collection import CollectionPage
+from .dashboard import DashboardView, open_url, stance_color
+from .menus import MenuBar
+from .stockview import StockWindow
+from .textclean import clean_repeats
+from .theme import FONT, FONT_B, T, font
+from .system import gui_python, no_console_flags, open_path
+from .widgets import RetroButton
 
 APP_NAME = "TickerQuill"
-APP_VERSION = "1.1.0"
-BASE = Path(__file__).resolve().parent
+APP_VERSION = __version__
+BASE = paths.data_dir()  # .env, settings.json, cache/, analyses/, transcripts/, work/ (lihat paths.py)
 CACHE = BASE / "cache"
 ARCHIVE = BASE / "analyses"  # satu JSON per analisis untuk halaman KOLEKSI (dibuat saat pertama dipakai)
 WORK = BASE / "work"
-CACHE.mkdir(exist_ok=True)
-WORK.mkdir(exist_ok=True)
+CACHE.mkdir(parents=True, exist_ok=True)
+WORK.mkdir(parents=True, exist_ok=True)
 
 ENV_FILE = BASE / ".env"
 GUIDE_URL = "https://github.com/ivanpwh/TickerQuill/blob/main/docs/user-guide.md"
@@ -181,7 +176,9 @@ STR = {
         "set_title": "Pengaturan",
         "m_file": "File", "m_view": "Lihat", "m_job": "Proses", "m_tools": "Alat", "m_help": "Bantuan",
         "mi_exit": "Keluar", "mi_theme": "Tema", "mi_lang": "Bahasa", "mi_colab": "Tes koneksi Colab",
-        "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill",
+        "mi_guide": "Panduan pengguna", "mi_about": "Tentang TickerQuill", "mi_shortcut": "Buat shortcut aplikasi",
+        "shortcut_done": "Shortcut TickerQuill dibuat:\n{list}\n\nAplikasi kini bisa dibuka dari sana tanpa terminal.",
+        "shortcut_err": "Gagal membuat shortcut: {e}",
         "about": "{name} v{v}\nYouTube >> Whisper >> ringkasan saran & prediksi saham.\nLisensi MIT.\n\n{disclaimer}",
         "chart_title": "Grafik candle",
         "chart_missing": "Grafik candle butuh paket pywebview. Pasang dengan: pip install -r requirements.txt (atau pip install pywebview), lalu buka aplikasi lagi.",
@@ -263,7 +260,9 @@ STR = {
         "set_title": "Settings",
         "m_file": "File", "m_view": "View", "m_job": "Job", "m_tools": "Tools", "m_help": "Help",
         "mi_exit": "Exit", "mi_theme": "Theme", "mi_lang": "Language", "mi_colab": "Test Colab connection",
-        "mi_guide": "User guide", "mi_about": "About TickerQuill",
+        "mi_guide": "User guide", "mi_about": "About TickerQuill", "mi_shortcut": "Create app shortcut",
+        "shortcut_done": "TickerQuill shortcut created:\n{list}\n\nYou can now open the app from there without a terminal.",
+        "shortcut_err": "Could not create the shortcut: {e}",
         "about": "{name} v{v}\nYouTube >> Whisper >> stock advice & predictions summary.\nMIT licence.\n\n{disclaimer}",
         "chart_title": "Candle chart",
         "chart_missing": "The candle chart needs the pywebview package. Install it with: pip install -r requirements.txt (or pip install pywebview), then restart the app.",
@@ -853,7 +852,7 @@ class Pipeline:
 class App(tk.Tk):
     def __init__(self):
         theme.apply(load_settings().get("theme") or theme.DEFAULT)  # sebelum widget apa pun dibuat
-        super().__init__()
+        super().__init__(className="TickerQuill")  # Tk menjadikannya kelas "Tickerquill" = StartupWMClass shortcut Linux
         self.title(f"{APP_NAME} v{APP_VERSION}")
         self.configure(bg=T.BG)
         self.geometry("980x720")
@@ -1239,6 +1238,17 @@ class App(tk.Tk):
     def pick_model(self):
         ModelPicker(self)
 
+    def make_shortcut(self):
+        """Alat > Buat shortcut: Start Menu + Desktop (Windows), ~/Applications (macOS), menu aplikasi (Linux)."""
+        try:
+            made = shortcuts.create()
+        except Exception as e:  # PowerShell diblokir, folder tidak bisa ditulis, dsb.
+            messagebox.showerror(self.tr("mi_shortcut"), self.tr("shortcut_err").format(e=f"{type(e).__name__}: {e}"),
+                                 parent=self)
+            return
+        messagebox.showinfo(self.tr("mi_shortcut"), self.tr("shortcut_done").format(
+            list="\n".join(str(p) for p in made)), parent=self)
+
     def open_entry(self, it, mode):
         """Buka entri riwayat di halaman ANALISIS. False bila proses lain masih berjalan."""
         if self.busy():
@@ -1290,7 +1300,8 @@ class App(tk.Tk):
                "levels": (context or {}).get("levels") or {}, "videos": (context or {}).get("videos") or []}
         path = Path(tempfile.gettempdir()) / f"tickerquill-chart-{symbol}.json"
         path.write_text(json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
-        proc = subprocess.Popen([str(gui_python()), str(BASE / "chartview.py"), str(path)], cwd=BASE,
+        proc = subprocess.Popen([str(gui_python()), "-m", "tickerquill.chartview", str(path)],
+                                cwd=paths.SOURCE if paths.is_source_checkout() else None,  # dari source: paket bisa diimpor
                                 creationflags=no_console_flags())
         self.chart_procs[symbol] = proc
         return proc
@@ -1374,7 +1385,7 @@ class App(tk.Tk):
         self.open_settings(page="trans").test()
 
     def open_guide(self):
-        if not open_path(BASE / "docs" / "user-guide.md"):  # salinan lokal sesuai versi aplikasi ini
+        if not open_path(paths.SOURCE / "docs" / "user-guide.md"):  # salinan lokal (source checkout) sesuai versi ini
             open_url(GUIDE_URL)  # berkas tidak ada atau tanpa aplikasi pembuka .md
 
     def show_about(self):

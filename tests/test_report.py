@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-import report
+from tickerquill import report
 
 
 def stock(ticker, stance="BUY", **kw):

@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pytest
 
-import market
+from tickerquill import market
 
 T0 = int(datetime(2026, 10, 23, 9, 0, tzinfo=market.WIB).timestamp())
 

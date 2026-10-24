@@ -9,11 +9,11 @@ import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox
 
-import archive
-import market
-import report
-from dashboard import DashboardView, open_url, stance_color
-from theme import FONT, FONT_B, T
+from . import archive
+from . import market
+from . import report
+from .dashboard import DashboardView, open_url, stance_color
+from .theme import FONT, FONT_B, T
 
 _T = {
     "info": ("{v} video · {s} emiten · {m} dibahas di lebih dari 1 video", "{v} videos · {s} stocks · {m} discussed in more than 1 video"),

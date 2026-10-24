@@ -3,9 +3,9 @@ import types
 
 import pytest
 
-import dashboard
-import system
-import theme
+from tickerquill import dashboard
+from tickerquill import system
+from tickerquill import theme
 
 
 def test_open_url_only_opens_http_links(monkeypatch):

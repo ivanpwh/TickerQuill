@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tickerquill"
+dynamic = ["version"]
+description = "Turn a YouTube stock-market video into a structured, investor-friendly summary."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "ivanpwh" }]
+dependencies = [
+    "faster-whisper>=1.2.1",
+    "yt-dlp>=2026.8.19",
+    "openai>=3.35.1",
+    "certifi",  # CA bundle for the HTTPS connection to a Colab server (needed on some macOS Pythons)
+    # Candle chart window (TradingView Lightweight Charts in a web view); the rest of the app works without it.
+    "pywebview>=6.2.1; sys_platform != 'linux'",
+    "pywebview[qt]>=6.2.1; sys_platform == 'linux'",  # Qt WebEngine from pip; GTK also works with system packages
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+tickerquill = "tickerquill.__main__:main"
+
+[project.gui-scripts]
+tickerquill-gui = "tickerquill.__main__:main"  # no console window on Windows
+
+[project.urls]
+Homepage = "https://github.com/ivanpwh/TickerQuill"
+Documentation = "https://github.com/ivanpwh/TickerQuill/blob/main/docs/user-guide.md"
+
+[tool.setuptools]
+packages = ["tickerquill"]
+
+[tool.setuptools.dynamic]
+version = { attr = "tickerquill.__version__" }
+
+[tool.setuptools.package-data]
+tickerquill = ["assets/*.html", "assets/lightweight-charts/*", "assets/icon/*"]
