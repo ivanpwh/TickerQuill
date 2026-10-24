@@ -3,7 +3,8 @@ faster-whisper>=1.2.1
 yt-dlp>=2026.8.19
 openai>=3.35.1
 # Candle chart window (TradingView Lightweight Charts in Edge WebView2); the rest of the app works without it.
-pywebview>=6.2.1
+pywebview>=6.2.1; sys_platform != "linux"
+pywebview[qt]>=6.2.1; sys_platform == "linux"  # Qt WebEngine via pip; GTK also works with system packages
 
 # Optional: CA bundle for the HTTPS connection to a Colab server (recommended on macOS).
 certifi

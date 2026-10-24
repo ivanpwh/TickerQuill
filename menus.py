@@ -2,10 +2,12 @@
 import tkinter as tk
 
 import theme
+from system import IS_MAC, MOD, MOD_LABEL
 
 LANG_LABELS = {"ID": "Bahasa Indonesia (ID)", "EN": "English (EN)"}
 # Binding kelas Tk yang mengubah isi widget untuk shortcut menu: diganti agar shortcut tidak berefek ganda
-CLASS_CLASH = {"<Control-o>": ("Text",)}  # Text: Ctrl+O = sisipkan baris baru
+CLASS_CLASH = {"<Control-o>": ("Text",)}  # Text: Ctrl+O = sisipkan baris baru (tidak ada padanannya untuk Cmd)
+
 
 
 def plain(text):
@@ -21,22 +23,22 @@ class MenuBar:
         tr, a = app.tr, app
 
         m = self.cascade(self.bar, "m_file")
-        self.add(m, lambda: plain(tr("open")) + "…", a.open_file, "Ctrl+O", ("<Control-o>", "<Control-O>"),
+        self.add(m, lambda: plain(tr("open")) + "…", a.open_file, f"{MOD_LABEL}+O", (f"<{MOD}-o>", f"<{MOD}-O>"),
                  lambda: not a.busy())
-        self.add(m, lambda: plain(a.copy_btn.cget("text")), a.copy, "Ctrl+Shift+C", ("<Control-Shift-C>",),
+        self.add(m, lambda: plain(a.copy_btn.cget("text")), a.copy, f"{MOD_LABEL}+Shift+C", (f"<{MOD}-Shift-C>",),
                  a.can_export)
-        self.add(m, lambda: plain(a.save_btn.cget("text")) + "…", a.save, "Ctrl+S", ("<Control-s>", "<Control-S>"),
+        self.add(m, lambda: plain(a.save_btn.cget("text")) + "…", a.save, f"{MOD_LABEL}+S", (f"<{MOD}-s>", f"<{MOD}-S>"),
                  a.can_export)
         m.add_separator()
         self.add(m, lambda: tr("mi_exit"), a.destroy)
 
         m = self.cascade(self.bar, "m_view")
-        self.add(m, lambda: tr("page_analysis").capitalize(), lambda: a.show_page("analysis"), "Ctrl+1",
-                 ("<Control-Key-1>",))
-        self.add(m, lambda: tr("page_history").capitalize(), lambda: a.show_page("history"), "Ctrl+2",
-                 ("<Control-Key-2>",))
-        self.add(m, lambda: tr("m_overview"), lambda: a.show_page("collection"), "Ctrl+3",
-                 ("<Control-Key-3>",))
+        self.add(m, lambda: tr("page_analysis").capitalize(), lambda: a.show_page("analysis"), f"{MOD_LABEL}+1",
+                 (f"<{MOD}-Key-1>",))
+        self.add(m, lambda: tr("page_history").capitalize(), lambda: a.show_page("history"), f"{MOD_LABEL}+2",
+                 (f"<{MOD}-Key-2>",))
+        self.add(m, lambda: tr("m_overview"), lambda: a.show_page("collection"), f"{MOD_LABEL}+3",
+                 (f"<{MOD}-Key-3>",))
         m.add_separator()
         for pane, key in (("DASHBOARD", "tab_dash"), ("ANALISIS", "analysis_tab"), ("TRANSKRIP", "transcript_tab")):
             self.add(m, lambda k=key: tr(k).capitalize(), lambda p=pane: a.show_tab(p))
@@ -57,7 +59,7 @@ class MenuBar:
         self.add(m, lambda: plain(tr("cancel")), a.stop, "Esc", ("<Escape>",), a.busy)
 
         m = self.cascade(self.bar, "m_tools")
-        self.add(m, lambda: tr("set_title") + "…", a.open_settings, "Ctrl+,", ("<Control-comma>",))
+        self.add(m, lambda: tr("set_title") + "…", a.open_settings, f"{MOD_LABEL}+,", (f"<{MOD}-comma>",))
         self.add(m, lambda: plain(tr("set_pick")) + "…", a.pick_model)
         self.add(m, lambda: tr("mi_colab"), a.test_colab)
 
@@ -66,6 +68,9 @@ class MenuBar:
         self.add(m, lambda: tr("mi_about"), a.show_about)
 
         app.config(menu=self.bar)
+        if IS_MAC:  # menu aplikasi macOS: Preferences (Cmd+,) dan Quit (Cmd+Q) memanggil aplikasi ini
+            app.createcommand("tk::mac::ShowPreferences", a.open_settings)
+            app.createcommand("tk::mac::Quit", a.destroy)
 
     def cascade(self, parent, key):
         menu = tk.Menu(parent, tearoff=0)

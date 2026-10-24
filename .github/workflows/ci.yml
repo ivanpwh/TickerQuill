@@ -11,16 +11,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python }}
       # The tests need pytest and openai (for its exception classes); Whisper and yt-dlp are imported lazily by the app.
       - run: pip install pytest "openai>=3.35.1"
-      - run: python -m pytest -q -rs
+      - name: Tests (Linux runs the GUI tests on a virtual display)
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq xvfb
+            xvfb-run -a python -m pytest -q -rs
+          else
+            python -m pytest -q -rs
+          fi
       - name: Colab notebook is in sync with whisper_server.py
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
         run: |

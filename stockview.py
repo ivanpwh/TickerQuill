@@ -9,7 +9,7 @@ import tkinter as tk
 import market
 import report
 from dashboard import open_url
-from theme import FONT, FONT_B, FONT_BIG, T, mix
+from theme import FONT, FONT_B, FONT_BIG, T, font, mix
 
 REFRESH_MS = 60_000
 LEVEL_ROLES = {"entry": "AMBER", "target": "GOOD", "stop_loss": "RED"}
@@ -104,7 +104,7 @@ class StockWindow(tk.Toplevel):
         self.since_title = self.line(FONT_B, T.AMBER, pady=(8, 2))
         self.since = tk.Frame(self, bg=T.BG)
         self.since.pack(fill="x", padx=12)
-        self.disclaimer_lbl = self.line(("Consolas", 9), T.DIM, pady=(8, 8))
+        self.disclaimer_lbl = self.line(font(9), T.DIM, pady=(8, 8))
         self.protocol("WM_DELETE_WINDOW", self.close)
         self.apply_lang()
         self.load(full=True)
@@ -271,7 +271,7 @@ class StockWindow(tk.Toplevel):
         for k in range(5):
             v = lo2 + k * (hi2 - lo2) / 4
             c.create_line(left, y(v), right, y(v), fill=mix(T.BG, T.DIM, 0.45))
-            c.create_text(right + 6, y(v), text=self.num(round(v)), anchor="w", fill=T.DIM, font=("Consolas", 9))
+            c.create_text(right + 6, y(v), text=self.num(round(v)), anchor="w", fill=T.DIM, font=font(9))
         color = T.GOOD if closes[-1] >= closes[0] else T.RED
         if len(pts) > 1:
             c.create_line(*[n for i, p in enumerate(pts) for n in (x(i), y(p[1]))], fill=color, width=2)
@@ -280,12 +280,12 @@ class StockWindow(tk.Toplevel):
             fg = getattr(T, LEVEL_ROLES[key])
             c.create_line(left, y(val), right, y(val), fill=fg, dash=(5, 3))
             c.create_text(left + 4, y(val) - 2, text=f"{t(ui, 'lv_' + key)} {self.num(val)}", anchor="sw", fill=fg,
-                          font=("Consolas", 9, "bold"))
+                          font=font(9, "bold"))
         fmt = "%H:%M" if self.range in ("1D", "5D") else "%d/%m"
         if self.range == "5D":
             fmt = "%d/%m %H:%M"
-        c.create_text(left, h - 4, text=pts[0][0].strftime(fmt), anchor="sw", fill=T.DIM, font=("Consolas", 9))
-        c.create_text(right, h - 4, text=pts[-1][0].strftime(fmt), anchor="se", fill=T.DIM, font=("Consolas", 9))
+        c.create_text(left, h - 4, text=pts[0][0].strftime(fmt), anchor="sw", fill=T.DIM, font=font(9))
+        c.create_text(right, h - 4, text=pts[-1][0].strftime(fmt), anchor="se", fill=T.DIM, font=font(9))
         self.legend_lbl.config(text=t(ui, "off_chart", list=", ".join(f"{t(ui, 'lv_' + k)} {self.num(v)}" for k, v in off))
                                if off else "")
 

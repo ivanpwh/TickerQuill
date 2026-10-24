@@ -8,6 +8,8 @@ import pytest
 pytest.importorskip("tkinter")
 import app  # noqa: E402
 import theme  # noqa: E402
+from system import MOD  # noqa: E402
+from widgets import RetroButton  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -281,7 +283,7 @@ def test_ctrl_o_in_a_text_pane_opens_the_file_dialog_once_without_editing(root, 
     root.update()
     txt.focus_force()
     root.update()
-    txt.event_generate("<Control-o>")
+    txt.event_generate(f"<{MOD}-o>")
     root.update()
     assert len(calls) == 1 and txt.get("1.0", "end-1c") == "abc"
     root.clear("TRANSKRIP")
@@ -334,7 +336,7 @@ def collection(root):
 
 
 def texts(widget):
-    return [w.cget("text") for w in all_widgets(widget) if isinstance(w, (tk.Label, tk.Button))]
+    return [w.cget("text") for w in all_widgets(widget) if isinstance(w, tk.Label)]
 
 
 def test_collection_lists_dates_and_stocks_with_disagreement(collection):
@@ -382,7 +384,7 @@ def test_collection_ai_summary_is_requested_once_and_cached(collection, root, mo
     page = collection
     page.select_ticker("TLKM")
     button = next(w for w in all_widgets(page.view.inner)
-                  if isinstance(w, tk.Button) and w.cget("text") == col.t(page.ui, "ai_btn"))
+                  if isinstance(w, RetroButton) and w.cget("text") == col.t(page.ui, "ai_btn"))
     button.invoke()
     for _ in range(100):
         root.update()
@@ -393,7 +395,7 @@ def test_collection_ai_summary_is_requested_once_and_cached(collection, root, mo
     assert "- semua membahas TLKM" in texts(page.view.inner)
     assert len(list((app.ARCHIVE / "ai").glob("ticker-TLKM-*.json"))) == 1
     page.render()
-    assert not any(isinstance(w, tk.Button) and w.cget("text") == col.t(page.ui, "ai_btn")
+    assert not any(isinstance(w, RetroButton) and w.cget("text") == col.t(page.ui, "ai_btn")
                    for w in all_widgets(page.view.inner))
 
 
@@ -543,7 +545,7 @@ def test_price_window_uses_international_ranges_and_opens_tradingview(root, fake
     try:
         wait_loaded(root, w)
         assert [b.cget("text") for b in w.range_btns.values()] == ["[ 1Y ]", "[ 3M ]", "[ 1M ]", "[ 5D ]", "[ 1D ]"]
-        button = next(x for x in all_widgets(w) if isinstance(x, tk.Button) and x.cget("text") == "[ TRADINGVIEW ]")
+        button = next(x for x in all_widgets(w) if isinstance(x, RetroButton) and x.cget("text") == "[ TRADINGVIEW ]")
         button.invoke()
         assert opened == ["https://www.tradingview.com/chart/?symbol=IDX%3ATLKM"]
     finally:
@@ -557,7 +559,7 @@ def test_overview_stock_detail_links_to_tradingview(collection, monkeypatch):
     monkeypatch.setattr(col, "open_url", opened.append)
     collection.select_ticker("TLKM")
     button = next(x for x in all_widgets(collection.view.inner)
-                  if isinstance(x, tk.Button) and x.cget("text") == "[ TRADINGVIEW ]")
+                  if isinstance(x, RetroButton) and x.cget("text") == "[ TRADINGVIEW ]")
     button.invoke()
     assert opened == ["https://www.tradingview.com/chart/?symbol=IDX%3ATLKM"]
 
@@ -604,3 +606,20 @@ def test_candle_chart_explains_a_missing_pywebview(root, monkeypatch):
     monkeypatch.setattr(app.messagebox, "showinfo", lambda title, text, **kw: shown.append(text))
     assert root.open_chart("TLKM", {}) is None
     assert shown == [root.tr("chart_missing")]
+
+
+def test_retro_button_behaves_like_a_button(root):
+    calls = []
+    b = RetroButton(root, "[ OK ]", lambda: calls.append(1))
+    b.invoke()
+    b.config(state="disabled")
+    b.invoke()
+    assert calls == [1] and b["state"] == "disabled" and b.cget("text") == "[ OK ]"
+    b.config(state="normal")
+    b.pack()
+    root.update()
+    b.event_generate("<Enter>")
+    assert str(b.cget("bg")).lower() == theme.T.FG.lower()  # hover: inverted colours, also on macOS
+    b.event_generate("<Leave>")
+    assert str(b.cget("bg")).lower() == theme.T.BG.lower()
+    b.destroy()

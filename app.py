@@ -24,7 +24,9 @@ from menus import MenuBar
 from stockview import StockWindow
 from textclean import clean_repeats
 import theme
-from theme import FONT, FONT_B, T
+from theme import FONT, FONT_B, T, font
+from system import IS_MAC, gui_python, no_console_flags, open_path
+from widgets import RetroButton
 
 APP_NAME = "TickerQuill"
 APP_VERSION = "1.1.0"
@@ -968,13 +970,7 @@ class App(tk.Tk):
         self.show("DASHBOARD")
 
     def button(self, parent, text, cmd):
-        b = tk.Button(parent, text=text, command=cmd, font=FONT_B, bg=T.BG, fg=T.FG, relief="flat",
-                      highlightthickness=1, highlightbackground=T.FG, activebackground=T.FG,
-                      activeforeground=T.BG, disabledforeground=T.DIM, cursor="hand2", padx=10, pady=3, bd=0)
-        b.bind("<Enter>", lambda e: b["state"] == "normal" and b.config(bg=T.FG, fg=T.BG))
-        b.bind("<Leave>", lambda e: b.config(bg=T.BG, fg=T.AMBER if b.selected else T.FG))  # T dibaca saat event
-        b.selected = False
-        return b
+        return RetroButton(parent, text, cmd)  # tk.Button mengabaikan warna di macOS
 
     @staticmethod
     def mark_tabs(buttons, active):
@@ -986,9 +982,9 @@ class App(tk.Tk):
     def build(self):
         head = tk.Frame(self, bg=T.BG)
         head.pack(fill="x", padx=14, pady=(12, 0))
-        self.title_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.AMBER, anchor="w")
+        self.title_lbl = tk.Label(head, text="", font=font(16, "bold"), bg=T.BG, fg=T.AMBER, anchor="w")
         self.title_lbl.pack(side="left")
-        self.page_lbl = tk.Label(head, text="", font=("Consolas", 16, "bold"), bg=T.BG, fg=T.FG, anchor="w")
+        self.page_lbl = tk.Label(head, text="", font=font(16, "bold"), bg=T.BG, fg=T.FG, anchor="w")
         self.page_lbl.pack(side="left", padx=(6, 0))
         # status proses saat halaman lain terbuka; klik untuk kembali ke ANALISIS
         self.job_lbl = tk.Label(head, text="", font=FONT_B, bg=T.BG, fg=T.CYAN, anchor="e", cursor="hand2")
@@ -997,7 +993,7 @@ class App(tk.Tk):
         self.subtitle_lbl = tk.Label(self, text="", font=FONT, bg=T.BG, fg=T.DIM, anchor="w")
         self.subtitle_lbl.pack(fill="x", padx=14)
         tk.Frame(self, bg=T.FG, height=1).pack(fill="x", padx=14, pady=8)
-        self.disclaimer_lbl = tk.Label(self, text="", font=("Consolas", 9), bg=T.BG, fg=T.DIM, anchor="w")
+        self.disclaimer_lbl = tk.Label(self, text="", font=font(9), bg=T.BG, fg=T.DIM, anchor="w")
         self.disclaimer_lbl.pack(side="bottom", fill="x", padx=14, pady=(0, 8))
         self.theme_var = tk.StringVar(value=theme.current)
 
@@ -1018,7 +1014,7 @@ class App(tk.Tk):
         self.go_btn.pack(side="left")
         self.open_btn = self.button(row, "", self.open_file)
         self.open_btn.pack(side="left", padx=(6, 0))
-        self.cache_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.CYAN, anchor="w")
+        self.cache_lbl = tk.Label(page, text="", font=font(10), bg=T.BG, fg=T.CYAN, anchor="w")
         self.cache_lbl.pack(fill="x", padx=14, pady=(4, 0))
 
         whisper = load_settings().get("whisper_model")
@@ -1033,7 +1029,7 @@ class App(tk.Tk):
         self.url_var.trace_add("write", self.update_cache_hint)
         self.audio_var.trace_add("write", self.update_cache_hint)
         # pengaturan Whisper/bahasa/model ada di Alat > Pengaturan; di sini cukup ringkasan yang bisa diklik
-        self.summary_lbl = tk.Label(page, text="", font=("Consolas", 10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
+        self.summary_lbl = tk.Label(page, text="", font=font(10), bg=T.BG, fg=T.DIM, anchor="w", cursor="hand2")
         self.summary_lbl.pack(fill="x", padx=14, pady=(6, 0))
         self.summary_lbl.bind("<Button-1>", lambda e: self.open_settings())
         for var in (self.model_var, self.audio_var, self.engine_var):
@@ -1075,7 +1071,7 @@ class App(tk.Tk):
             sb.config(command=txt.yview)
             sb.pack(side="right", fill="y")
             txt.pack(side="left", fill="both", expand=True)
-            txt.tag_config("h1", foreground=T.AMBER, font=("Consolas", 13, "bold"))
+            txt.tag_config("h1", foreground=T.AMBER, font=font(13, "bold"))
             txt.tag_config("h2", foreground=T.AMBER, font=FONT_B)
             txt.tag_config("bold", font=FONT_B)
             txt.tag_config("dim", foreground=T.DIM)
@@ -1294,10 +1290,8 @@ class App(tk.Tk):
                "levels": (context or {}).get("levels") or {}, "videos": (context or {}).get("videos") or []}
         path = Path(tempfile.gettempdir()) / f"tickerquill-chart-{symbol}.json"
         path.write_text(json.dumps(ctx, ensure_ascii=False), encoding="utf-8")
-        exe = Path(sys.executable)
-        windowless = exe.with_name("pythonw.exe")  # tanpa jendela konsol di Windows
-        proc = subprocess.Popen([str(windowless if windowless.exists() else exe), str(BASE / "chartview.py"), str(path)],
-                                cwd=BASE, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        proc = subprocess.Popen([str(gui_python()), str(BASE / "chartview.py"), str(path)], cwd=BASE,
+                                creationflags=no_console_flags())
         self.chart_procs[symbol] = proc
         return proc
 
@@ -1380,10 +1374,8 @@ class App(tk.Tk):
         self.open_settings(page="trans").test()
 
     def open_guide(self):
-        try:
-            os.startfile(BASE / "docs" / "user-guide.md")  # salinan lokal sesuai versi aplikasi ini
-        except (AttributeError, OSError):  # bukan Windows, berkas tidak ada, atau tanpa aplikasi pembuka .md
-            open_url(GUIDE_URL)
+        if not open_path(BASE / "docs" / "user-guide.md"):  # salinan lokal sesuai versi aplikasi ini
+            open_url(GUIDE_URL)  # berkas tidak ada atau tanpa aplikasi pembuka .md
 
     def show_about(self):
         messagebox.showinfo(self.tr("mi_about"), self.tr("about").format(
@@ -1737,7 +1729,7 @@ class SettingsDialog(tk.Toplevel):
             self.build_row(self.frames[page_key], name, label_key, kind, store)
         self.build_trans_extras(self.frames["trans"])
         self.build_llm_extras(self.frames["llm"])
-        tk.Label(self.frames["general"], text=app.tr("set_help"), font=("Consolas", 10), bg=T.BG, fg=T.DIM,
+        tk.Label(self.frames["general"], text=app.tr("set_help"), font=font(10), bg=T.BG, fg=T.DIM,
                  justify="left", anchor="w", wraplength=620).pack(fill="x", padx=12, pady=(12, 8))
 
         self.info = tk.Label(self, text=notice, font=FONT, bg=T.BG, fg=T.FG, justify="left", anchor="w", wraplength=640)
@@ -1769,7 +1761,7 @@ class SettingsDialog(tk.Toplevel):
         names.pack(side="left", anchor="n")
         names.pack_propagate(False)
         tk.Label(names, text=app.tr(label_key), font=FONT, bg=T.BG, fg=T.FG, anchor="w").pack(fill="x")
-        tk.Label(names, text=name if store == "env" else "settings.json", font=("Consolas", 9), bg=T.BG, fg=T.DIM,
+        tk.Label(names, text=name if store == "env" else "settings.json", font=font(9), bg=T.BG, fg=T.DIM,
                  anchor="w").pack(fill="x")
         if kind == "choice":
             labels = [label for _, label in self.choices[name]]
@@ -1788,7 +1780,7 @@ class SettingsDialog(tk.Toplevel):
             entry.toggle_btn = toggle
 
     def build_trans_extras(self, parent):
-        tk.Label(parent, text=self.app.tr("colab_help"), font=("Consolas", 10), bg=T.BG, fg=T.DIM, justify="left",
+        tk.Label(parent, text=self.app.tr("colab_help"), font=font(10), bg=T.BG, fg=T.DIM, justify="left",
                  anchor="w", wraplength=620).pack(fill="x", padx=12, pady=(4, 6))
         self.app.button(parent, self.app.tr("colab_test"), self.test).pack(anchor="w", padx=12, pady=(0, 8))
 

@@ -19,9 +19,19 @@ CHOICES = [*THEMES, "system"]  # "system" = ikuti mode gelap/terang OS saat apli
 DEFAULT = "retro_green"
 ROLES = tuple(THEMES[DEFAULT])
 
-FONT = ("Consolas", 11)
-FONT_B = ("Consolas", 11, "bold")
-FONT_BIG = ("Consolas", 16, "bold")
+# Monospace bawaan tiap OS. Di Linux "monospace" adalah alias fontconfig (DejaVu/Liberation/Noto Sans Mono, ...).
+MONO = {"win32": "Consolas", "darwin": "Menlo"}.get(sys.platform, "monospace")
+SIZE_DELTA = 2 if sys.platform == "darwin" else 0  # Tk di macOS menghitung 72 dpi: ukuran sama tampak lebih kecil
+
+
+def font(size, *style):
+    """Font aplikasi: (keluarga monospace OS ini, ukuran, gaya...)."""
+    return (MONO, size + SIZE_DELTA, *style)
+
+
+FONT = font(11)
+FONT_B = font(11, "bold")
+FONT_BIG = font(16, "bold")
 
 COLOR_OPTIONS = ("bg", "fg", "activebackground", "activeforeground", "disabledforeground", "highlightbackground",
                  "highlightcolor", "insertbackground", "selectbackground", "selectforeground", "troughcolor",
@@ -49,6 +59,18 @@ def system_is_dark():
 
             out = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"], capture_output=True, text=True)
             return out.stdout.strip() == "Dark"
+        if sys.platform.startswith("linux"):  # GNOME dan turunannya; desktop lain: anggap gelap (bawaan aplikasi)
+            import subprocess
+
+            def gsetting(key):
+                out = subprocess.run(["gsettings", "get", "org.gnome.desktop.interface", key], capture_output=True,
+                                     text=True, timeout=3)
+                return out.stdout.strip().strip("'").lower()
+
+            scheme = gsetting("color-scheme")
+            if scheme in ("prefer-dark", "prefer-light"):
+                return scheme == "prefer-dark"
+            return "dark" in gsetting("gtk-theme")
     except Exception:
         pass
     return True

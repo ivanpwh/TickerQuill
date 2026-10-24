@@ -6,13 +6,13 @@
 <style>
   :root { --bg: #0b0f0b; --fg: #33ff66; --dim: #4d6b55; --amber: #ffb000; --red: #ff5555; --cyan: #55ddff; --good: #33ff66; }
   html, body { height: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px Consolas, monospace; display: flex; flex-direction: column; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 13px Consolas, Menlo, 'DejaVu Sans Mono', monospace; display: flex; flex-direction: column; }
   header { padding: 10px 12px 6px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; }
   #sym { color: var(--amber); font-weight: bold; }
   #name { color: var(--dim); }
   #price { font-size: 20px; font-weight: bold; }
   .ranges { margin-left: auto; display: flex; gap: 4px; }
-  .ranges button { background: var(--bg); color: var(--fg); border: 1px solid var(--fg); font: bold 12px Consolas, monospace; padding: 2px 8px; cursor: pointer; }
+  .ranges button { background: var(--bg); color: var(--fg); border: 1px solid var(--fg); font: bold 12px Consolas, Menlo, 'DejaVu Sans Mono', monospace; padding: 2px 8px; cursor: pointer; }
   .ranges button.on { color: var(--amber); border-color: var(--amber); text-decoration: underline; }
   .ranges button:hover { background: var(--fg); color: var(--bg); }
   #msg { color: var(--red); padding: 0 12px; min-height: 16px; }
@@ -60,7 +60,7 @@ function setup() {
   }
   chart = LWC.createChart(document.getElementById("chart"), {
     autoSize: true,
-    layout: { background: { type: "solid", color: p.BG }, textColor: p.FG, fontFamily: "Consolas, monospace" },
+    layout: { background: { type: "solid", color: p.BG }, textColor: p.FG, fontFamily: "Consolas, Menlo, 'DejaVu Sans Mono', monospace" },
     grid: { vertLines: { color: hexAlpha(p.DIM, 0.25) }, horzLines: { color: hexAlpha(p.DIM, 0.25) } },
     rightPriceScale: { borderColor: p.DIM },
     timeScale: { borderColor: p.DIM, timeVisible: true, secondsVisible: false },
